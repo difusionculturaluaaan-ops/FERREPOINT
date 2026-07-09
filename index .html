@@ -1,0 +1,2269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>FERREPOINT — Sistema POS</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap');
+:root{
+  --na:#E8610A;--nad:#B84D08;--nal:#FFF0E6;
+  --ac:#2B2F35;--acm:#3E4550;
+  --gf:#F2F4F7;--gb:#D8DCE4;--gm:#8A929E;
+  --bl:#FFFFFF;
+  --ve:#1A8A4A;--vel:#E8F5EE;
+  --ro:#C0392B;--rol:#FDECEA;
+  --az:#1A5FA8;--azl:#E8F0FB;
+  --am:#E8A20A;--aml:#FFF8E1;
+  --tp:#1C1F26;
+  --nav-h:52px;
+  --bot-h:60px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Barlow',sans-serif;background:var(--gf);color:var(--tp);font-size:14px;display:flex;flex-direction:column}
+
+/* ── TOPBAR ── */
+.topbar{
+  background:var(--ac);color:var(--bl);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;height:var(--nav-h);flex-shrink:0;z-index:200;
+}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-icon{width:32px;height:32px;background:var(--na);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.brand-name{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:19px;letter-spacing:1px}
+.brand-tag{font-size:9px;color:#aaa;letter-spacing:1px;text-transform:uppercase;display:none}
+.topbar-nav{display:flex;gap:2px} /* desktop only */
+.nav-btn-top{background:none;border:none;color:#bbb;padding:6px 11px;border-radius:4px;cursor:pointer;font-family:'Barlow',sans-serif;font-size:13px;font-weight:500;transition:all .15s;white-space:nowrap}
+.nav-btn-top:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-btn-top.active{background:var(--na);color:#fff}
+.topbar-user{display:flex;align-items:center;gap:8px;font-size:13px;color:#ccc;flex-shrink:0}
+.avatar{width:28px;height:28px;background:var(--na);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.topbar-user span{display:none}
+
+/* ── BOTTOM NAV (móvil) ── */
+.bottom-nav{
+  display:none;position:fixed;bottom:0;left:0;right:0;
+  height:var(--bot-h);background:var(--ac);
+  border-top:1px solid var(--acm);z-index:300;
+  display:flex;justify-content:space-around;align-items:center;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.bnav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  border:none;background:none;color:#888;cursor:pointer;
+  font-family:'Barlow',sans-serif;font-size:9px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.3px;padding:6px 2px;
+  transition:color .15s;
+}
+.bnav-btn.active{color:var(--na)}
+.bnav-btn .bico{font-size:20px;line-height:1}
+
+/* ── BADGE CARRITO (móvil) ── */
+.cart-badge{
+  position:absolute;top:-3px;right:-3px;
+  background:var(--na);color:#fff;border-radius:20px;
+  font-size:10px;font-weight:700;padding:0 4px;min-width:16px;text-align:center;
+  display:none;
+}
+.cart-ico-wrap{position:relative;display:inline-block}
+
+/* ── CONTENIDO ── */
+.app-body{flex:1;overflow:hidden;position:relative}
+.vista{display:none;height:100%;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch}
+.vista.activa{display:block}
+/* En móvil el padding-bottom incluye la nav inferior */
+
+/* ── POS LAYOUT ── */
+.pos-grid{display:grid;grid-template-columns:1fr 360px;gap:14px;height:100%}
+.pos-izq{display:flex;flex-direction:column;gap:10px;min-height:0}
+.search-bar{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.search-bar input{flex:1;padding:10px 13px;border:1.5px solid var(--gb);border-radius:8px;font-size:15px;font-family:'Barlow',sans-serif;background:var(--bl);transition:border .15s}
+.search-bar input:focus{outline:none;border-color:var(--na)}
+.vendedor-sel{padding:9px 10px;border:1.5px solid var(--gb);border-radius:8px;font-family:'Barlow',sans-serif;font-size:13px;background:var(--bl);cursor:pointer}
+
+.catalogo{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px;overflow-y:auto;padding-bottom:4px;flex:1}
+.prod-card{background:var(--bl);border:1.5px solid var(--gb);border-radius:10px;padding:12px;cursor:pointer;transition:all .15s;position:relative;user-select:none}
+.prod-card:hover,.prod-card:active{border-color:var(--na);box-shadow:0 2px 10px rgba(232,97,10,.13)}
+.prod-card.bajo-stock::after{content:'⚠';position:absolute;top:7px;right:8px;font-size:11px;color:var(--am)}
+.prod-clave{font-size:10px;color:var(--gm);font-family:'Barlow Condensed',sans-serif;letter-spacing:.4px;margin-bottom:3px}
+.prod-nombre{font-size:12px;font-weight:600;line-height:1.3;margin-bottom:7px}
+.prod-footer{display:flex;justify-content:space-between;align-items:flex-end}
+.prod-precio{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;color:var(--na)}
+.prod-stock{font-size:10px;color:var(--gm)}
+.stock-bajo{color:var(--ro)!important}
+
+/* ── UBICACIÓN ── */
+.prod-ubic{
+  font-size:10px;color:var(--az);background:var(--azl);
+  border-radius:4px;padding:2px 6px;margin-bottom:6px;
+  display:inline-block;font-weight:600;letter-spacing:.2px;
+}
+.item-ubic{
+  font-size:10px;color:var(--az);margin-top:2px;font-weight:600;
+}
+
+/* ── BODEGA ── */
+.orden-surtido{
+  background:var(--bl);border:1.5px solid var(--gb);
+  border-radius:10px;overflow:hidden;margin-bottom:12px;
+}
+.os-header{
+  padding:12px 14px;display:flex;justify-content:space-between;
+  align-items:flex-start;gap:10px;flex-wrap:wrap;
+}
+.os-folio{font-size:13px;font-weight:700;margin-bottom:2px}
+.os-meta{font-size:11px;color:var(--gm)}
+.os-estado{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.os-btn{
+  padding:5px 10px;border:none;border-radius:5px;cursor:pointer;
+  font-size:11px;font-family:'Barlow',sans-serif;font-weight:600;
+}
+.os-btn-ini{background:var(--azl);color:var(--az)}
+.os-btn-ok{background:var(--vel);color:var(--ve)}
+
+.surtido-prog{height:5px;background:var(--gb);border-radius:3px;margin:8px 0 4px;overflow:hidden}
+.surtido-prog-bar{height:100%;background:var(--na);border-radius:3px;transition:width .4s ease}
+
+.surtido-items{padding:0 14px 10px}
+.surtido-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 0;border-bottom:1px solid var(--gf);
+}
+.surtido-item:last-child{border-bottom:none}
+.si-ubic{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:52px}
+.ubic-p{
+  background:var(--ac);color:var(--bl);
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;
+  border-radius:5px;padding:2px 7px;letter-spacing:.5px;
+}
+.ubic-det{font-size:9px;color:var(--gm);text-align:center;line-height:1.3}
+.si-info{flex:1;min-width:0}
+.si-nombre{font-size:12px;font-weight:600;line-height:1.3}
+.si-qty{font-size:11px;color:var(--gm);margin-top:1px;font-weight:600}
+.si-check{
+  width:30px;height:30px;border-radius:50%;border:2px solid var(--gb);
+  background:var(--gf);cursor:pointer;font-size:14px;flex-shrink:0;
+  transition:all .15s;display:flex;align-items:center;justify-content:center;
+  font-weight:700;color:var(--gm);
+}
+.si-check:hover{border-color:var(--ve);color:var(--ve)}
+.si-check.done{background:var(--ve);border-color:var(--ve);color:var(--bl)}
+
+/* Mapa responsive */
+@media(max-width:768px){
+  #bodega-layout{grid-template-columns:1fr!important}
+  #mapaCanvas{max-height:220px}
+}
+
+/* ── CONTABILIDAD ── */
+.ctab{
+  padding:7px 14px;border:1.5px solid var(--gb);border-radius:7px;
+  background:var(--bl);color:var(--gm);font-family:'Barlow',sans-serif;
+  font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.ctab:hover{border-color:var(--gm)}
+.ctab.active{background:var(--na);color:var(--bl);border-color:var(--na)}
+
+.cont-kpi-card{
+  background:var(--bl);border:1.5px solid var(--gb);border-radius:10px;
+  padding:16px;
+}
+.ckpi-label{font-size:10px;font-weight:700;color:var(--gm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.ckpi-val{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;line-height:1;margin-bottom:4px}
+.ckpi-sub{font-size:11px;color:var(--gm)}
+
+.cont-kpi-mini{
+  background:var(--bl);border:1.5px solid var(--gb);border-radius:8px;
+  padding:10px 14px;text-align:center;line-height:1.4;
+}
+
+.cont-card{
+  background:var(--bl);border:1.5px solid var(--gb);border-radius:10px;
+  padding:16px;margin-bottom:14px;
+}
+.cont-card:last-child{margin-bottom:0}
+.cont-card-tit{
+  font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;
+  margin-bottom:12px;color:var(--ac);
+}
+.cont-alerta{
+  border-left:3px solid var(--gb);border-radius:0 7px 7px 0;
+  padding:10px 12px;margin-bottom:8px;font-size:13px;
+}
+
+@media(max-width:768px){
+  #cont-tabs{gap:5px}
+  .ctab{font-size:11px;padding:6px 10px}
+}
+
+/* ── CARRITO PANEL (desktop) ── */
+.carrito-panel{background:var(--bl);border-radius:12px;border:1.5px solid var(--gb);display:flex;flex-direction:column;overflow:hidden;height:100%}
+.carrito-header{padding:11px 14px;border-bottom:1px solid var(--gb);background:var(--ac);color:var(--bl);flex-shrink:0}
+.carrito-header h3{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center}
+.badge{background:var(--na);color:#fff;border-radius:20px;padding:1px 7px;font-size:12px}
+.cliente-row{padding:7px 12px;border-bottom:1px solid var(--gb);display:flex;gap:7px;flex-shrink:0}
+.cliente-row input{flex:1;padding:6px 9px;border:1.5px solid var(--gb);border-radius:6px;font-size:12px;font-family:'Barlow',sans-serif}
+.cliente-row input:focus{outline:none;border-color:var(--na)}
+.carrito-items{flex:1;overflow-y:auto;padding:7px 12px;-webkit-overflow-scrolling:touch}
+.carrito-vacio{text-align:center;padding:20px;color:var(--gm)}
+.carrito-vacio .icono{font-size:28px;margin-bottom:6px}
+
+.item-carrito{display:flex;align-items:center;gap:7px;padding:7px 0;border-bottom:1px solid var(--gf)}
+.item-info{flex:1;min-width:0}
+.item-nombre{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-precio-u{font-size:10px;color:var(--gm)}
+.item-qty{display:flex;align-items:center;gap:3px}
+.qty-btn{width:24px;height:24px;border:1.5px solid var(--gb);border-radius:4px;background:var(--gf);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .1s;flex-shrink:0}
+.qty-btn:hover,.qty-btn:active{border-color:var(--na);color:var(--na)}
+.qty-num{width:26px;text-align:center;font-weight:600;font-size:13px}
+.item-total{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;min-width:52px;text-align:right}
+.item-del{width:20px;height:20px;background:none;border:none;cursor:pointer;color:#ccc;font-size:13px;transition:color .1s;padding:0;flex-shrink:0}
+.item-del:hover,.item-del:active{color:var(--ro)}
+
+.totales{padding:8px 12px;border-top:1px solid var(--gb);background:var(--gf);flex-shrink:0}
+.total-row{display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px;color:var(--gm)}
+.total-row.grande{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:var(--tp);margin-top:6px;padding-top:6px;border-top:2px solid var(--gb)}
+.pago-section{padding:9px 12px;border-top:1px solid var(--gb);flex-shrink:0}
+.pago-label{font-size:10px;font-weight:600;color:var(--gm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.pago-btns{display:flex;gap:4px;margin-bottom:7px}
+.pago-opt{flex:1;padding:6px 3px;border:1.5px solid var(--gb);border-radius:6px;background:var(--bl);cursor:pointer;font-size:11px;font-family:'Barlow',sans-serif;font-weight:600;text-align:center;transition:all .15s;color:var(--gm)}
+.pago-opt.sel{border-color:var(--na);background:var(--nal);color:var(--nad)}
+.ticket-opts{display:flex;gap:4px;margin-bottom:7px}
+.ticket-opt{flex:1;padding:5px 2px;border:1.5px solid var(--gb);border-radius:6px;background:var(--bl);cursor:pointer;font-size:10px;font-family:'Barlow',sans-serif;font-weight:600;text-align:center;color:var(--gm);transition:all .15s}
+.ticket-opt.sel{border-color:var(--ve);background:var(--vel);color:var(--ve)}
+
+/* Entrega toggle */
+.entrega-toggle{display:flex;align-items:center;gap:8px;margin-bottom:7px;padding:7px 10px;border:1.5px solid var(--gb);border-radius:7px;cursor:pointer;transition:all .15s;background:var(--bl)}
+.entrega-toggle.activo{border-color:var(--az);background:var(--azl)}
+.entrega-toggle input[type=checkbox]{accent-color:var(--az);width:15px;height:15px;cursor:pointer;flex-shrink:0}
+.entrega-toggle span{font-size:12px;font-weight:600;color:var(--gm);pointer-events:none}
+.entrega-toggle.activo span{color:var(--az)}
+.form-entrega{display:none;background:var(--azl);border-radius:7px;padding:9px;margin-bottom:7px;border:1.5px solid #c5d8f0}
+.form-entrega.show{display:block}
+.fe-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:5px}
+.fe-row.full{grid-template-columns:1fr}
+.fe-label{font-size:10px;font-weight:600;color:var(--az);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.fe-input{padding:6px 8px;border:1.5px solid #c5d8f0;border-radius:5px;font-family:'Barlow',sans-serif;font-size:11px;background:var(--bl);width:100%}
+.fe-input:focus{outline:none;border-color:var(--az)}
+
+.btn-cobrar{width:100%;padding:12px;background:var(--na);color:var(--bl);border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:.5px;cursor:pointer;transition:background .15s;touch-action:manipulation}
+.btn-cobrar:hover,.btn-cobrar:active{background:var(--nad)}
+.btn-cobrar:disabled{background:var(--gb);color:var(--gm);cursor:not-allowed}
+
+/* ── CARRITO DRAWER (móvil) ── */
+.cart-drawer{
+  display:none;position:fixed;inset:0;z-index:400;
+}
+.cart-drawer-bg{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.cart-drawer-panel{
+  position:absolute;bottom:0;left:0;right:0;
+  background:var(--bl);border-radius:18px 18px 0 0;
+  max-height:90vh;display:flex;flex-direction:column;overflow:hidden;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);
+}
+.cart-drawer.open .cart-drawer-panel{transform:translateY(0)}
+.cart-drawer-handle{width:36px;height:4px;background:var(--gb);border-radius:2px;margin:10px auto 4px}
+.cart-drawer-header{padding:10px 16px 10px;border-bottom:1px solid var(--gb);background:var(--ac);color:var(--bl);flex-shrink:0}
+.cart-drawer-header h3{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center}
+.cart-drawer-close{background:none;border:none;color:#aaa;font-size:22px;cursor:pointer;padding:0 4px;line-height:1}
+.cart-drawer-body{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1}
+
+/* ── SECCIONES GENERALES ── */
+.seccion-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:8px}
+.seccion-titulo{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:.5px}
+.btn-primary{padding:9px 16px;background:var(--na);color:#fff;border:none;border-radius:7px;font-family:'Barlow',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s;white-space:nowrap}
+.btn-primary:hover,.btn-primary:active{background:var(--nad)}
+.btn-sec{padding:9px 14px;background:var(--bl);color:var(--tp);border:1.5px solid var(--gb);border-radius:7px;font-family:'Barlow',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-sec:hover{border-color:var(--gm)}
+
+/* ── INVENTARIO tabla → cards en móvil ── */
+.tabla{width:100%;background:var(--bl);border-radius:10px;border:1.5px solid var(--gb);overflow:hidden;border-collapse:collapse}
+.tabla th{background:var(--ac);color:#fff;padding:10px 12px;text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.5px;font-weight:600}
+.tabla td{padding:9px 12px;border-bottom:1px solid var(--gf);font-size:13px}
+.tabla tr:last-child td{border-bottom:none}
+.tabla tr:hover td{background:var(--gf)}
+.stock-chip{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600}
+.s-ok{background:var(--vel);color:var(--ve)}.s-w{background:var(--aml);color:#7A5500}.s-lo{background:var(--rol);color:var(--ro)}
+.accion-btn{background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:4px;font-size:15px;transition:background .1s}
+.accion-btn:hover,.accion-btn:active{background:var(--gf)}
+
+/* ── KPIs ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.kpi-card{background:var(--bl);border:1.5px solid var(--gb);border-radius:10px;padding:16px 12px}
+.kpi-label{font-size:10px;font-weight:600;color:var(--gm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.kpi-val{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:var(--ac);line-height:1}
+.kpi-val.na{color:var(--na)}.kpi-val.ve{color:var(--ve)}.kpi-val.az{color:var(--az)}
+.kpi-sub{font-size:10px;color:var(--gm);margin-top:3px}
+.reporte-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.reporte-card{background:var(--bl);border:1.5px solid var(--gb);border-radius:10px;padding:16px}
+.reporte-card h4{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;margin-bottom:12px;color:var(--ac)}
+.vend-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.vend-bar-wrap{flex:1;height:6px;background:var(--gf);border-radius:3px;margin:0 9px;overflow:hidden}
+.vend-bar{height:100%;background:var(--na);border-radius:3px}
+.vend-monto{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;min-width:52px;text-align:right}
+
+/* ── ENTREGAS KANBAN ── */
+.entregas-kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.kanban-col{background:var(--bl);border-radius:10px;border:1.5px solid var(--gb);overflow:hidden}
+.kanban-header{padding:11px 14px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+.kh-p{background:var(--aml);color:#7A5500}
+.kh-r{background:var(--azl);color:var(--az)}
+.kh-e{background:var(--vel);color:var(--ve)}
+.kanban-items{padding:8px;min-height:100px}
+.entrega-card{background:var(--bl);border:1.5px solid var(--gb);border-radius:8px;padding:10px;margin-bottom:7px;transition:all .15s}
+.entrega-card:hover{border-color:var(--na)}
+.ec-folio{font-size:10px;color:var(--gm);margin-bottom:2px;font-family:'Barlow Condensed',sans-serif}
+.ec-cliente{font-size:12px;font-weight:600;margin-bottom:2px}
+.ec-dir{font-size:10px;color:var(--gm);margin-bottom:5px;line-height:1.4}
+.ec-meta{display:flex;justify-content:space-between;align-items:center}
+.ec-chofer{font-size:10px;background:var(--gf);border-radius:20px;padding:2px 7px}
+.ec-hora{font-size:10px;color:var(--gm)}
+.ec-btns{display:flex;gap:4px;margin-top:6px}
+.ec-btn{flex:1;padding:5px 6px;border:none;border-radius:5px;cursor:pointer;font-size:10px;font-family:'Barlow',sans-serif;font-weight:600;transition:all .15s}
+.ec-btn-r{background:var(--azl);color:var(--az)}.ec-btn-r:hover,.ec-btn-r:active{background:var(--az);color:#fff}
+.ec-btn-e{background:var(--vel);color:var(--ve)}.ec-btn-e:hover,.ec-btn-e:active{background:var(--ve);color:#fff}
+.tag-urgente{background:var(--rol);color:var(--ro);font-size:9px;font-weight:700;border-radius:4px;padding:1px 5px;margin-left:3px}
+
+/* ── FACTURACIÓN ── */
+.info-cfdi{background:var(--bl);border:1.5px solid var(--gb);border-radius:12px;padding:20px;max-width:720px}
+.cfdi-paso{display:flex;gap:12px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--gf)}
+.cfdi-paso:last-of-type{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.cfdi-num{width:30px;height:30px;min-width:30px;background:var(--na);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:15px}
+.cfdi-texto h4{font-weight:600;margin-bottom:3px;font-size:14px}
+.cfdi-texto p{font-size:12px;color:var(--gm);line-height:1.5}
+.cfdi-alerta{background:var(--nal);border-left:3px solid var(--na);padding:10px 12px;border-radius:0 8px 8px 0;font-size:12px;margin-top:14px}
+
+/* ── MODAL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:flex-end;justify-content:center}
+.overlay.show{display:flex}
+.modal{background:var(--bl);border-radius:18px 18px 0 0;padding:20px;width:100%;max-width:500px;box-shadow:0 -10px 40px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.modal h3{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;margin-bottom:16px;color:var(--ac)}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:11px;font-weight:600;color:var(--gm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.form-group input,.form-group select{width:100%;padding:10px 12px;border:1.5px solid var(--gb);border-radius:7px;font-family:'Barlow',sans-serif;font-size:15px;transition:border .15s;background:var(--bl);-webkit-appearance:none;appearance:none}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--na)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-footer{display:flex;gap:8px;margin-top:16px;justify-content:flex-end;padding-bottom:env(safe-area-inset-bottom)}
+
+/* ── TICKET ── */
+.ticket-print{font-family:'Barlow Condensed',sans-serif;font-size:13px}
+.ticket-print .th{text-align:center;margin-bottom:8px}
+.ticket-print .empresa{font-size:20px;font-weight:900}
+.ticket-print .sub-emp{font-size:11px;color:var(--gm)}
+.ticket-print hr{border:none;border-top:1px dashed var(--gb);margin:7px 0}
+.ticket-print .meta{font-size:11px;display:flex;justify-content:space-between;margin-bottom:2px}
+.ticket-print .it-row{display:flex;justify-content:space-between;margin:3px 0;font-size:12px}
+.ticket-print .it-desc{flex:1;padding-right:8px}
+.ticket-print .tot-row{display:flex;justify-content:space-between;font-size:12px}
+.ticket-print .tot-grand{font-size:17px;font-weight:900;margin-top:3px}
+.ticket-print .pie{text-align:center;font-size:10px;color:var(--gm);margin-top:7px}
+.entrega-bloque{background:var(--azl);border-radius:6px;padding:8px;margin:7px 0;font-size:11px;line-height:1.6}
+.entrega-bloque strong{color:var(--az);display:block;margin-bottom:2px}
+
+/* ── RESPONSIVE ── */
+@media (max-width:768px){
+  :root{--nav-h:48px;--bot-h:64px}
+  body{overflow:auto}
+  .brand-tag{display:block}
+  .topbar-nav{display:none}           /* ocultar nav superior */
+  .topbar-user span{display:none}
+  .app-body{height:auto;overflow:visible}
+  .vista{height:auto;overflow:visible;padding:12px 12px calc(var(--bot-h) + 12px)}
+
+  /* POS en móvil: columna única, catálogo arriba, carrito abajo */
+  .pos-grid{grid-template-columns:1fr;height:auto;gap:12px}
+  .pos-izq{height:auto}
+  .catalogo{grid-template-columns:repeat(2,1fr);height:auto;max-height:55vh;overflow-y:auto}
+  .carrito-panel{display:none}        /* reemplazado por drawer */
+
+  /* KPIs 2×2 en móvil */
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .kpi-val{font-size:24px}
+
+  /* Reportes stack vertical */
+  .reporte-grid{grid-template-columns:1fr}
+
+  /* Kanban: stack vertical */
+  .entregas-kanban{grid-template-columns:1fr}
+
+  /* Tabla inventario: scroll horizontal */
+  .tabla-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:1.5px solid var(--gb)}
+  .tabla{border:none;border-radius:0;min-width:560px}
+
+  /* Modal centrado en móvil */
+  .overlay{align-items:flex-end}
+  .modal{border-radius:18px 18px 0 0;max-height:95vh}
+  .form-row{grid-template-columns:1fr}
+
+  /* Botón flotante Carrito */
+  .fab-carrito{display:flex}
+
+  /* Secciones */
+  .seccion-titulo{font-size:19px}
+  .info-cfdi{padding:14px}
+}
+
+@media (min-width:769px){
+  .bottom-nav{display:none!important}
+  .fab-carrito{display:none!important}
+  .cart-drawer{display:none!important}
+  .brand-tag{display:block}
+  .topbar-user span{display:inline}
+  .app-body{height:calc(100vh - var(--nav-h));overflow:hidden}
+  .vista{height:100%;overflow-y:auto}
+  #vista-pos{overflow:hidden;padding:14px}
+  .pos-grid{height:calc(100vh - var(--nav-h) - 28px)}
+}
+
+/* FAB carrito (móvil) */
+.fab-carrito{
+  display:none;
+  position:fixed;bottom:calc(var(--bot-h) + 12px);right:14px;
+  width:56px;height:56px;border-radius:50%;
+  background:var(--na);color:#fff;border:none;cursor:pointer;
+  font-size:24px;box-shadow:0 4px 16px rgba(232,97,10,.4);
+  z-index:350;align-items:center;justify-content:center;
+  transition:transform .15s;
+}
+.fab-carrito:active{transform:scale(.93)}
+.fab-count{
+  position:absolute;top:-2px;right:-2px;
+  background:var(--ac);color:#fff;border-radius:20px;
+  font-size:10px;font-weight:700;padding:0 5px;min-width:18px;
+  text-align:center;display:none;font-family:'Barlow',sans-serif;
+}
+
+@media print{
+  .topbar,.bottom-nav,.fab-carrito,.cart-drawer,.modal-footer,.pago-section{display:none!important}
+  body{overflow:auto;background:#fff}
+  .vista{padding:0;height:auto;overflow:visible}
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon">🔩</div>
+    <div>
+      <div class="brand-name">FERREPOINT</div>
+      <div class="brand-tag">Sistema POS</div>
+    </div>
+  </div>
+  <div class="topbar-nav" id="topNav">
+    <button class="nav-btn-top active" onclick="go('pos',this)">🛒 Vender</button>
+    <button class="nav-btn-top" onclick="go('entregas',this)">🚚 Entregas</button>
+    <button class="nav-btn-top" onclick="go('bodega',this)">🗺 Bodega</button>
+    <button class="nav-btn-top" onclick="go('inventario',this)">📦 Inventario</button>
+    <button class="nav-btn-top" onclick="go('reportes',this)">📊 Reportes</button>
+    <button class="nav-btn-top" onclick="go('contabilidad',this)">💰 Contabilidad</button>
+    <button class="nav-btn-top" onclick="go('usuarios',this)">👥 Usuarios</button>
+    <button class="nav-btn-top" onclick="go('facturacion',this)">🧾 CFDI 4.0</button>
+  </div>
+  <div class="topbar-user">
+    <div class="avatar">V1</div>
+    <span>Vendedor 1</span>
+  </div>
+</div>
+
+<!-- FAB carrito (móvil) -->
+<button class="fab-carrito" id="fabCarrito" onclick="abrirDrawer()" aria-label="Ver carrito">
+  🛒
+  <span class="fab-count" id="fabCount">0</span>
+</button>
+
+<!-- CART DRAWER (móvil) -->
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-drawer-bg" onclick="cerrarDrawer()"></div>
+  <div class="cart-drawer-panel" id="drawerPanel">
+    <div class="cart-drawer-handle"></div>
+    <div class="cart-drawer-header">
+      <h3>Carrito <span class="badge" id="badgeD">0</span>
+        <button class="cart-drawer-close" onclick="cerrarDrawer()">×</button>
+      </h3>
+    </div>
+    <div class="cart-drawer-body">
+      <!-- mismo contenido que el carrito desktop -->
+      <div class="cliente-row">
+        <input type="text" id="cnombreD" placeholder="Cliente (opcional)">
+        <input type="text" id="crfcD" placeholder="RFC" style="width:100px;flex:none">
+      </div>
+      <div class="carrito-items" id="carrito-items-d" style="max-height:30vh">
+        <div class="carrito-vacio"><div class="icono">🔩</div><div>Sin productos aún</div></div>
+      </div>
+      <div class="totales">
+        <div class="total-row"><span>Subtotal</span><span id="tsD">$0.00</span></div>
+        <div class="total-row"><span>IVA (16%)</span><span id="tiD">$0.00</span></div>
+        <div class="total-row grande"><span>Total</span><span id="ttD">$0.00</span></div>
+      </div>
+      <div class="pago-section">
+        <div class="pago-label">Forma de pago</div>
+        <div class="pago-btns">
+          <button class="pago-opt sel" onclick="sPagoD(this)">💵 Efectivo</button>
+          <button class="pago-opt" onclick="sPagoD(this)">📲 Transfer.</button>
+          <button class="pago-opt" onclick="sPagoD(this)">💳 Crédito</button>
+        </div>
+        <div class="pago-label">Comprobante</div>
+        <div class="ticket-opts">
+          <button class="ticket-opt sel" onclick="sTicketD(this)" data-t="completo">📄 Completo</button>
+          <button class="ticket-opt" onclick="sTicketD(this)" data-t="resumido">📋 Resumido</button>
+          <button class="ticket-opt" onclick="sTicketD(this)" data-t="whatsapp">💬 WhatsApp</button>
+          <button class="ticket-opt" onclick="sTicketD(this)" data-t="sin">🚫 Sin papel</button>
+        </div>
+        <label class="entrega-toggle" id="etD" onclick="toggleEntD()">
+          <input type="checkbox" id="chkEntD" onclick="event.stopPropagation();toggleEntD()">
+          <span>🚚 &nbsp;¿Entrega a domicilio?</span>
+        </label>
+        <div class="form-entrega" id="fEntD">
+          <div class="fe-row full"><div>
+            <div class="fe-label">Dirección</div>
+            <input class="fe-input" id="fDirD" placeholder="Calle, número, colonia">
+          </div></div>
+          <div class="fe-row full"><div>
+            <div class="fe-label">Referencia</div>
+            <input class="fe-input" id="fRefD" placeholder="Portón azul, bodega lateral…">
+          </div></div>
+          <div class="fe-row">
+            <div><div class="fe-label">Fecha</div><input class="fe-input" type="date" id="fFechaD"></div>
+            <div><div class="fe-label">Hora aprox.</div><input class="fe-input" type="time" id="fHoraD"></div>
+          </div>
+          <div class="fe-row">
+            <div><div class="fe-label">Chofer</div>
+              <select class="fe-input" id="fChoferD">
+                <option value="">— Asignar —</option>
+                <option>🚚 Chofer 1</option><option>🚚 Chofer 2</option><option>🚚 Chofer 3</option>
+              </select>
+            </div>
+            <div><div class="fe-label">Prioridad</div>
+              <select class="fe-input" id="fUrgD">
+                <option value="no">Normal</option>
+                <option value="si">⚠ Urgente</option>
+              </select>
+            </div>
+          </div>
+          <div class="fe-row full"><div>
+            <div class="fe-label">Notas</div>
+            <input class="fe-input" id="fNotasD" placeholder="Instrucciones para el chofer…">
+          </div></div>
+        </div>
+        <button class="btn-cobrar" id="btnCobrarD" onclick="cobrarD()" disabled>COBRAR — $0.00</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP BODY -->
+<div class="app-body">
+
+<!-- ══ POS ══ -->
+<div id="vista-pos" class="vista activa">
+  <div class="pos-grid">
+    <div class="pos-izq">
+      <div class="search-bar">
+        <input type="text" id="buscar" placeholder="🔍  Buscar por nombre o clave…" oninput="filtrar()">
+        <select class="vendedor-sel" id="vsel">
+          <option>👤 Vendedor 1</option><option>👤 Vendedor 2</option><option>👤 Vendedor 3</option>
+        </select>
+      </div>
+      <div class="catalogo" id="catalogo"></div>
+    </div>
+
+    <!-- CARRITO DESKTOP -->
+    <div class="carrito-panel" id="carritoDesktop">
+      <div class="carrito-header"><h3>Venta actual <span class="badge" id="badge">0</span></h3></div>
+      <div class="cliente-row">
+        <input type="text" id="cnombre" placeholder="Cliente (opcional)">
+        <input type="text" id="crfc" placeholder="RFC" style="width:100px;flex:none">
+      </div>
+      <div class="carrito-items" id="carrito-items">
+        <div class="carrito-vacio"><div class="icono">🔩</div><div>Toca un producto para agregarlo</div></div>
+      </div>
+      <div class="totales">
+        <div class="total-row"><span>Subtotal</span><span id="ts">$0.00</span></div>
+        <div class="total-row"><span>IVA (16%)</span><span id="ti">$0.00</span></div>
+        <div class="total-row grande"><span>Total</span><span id="tt">$0.00</span></div>
+      </div>
+      <div class="pago-section">
+        <div class="pago-label">Forma de pago</div>
+        <div class="pago-btns">
+          <button class="pago-opt sel" onclick="sPago(this)">💵 Efectivo</button>
+          <button class="pago-opt" onclick="sPago(this)">📲 Transfer.</button>
+          <button class="pago-opt" onclick="sPago(this)">💳 Crédito</button>
+        </div>
+        <div class="pago-label">Comprobante</div>
+        <div class="ticket-opts">
+          <button class="ticket-opt sel" onclick="sTicket(this)" data-t="completo">📄 Completo</button>
+          <button class="ticket-opt" onclick="sTicket(this)" data-t="resumido">📋 Resumido</button>
+          <button class="ticket-opt" onclick="sTicket(this)" data-t="whatsapp">💬 WhatsApp</button>
+          <button class="ticket-opt" onclick="sTicket(this)" data-t="sin">🚫 Sin papel</button>
+        </div>
+        <label class="entrega-toggle" id="et" onclick="toggleEnt()">
+          <input type="checkbox" id="chkEnt" onclick="event.stopPropagation();toggleEnt()">
+          <span>🚚 &nbsp;¿Entrega a domicilio?</span>
+        </label>
+        <div class="form-entrega" id="fEnt">
+          <div class="fe-row full"><div>
+            <div class="fe-label">Dirección</div>
+            <input class="fe-input" id="fDir" placeholder="Calle, número, colonia">
+          </div></div>
+          <div class="fe-row full"><div>
+            <div class="fe-label">Referencia</div>
+            <input class="fe-input" id="fRef" placeholder="Portón azul, bodega lateral…">
+          </div></div>
+          <div class="fe-row">
+            <div><div class="fe-label">Fecha</div><input class="fe-input" type="date" id="fFecha"></div>
+            <div><div class="fe-label">Hora</div><input class="fe-input" type="time" id="fHora"></div>
+          </div>
+          <div class="fe-row">
+            <div><div class="fe-label">Chofer</div>
+              <select class="fe-input" id="fChofer">
+                <option value="">— Asignar —</option>
+                <option>🚚 Chofer 1</option><option>🚚 Chofer 2</option><option>🚚 Chofer 3</option>
+              </select>
+            </div>
+            <div><div class="fe-label">Prioridad</div>
+              <select class="fe-input" id="fUrg">
+                <option value="no">Normal</option>
+                <option value="si">⚠ Urgente</option>
+              </select>
+            </div>
+          </div>
+          <div class="fe-row full"><div>
+            <div class="fe-label">Notas</div>
+            <input class="fe-input" id="fNotas" placeholder="Instrucciones para el chofer…">
+          </div></div>
+        </div>
+        <button class="btn-cobrar" id="btnCobrar" onclick="cobrar(false)" disabled>COBRAR — $0.00</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ENTREGAS ══ -->
+<div id="vista-entregas" class="vista">
+  <div class="seccion-header">
+    <div class="seccion-titulo">🚚 Entregas</div>
+    <button class="btn-sec" onclick="renderEntregas()">↻ Actualizar</button>
+  </div>
+  <div class="entregas-kanban">
+    <div class="kanban-col">
+      <div class="kanban-header kh-p">⏳ Pendientes <span class="badge" id="cntP" style="background:var(--am)">0</span></div>
+      <div class="kanban-items" id="colP"></div>
+    </div>
+    <div class="kanban-col">
+      <div class="kanban-header kh-r">🚛 En ruta <span class="badge" id="cntR" style="background:var(--az)">0</span></div>
+      <div class="kanban-items" id="colR"></div>
+    </div>
+    <div class="kanban-col">
+      <div class="kanban-header kh-e">✅ Entregados <span class="badge" id="cntE" style="background:var(--ve)">0</span></div>
+      <div class="kanban-items" id="colE"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ INVENTARIO ══ -->
+<div id="vista-inventario" class="vista">
+  <div class="seccion-header">
+    <div class="seccion-titulo">📦 Inventario</div>
+    <div style="display:flex;gap:6px">
+      <button class="btn-sec" onclick="exportCSV()">⬇ CSV</button>
+      <button class="btn-primary" onclick="abrirModal()">+ Nuevo</button>
+    </div>
+  </div>
+  <div class="tabla-wrap">
+    <table class="tabla" id="tablaInv"></table>
+  </div>
+</div>
+
+<!-- ══ REPORTES ══ -->
+<div id="vista-reportes" class="vista">
+  <div class="seccion-titulo" style="margin-bottom:14px">📊 Reportes del día</div>
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-label">Ventas hoy</div><div class="kpi-val na" id="kVentas">0</div><div class="kpi-sub">transacciones</div></div>
+    <div class="kpi-card"><div class="kpi-label">Ingresos</div><div class="kpi-val ve" id="kIngresos">$0</div><div class="kpi-sub">sin IVA</div></div>
+    <div class="kpi-card"><div class="kpi-label">Entregas activas</div><div class="kpi-val az" id="kEntregas">0</div><div class="kpi-sub">pendientes+ruta</div></div>
+    <div class="kpi-card"><div class="kpi-label">Ticket prom.</div><div class="kpi-val" id="kProm">$0</div><div class="kpi-sub">por venta</div></div>
+  </div>
+  <div class="reporte-grid">
+    <div class="reporte-card"><h4>Por vendedor</h4><div id="repVend"></div></div>
+    <div class="reporte-card"><h4>Últimas ventas</h4><div id="repVentas"></div></div>
+  </div>
+</div>
+
+<!-- ══ FACTURACIÓN ══ -->
+<div id="vista-facturacion" class="vista">
+  <div class="seccion-titulo" style="margin-bottom:14px">🧾 Facturación CFDI 4.0</div>
+  <div class="info-cfdi">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;margin-bottom:14px">¿Cómo funciona la factura electrónica?</div>
+    <div class="cfdi-paso"><div class="cfdi-num">1</div><div class="cfdi-texto"><h4>Certificado de Sello Digital (CSD)</h4><p>El negocio tramita su CSD en el portal del SAT. Son dos archivos (.cer y .key) + contraseña.</p></div></div>
+    <div class="cfdi-paso"><div class="cfdi-num">2</div><div class="cfdi-texto"><h4>PAC — Proveedor de timbrado</h4><p>Valida y timbra los XMLs ante el SAT. Recomendado: Facturama. ~$300/año.</p></div></div>
+    <div class="cfdi-paso"><div class="cfdi-num">3</div><div class="cfdi-texto"><h4>Datos del receptor al cobrar</h4><p>RFC, nombre fiscal, régimen y uso del CFDI del cliente. El sistema los solicita al cerrar la venta.</p></div></div>
+    <div class="cfdi-paso"><div class="cfdi-num">4</div><div class="cfdi-texto"><h4>Timbrado y entrega automática</h4><p>XML → PAC → UUID → PDF. Se envía por WhatsApp o email al cliente.</p></div></div>
+    <div class="cfdi-alerta">⚡ <strong>FERREPOINT incluye el flujo de datos fiscales.</strong> La integración con el PAC se activa cuando el negocio tenga su CSD.</div>
+  </div>
+</div>
+
+<!-- ══ BODEGA ══ -->
+<div id="vista-bodega" class="vista">
+  <!-- KPIs -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+    <div class="kpi-card" style="border-color:var(--am)">
+      <div class="kpi-label">Pendientes</div>
+      <div class="kpi-val" id="bk-pend" style="color:var(--am)">0</div>
+      <div class="kpi-sub">por surtir</div>
+    </div>
+    <div class="kpi-card" style="border-color:var(--az)">
+      <div class="kpi-label">En proceso</div>
+      <div class="kpi-val" id="bk-prog" style="color:var(--az)">0</div>
+      <div class="kpi-sub">surtiendo</div>
+    </div>
+    <div class="kpi-card" style="border-color:var(--ve)">
+      <div class="kpi-label">Listos</div>
+      <div class="kpi-val" id="bk-comp" style="color:var(--ve)">0</div>
+      <div class="kpi-sub">completados hoy</div>
+    </div>
+  </div>
+
+  <!-- Layout dos columnas en desktop -->
+  <div style="display:grid;grid-template-columns:1fr 260px;gap:16px;align-items:start" id="bodega-layout">
+
+    <!-- Órdenes de surtido -->
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div class="seccion-titulo">🗺 Órdenes de surtido</div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <select id="bodega-filtro" onchange="renderBodega()" class="vendedor-sel" style="font-size:12px;padding:6px 10px">
+            <option value="todas">Todas</option>
+            <option value="pendiente">⏳ Pendientes</option>
+            <option value="surtiendo">🔍 En proceso</option>
+            <option value="listo">✅ Listas</option>
+          </select>
+          <button class="btn-sec" onclick="renderBodega()" style="font-size:12px;padding:6px 12px">↻</button>
+        </div>
+      </div>
+      <div id="bodega-cont">
+        <div style="text-align:center;padding:40px 20px;color:var(--gm)">
+          <div style="font-size:40px;margin-bottom:10px">📦</div>
+          <div style="font-size:14px">Sin órdenes de surtido</div>
+          <div style="font-size:12px;margin-top:6px">Aparecen aquí automáticamente cuando el vendedor cobra una venta</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mapa de la tienda -->
+    <div style="position:sticky;top:16px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin-bottom:8px;color:var(--ac)">
+        Mapa de la tienda
+        <span style="font-size:10px;font-weight:400;color:var(--gm);margin-left:4px">· Los 🟠 muestran productos del carrito activo</span>
+      </div>
+      <div style="background:var(--bl);border:1.5px solid var(--gb);border-radius:10px;padding:12px;overflow:hidden">
+        <canvas id="mapaCanvas" width="480" height="340" style="width:100%;height:auto;display:block"></canvas>
+      </div>
+      <!-- Leyenda -->
+      <div style="margin-top:10px;background:var(--bl);border:1.5px solid var(--gb);border-radius:8px;padding:10px 12px">
+        <div style="font-size:10px;font-weight:700;color:var(--gm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Leyenda</div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="display:flex;align-items:center;gap:7px;font-size:11px">
+            <div style="width:14px;height:14px;background:#E0E4EA;border:1px solid #B0B8C8;border-radius:2px;flex-shrink:0"></div>Estante sin productos en venta
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;font-size:11px">
+            <div style="width:14px;height:14px;background:var(--nal);border:2px solid var(--na);border-radius:2px;flex-shrink:0"></div>Estante con producto en venta activa
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;font-size:11px">
+            <div style="width:14px;height:14px;background:var(--na);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:700">2</div>Cantidad a surtir
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONTABILIDAD ══ -->
+<div id="vista-contabilidad" class="vista">
+
+  <!-- Tabs -->
+  <div id="cont-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px"></div>
+
+  <!-- Body dinámico -->
+  <div id="cont-body"></div>
+
+</div>
+
+<!-- ══ USUARIOS ══ -->
+<div id="vista-usuarios" class="vista">
+  <div id="usuarios-cont"></div>
+</div>
+
+</div><!-- /app-body -->
+
+<!-- BOTTOM NAV (móvil) -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bnav-btn active" onclick="goM('pos',this)"><span class="bico">🛒</span>Vender</button>
+  <button class="bnav-btn" onclick="goM('entregas',this)"><span class="bico">🚚</span>Entregas</button>
+  <button class="bnav-btn" onclick="goM('bodega',this)"><span class="bico">🗺</span>Bodega</button>
+  <button class="bnav-btn" onclick="goM('inventario',this)"><span class="bico">📦</span>Inventario</button>
+  <button class="bnav-btn" onclick="goM('contabilidad',this)"><span class="bico">💰</span>Contab.</button>
+</nav>
+
+<!-- MODAL COMPRA -->
+<div class="overlay" id="ovCompra">
+  <div class="modal">
+    <h3>Nueva compra / entrada de mercancía</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Proveedor</label>
+        <select id="cProv">
+          <option>Grupo Cementos del Norte</option>
+          <option>Distribuidora Aceros SA</option>
+          <option>Pinturas y Recubrimientos MX</option>
+          <option>Ferremateriales Coahuila</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Fecha</label><input type="date" id="cFecha"></div>
+    </div>
+    <div class="form-group"><label>Producto</label>
+      <select id="cProd" onchange="calcularTotalCompra()">
+        <option value="1">Estuco Premium 20 KG</option>
+        <option value="2">Yeso Calcáreo 25 KG</option>
+        <option value="3">Cemento Gris 50 KG</option>
+        <option value="4">Cemento Blanco 25 KG</option>
+        <option value="5">Block 15×20×40 cm</option>
+        <option value="6">Tabique Rojo 6×12×24 cm</option>
+        <option value="7">Varilla #3 Corrugada 6m</option>
+        <option value="8">Malla Electrosoldada 6×6</option>
+        <option value="9">Pintura Vinílica Blanca 19L</option>
+        <option value="10">Impermeabilizante 19L</option>
+        <option value="11">Tubo PVC 4" × 6m</option>
+        <option value="12">Pala Cuadrada Truper</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Cantidad</label><input type="number" id="cQty" placeholder="0" inputmode="numeric" oninput="calcularTotalCompra()"></div>
+      <div class="form-group"><label>Costo unitario s/IVA</label><input type="number" id="cCosto" placeholder="0.00" step="0.01" inputmode="decimal" oninput="calcularTotalCompra()"></div>
+    </div>
+    <div style="background:var(--gf);border-radius:8px;padding:12px;margin-bottom:12px;text-align:center">
+      <div style="font-size:11px;color:var(--gm);margin-bottom:4px">Total de la compra</div>
+      <div id="cTotal" style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:var(--na)">$0.00</div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Condición de pago</label>
+        <select id="cCondicion"><option value="0">Contado</option><option value="15">15 días</option><option value="30">30 días</option><option value="45">45 días</option><option value="60">60 días</option></select>
+      </div>
+      <div class="form-group"><label>Estado</label>
+        <select id="cEstado"><option value="pendiente">Crédito (pendiente)</option><option value="pagada">Pagado al contado</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sec" onclick="cerrar('ovCompra')">Cancelar</button>
+      <button class="btn-primary" onclick="guardarCompra()">Registrar compra</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL USUARIO -->
+<div class="overlay" id="ovUsuario">
+  <div class="modal">
+    <h3 id="uModalTit">Invitar usuario</h3>
+    <div class="form-group"><label>Nombre completo</label><input type="text" id="uNombre" placeholder="Juan García"></div>
+    <div class="form-group"><label>Correo electrónico</label><input type="email" id="uEmail" placeholder="juan@ferreteria.com"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Rol</label>
+        <select id="uRol">
+          <option value="vendedor">🛒 Vendedor</option>
+          <option value="cajero">💵 Cajero</option>
+          <option value="bodeguero">📦 Bodeguero</option>
+          <option value="chofer">🚚 Chofer</option>
+          <option value="dueno">👑 Dueño / Admin</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Sucursal</label>
+        <select id="uSuc">
+          <option>Sucursal 1</option>
+          <option>Sucursal 2</option>
+          <option>Todas</option>
+        </select>
+      </div>
+    </div>
+    <div style="background:var(--azl);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--az);margin-bottom:4px">
+      💡 El usuario recibirá un correo con un enlace para crear su contraseña. Solo verá los módulos correspondientes a su rol.
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sec" onclick="cerrar('ovUsuario')">Cancelar</button>
+      <button class="btn-primary" onclick="guardarUsuario()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TICKET -->
+<div class="overlay" id="ovTicket">
+  <div class="modal" style="max-width:480px">
+    <h3 id="ticketTitulo">✅ Venta registrada</h3>
+    <div id="ticketCont"></div>
+    <div class="modal-footer">
+      <button class="btn-sec" onclick="cerrar('ovTicket')">Cerrar</button>
+      <button class="btn-primary" onclick="window.print()" id="btnPrint">🖨 Imprimir</button>
+      <button class="btn-primary" onclick="copiarWA()" id="btnWA" style="display:none;background:var(--ve)">💬 Copiar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PRODUCTO -->
+<div class="overlay" id="ovProd">
+  <div class="modal">
+    <h3 id="modalTit">Nuevo producto</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Clave</label><input type="text" id="pClave" placeholder="00-00-0000-000"></div>
+      <div class="form-group"><label>Categoría</label>
+        <select id="pCat"><option>Estuco y Yeso</option><option>Cemento</option><option>Block y Tabique</option><option>Acero y Varilla</option><option>Herramientas</option><option>Pintura</option><option>Plomería</option><option>Eléctrico</option><option>General</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Nombre del producto</label><input type="text" id="pNombre" placeholder="Nombre del producto"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Precio sin IVA ($)</label><input type="number" id="pPrecio" placeholder="0.00" step="0.01" inputmode="decimal"></div>
+      <div class="form-group"><label>Stock actual</label><input type="number" id="pStock" placeholder="0" inputmode="numeric"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Stock mínimo</label><input type="number" id="pMin" placeholder="5" inputmode="numeric"></div>
+      <div class="form-group"><label>Unidad</label>
+        <select id="pUnidad"><option>KG</option><option>PZA</option><option>LT</option><option>M2</option><option>M3</option><option>ML</option><option>SACO</option><option>ROLLO</option></select>
+      </div>
+    </div>
+    <!-- Ubicación física -->
+    <div style="background:var(--azl);border-radius:8px;padding:10px 12px;margin-bottom:12px;border:1px solid #c5d8f0">
+      <div style="font-size:11px;font-weight:700;color:var(--az);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📍 Ubicación en tienda</div>
+      <div class="form-row">
+        <div class="form-group"><label>Pasillo</label>
+          <select id="pPasillo">
+            <option value="">Sin asignar</option>
+            <option value="P01">P01 — Estucos y Yeso</option>
+            <option value="P02">P02 — Cemento</option>
+            <option value="P03">P03 — Acero y Varilla</option>
+            <option value="P04">P04 — Pintura</option>
+            <option value="P05">P05 — Plomería / Herr.</option>
+            <option value="BOD">BOD — Bodega exterior</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Nivel</label>
+          <select id="pNivel"><option value="N1">N1 — Nivel 1 (piso)</option><option value="N2">N2 — Nivel 2</option><option value="N3">N3 — Nivel 3 (alto)</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Lado</label>
+          <select id="pLado"><option value="IZQ">Izquierdo</option><option value="DER">Derecho</option><option value="CEN">Centro</option></select>
+        </div>
+        <div class="form-group"><label>Posición</label>
+          <input type="number" id="pPos" placeholder="1" min="1" max="20" inputmode="numeric">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sec" onclick="cerrar('ovProd')">Cancelar</button>
+      <button class="btn-primary" onclick="guardarProd()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════ DATOS ════════════════
+// ubic: {p=pasillo, n=nivel, l=lado IZQ/DER/CEN, pos=posición}
+let prods=[
+  {id:1, clave:'40-09-0109-607',nombre:'Estuco Premium 20 KG',       precio:73.28, stock:45,  min:10,cat:'Estuco y Yeso', unidad:'SACO', ubic:{p:'P01',n:'N2',l:'IZQ',pos:'3'}},
+  {id:2, clave:'40-09-0110-001',nombre:'Yeso Calcáreo 25 KG',         precio:55.17, stock:32,  min:8, cat:'Estuco y Yeso', unidad:'SACO', ubic:{p:'P01',n:'N2',l:'DER',pos:'1'}},
+  {id:3, clave:'10-01-0001-200',nombre:'Cemento Gris 50 KG',          precio:108.62,stock:120, min:20,cat:'Cemento',       unidad:'SACO', ubic:{p:'P02',n:'N1',l:'IZQ',pos:'1'}},
+  {id:4, clave:'10-01-0002-100',nombre:'Cemento Blanco 25 KG',        precio:189.66,stock:18,  min:10,cat:'Cemento',       unidad:'SACO', ubic:{p:'P02',n:'N1',l:'DER',pos:'2'}},
+  {id:5, clave:'20-05-0001-400',nombre:'Block 15×20×40 cm',           precio:8.62,  stock:850, min:100,cat:'Block',        unidad:'PZA',  ubic:{p:'BOD',n:'N1',l:'CEN',pos:'1'}},
+  {id:6, clave:'20-05-0002-100',nombre:'Tabique Rojo 6×12×24 cm',     precio:3.45,  stock:1200,min:200,cat:'Block',        unidad:'PZA',  ubic:{p:'BOD',n:'N1',l:'CEN',pos:'2'}},
+  {id:7, clave:'30-03-0001-600',nombre:'Varilla #3 Corrugada 6m',      precio:95.69, stock:7,   min:15,cat:'Acero',        unidad:'PZA',  ubic:{p:'P03',n:'N3',l:'IZQ',pos:'4'}},
+  {id:8, clave:'30-03-0002-800',nombre:'Malla Electrosoldada 6×6',    precio:310.34,stock:22,  min:5, cat:'Acero',        unidad:'PZA',  ubic:{p:'P03',n:'N3',l:'DER',pos:'2'}},
+  {id:9, clave:'50-02-0001-300',nombre:'Pintura Vinílica Blanca 19L', precio:603.45,stock:3,   min:5, cat:'Pintura',      unidad:'LT',   ubic:{p:'P04',n:'N2',l:'IZQ',pos:'1'}},
+  {id:10,clave:'50-02-0003-200',nombre:'Impermeabilizante 19L',       precio:775.86,stock:8,   min:4, cat:'Pintura',      unidad:'LT',   ubic:{p:'P04',n:'N2',l:'DER',pos:'3'}},
+  {id:11,clave:'60-07-0001-100',nombre:'Tubo PVC 4" × 6m',           precio:181.03,stock:28,  min:6, cat:'Plomería',     unidad:'PZA',  ubic:{p:'P05',n:'N3',l:'IZQ',pos:'2'}},
+  {id:12,clave:'70-01-0001-500',nombre:'Pala Cuadrada Truper',        precio:224.14,stock:11,  min:4, cat:'Herramientas', unidad:'PZA',  ubic:{p:'P05',n:'N1',l:'DER',pos:'5'}},
+];
+// Órdenes de surtido generadas al cobrar
+let ordenesSurtido=[];
+let carrito=[], ventas=[];
+let entregas=[
+  {id:'E001',folio:'V50735',cliente:'Constructora Ríos',  dir:'Blvd. Independencia 4521, Col. Centro',ref:'Bodega lateral', fecha:'Hoy',hora:'10:00',chofer:'Chofer 1',urgente:false,estado:'pendiente',notas:''},
+  {id:'E002',folio:'V50736',cliente:'Roberto Martínez',   dir:'Calle 8 #88, Col. San Jorge',          ref:'Casa verde',     fecha:'Hoy',hora:'12:30',chofer:'Chofer 2',urgente:true, estado:'pendiente',notas:'Llegar puntual'},
+  {id:'E003',folio:'V50730',cliente:'Ing. García Obras',  dir:'Privada Las Palmas 12, Col. Jardines', ref:'Portón negro',   fecha:'Hoy',hora:'09:00',chofer:'Chofer 1',urgente:false,estado:'ruta',     notas:''},
+  {id:'E004',folio:'V50728',cliente:'Mario Domínguez',    dir:'Av. Constitución 1100',                ref:'Tienda esquina', fecha:'Ayer',hora:'16:00',chofer:'Chofer 3',urgente:false,estado:'entregado',notas:''},
+];
+let pagoSel='Efectivo', ticketSel='completo', editId=null;
+const isMobile=()=>window.innerWidth<=768;
+
+// ════ NAV ════
+function go(id,btn){
+  document.querySelectorAll('.vista').forEach(v=>v.classList.remove('activa'));
+  document.getElementById('vista-'+id).classList.add('activa');
+  document.querySelectorAll('.nav-btn-top').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(id==='inventario') renderInv();
+  if(id==='reportes')   renderReportes();
+  if(id==='entregas')   renderEntregas();
+  if(id==='bodega')     {renderBodega();setTimeout(renderMapa,100);}
+  if(id==='contabilidad') renderContabilidad();
+  if(id==='usuarios')   renderUsuarios();
+}
+function goM(id,btn){
+  go(id,null);
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ════ CATÁLOGO ════
+// Formatea la ubicación como etiqueta corta
+function fmtUbic(u){if(!u)return'Sin ubicación';return`${u.p} · ${u.n} · ${u.l} · Pos.${u.pos}`;}
+function fmtUbicLargo(u){if(!u)return'Sin ubicación';const lados={IZQ:'Lado izquierdo',DER:'Lado derecho',CEN:'Centro'};return`${u.p==='BOD'?'Bodega exterior':u.p} — Nivel ${u.n.replace('N','')} — ${lados[u.l]||u.l} — Posición ${u.pos}`;}
+
+function renderCat(lista){
+  const c=document.getElementById('catalogo');
+  if(!lista.length){c.innerHTML='<p style="color:var(--gm);padding:12px">Sin resultados</p>';return;}
+  c.innerHTML=lista.map(p=>`
+    <div class="prod-card ${p.stock<=p.min?'bajo-stock':''}" onclick="add(${p.id})">
+      <div class="prod-clave">${p.clave}</div>
+      <div class="prod-nombre">${p.nombre}</div>
+      ${p.ubic?`<div class="prod-ubic">📍 ${fmtUbic(p.ubic)}</div>`:''}
+      <div class="prod-footer">
+        <div class="prod-precio">$${(p.precio*1.16).toFixed(2)}</div>
+        <div class="prod-stock ${p.stock<=p.min?'stock-bajo':''}">Stock: ${p.stock}</div>
+      </div>
+    </div>`).join('');
+}
+function filtrar(){const q=document.getElementById('buscar').value.toLowerCase();renderCat(prods.filter(p=>p.nombre.toLowerCase().includes(q)||p.clave.toLowerCase().includes(q)));}
+
+// ════ CARRITO ════
+function add(id){
+  const p=prods.find(x=>x.id===id);if(!p)return;
+  const ex=carrito.find(x=>x.id===id);
+  if(ex){if(ex.qty>=p.stock)return;ex.qty++;}else carrito.push({...p,qty:1});
+  renderCarrito();
+  // En móvil: animar el FAB
+  if(isMobile()){
+    const fab=document.getElementById('fabCarrito');
+    fab.style.transform='scale(1.2)';
+    setTimeout(()=>fab.style.transform='',200);
+  }
+}
+function chgQty(id,d){const it=carrito.find(x=>x.id===id);if(!it)return;it.qty+=d;if(it.qty<=0)carrito=carrito.filter(x=>x.id!==id);renderCarrito();}
+function del(id){carrito=carrito.filter(x=>x.id!==id);renderCarrito();}
+
+function renderCarrito(){
+  const total=carrito.length===0;
+  const sub=carrito.reduce((a,x)=>a+x.precio*x.qty,0);
+  const iva=sub*.16,tot=sub+iva;
+  const itemsHTML=total?'<div class="carrito-vacio"><div class="icono">🔩</div><div>Toca un producto para agregarlo</div></div>':
+    carrito.map(it=>`
+      <div class="item-carrito">
+        <div class="item-info">
+          <div class="item-nombre">${it.nombre}</div>
+          <div class="item-precio-u">$${it.precio.toFixed(2)} c/u s/IVA</div>
+          ${it.ubic?`<div class="item-ubic">📍 ${fmtUbic(it.ubic)}</div>`:''}
+        </div>
+        <div class="item-qty">
+          <button class="qty-btn" onclick="chgQty(${it.id},-1)">−</button>
+          <span class="qty-num">${it.qty}</span>
+          <button class="qty-btn" onclick="chgQty(${it.id},1)">+</button>
+        </div>
+        <div class="item-total">$${(it.precio*it.qty*1.16).toFixed(2)}</div>
+        <button class="item-del" onclick="del(${it.id})">✕</button>
+      </div>`).join('');
+  const cnt=carrito.reduce((a,x)=>a+x.qty,0);
+
+  // Desktop
+  document.getElementById('carrito-items').innerHTML=itemsHTML;
+  document.getElementById('ts').textContent='$'+sub.toFixed(2);
+  document.getElementById('ti').textContent='$'+iva.toFixed(2);
+  document.getElementById('tt').textContent='$'+tot.toFixed(2);
+  document.getElementById('badge').textContent=cnt;
+  const b=document.getElementById('btnCobrar');
+  b.disabled=total;b.textContent=total?'COBRAR — $0.00':`COBRAR — $${tot.toFixed(2)}`;
+
+  // Móvil drawer
+  document.getElementById('carrito-items-d').innerHTML=itemsHTML.replace(/onclick="chgQty\((\d+),(-?\d+)\)"/g,(m,id,d)=>`onclick="chgQty(${id},${d})"`).replace(/onclick="del\((\d+)\)"/g,(m,id)=>`onclick="del(${id})"`);
+  document.getElementById('tsD').textContent='$'+sub.toFixed(2);
+  document.getElementById('tiD').textContent='$'+iva.toFixed(2);
+  document.getElementById('ttD').textContent='$'+tot.toFixed(2);
+  document.getElementById('badgeD').textContent=cnt;
+  const bD=document.getElementById('btnCobrarD');
+  bD.disabled=total;bD.textContent=total?'COBRAR — $0.00':`COBRAR — $${tot.toFixed(2)}`;
+
+  // FAB
+  const fab=document.getElementById('fabCarrito');
+  const fc=document.getElementById('fabCount');
+  fc.textContent=cnt;fc.style.display=cnt>0?'block':'none';
+  fab.style.display=isMobile()&&cnt>0?'flex':'';
+
+  // Actualizar mapa si está visible
+  setTimeout(renderMapa,50);
+}
+
+// ════ DRAWER ════
+function abrirDrawer(){
+  const d=document.getElementById('cartDrawer');
+  d.style.display='flex';
+  document.getElementById('fFechaD').valueAsDate=new Date();
+  setTimeout(()=>d.classList.add('open'),10);
+}
+function cerrarDrawer(){
+  const d=document.getElementById('cartDrawer');
+  d.classList.remove('open');
+  setTimeout(()=>d.style.display='none',300);
+}
+
+// ════ ENTREGA TOGGLE ════
+function toggleEnt(){
+  const chk=document.getElementById('chkEnt');
+  setTimeout(()=>{
+    if(chk.checked){document.getElementById('et').classList.add('activo');document.getElementById('fEnt').classList.add('show');}
+    else{document.getElementById('et').classList.remove('activo');document.getElementById('fEnt').classList.remove('show');}
+  },10);
+}
+function toggleEntD(){
+  const chk=document.getElementById('chkEntD');
+  setTimeout(()=>{
+    if(chk.checked){document.getElementById('etD').classList.add('activo');document.getElementById('fEntD').classList.add('show');}
+    else{document.getElementById('etD').classList.remove('activo');document.getElementById('fEntD').classList.remove('show');}
+  },10);
+}
+
+// ════ PAGO / TICKET DESKTOP ════
+function sPago(b){document.querySelectorAll('#carritoDesktop .pago-opt').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');pagoSel=b.textContent.trim().replace(/^../,'').trim();}
+function sTicket(b){document.querySelectorAll('#carritoDesktop .ticket-opt').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');ticketSel=b.dataset.t;}
+// DRAWER
+function sPagoD(b){document.querySelectorAll('#cartDrawer .pago-opt').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');pagoSel=b.textContent.trim().replace(/^../,'').trim();}
+function sTicketD(b){document.querySelectorAll('#cartDrawer .ticket-opt').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');ticketSel=b.dataset.t;}
+
+// ════ COBRAR ════
+function cobrar(drawer){
+  if(!carrito.length)return;
+  const mobile=drawer||isMobile();
+  const sfx=mobile?'D':'';
+  carrito.forEach(it=>{const p=prods.find(x=>x.id===it.id);if(p)p.stock-=it.qty;});
+  const sub=carrito.reduce((a,x)=>a+x.precio*x.qty,0);
+  const iva=sub*.16,total=sub+iva;
+  const folio='V'+(50740+ventas.length+1);
+  const fecha=new Date().toLocaleDateString('es-MX');
+  const hora=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  const vend=document.getElementById('vsel').value.replace('👤 ','');
+  const cnombre=(document.getElementById('cnombre'+sfx)||document.getElementById('cnombre')).value||'Público General';
+  const crfc=(document.getElementById('crfc'+sfx)||document.getElementById('crfc')).value||'XAXX010101000';
+  const chkE=document.getElementById('chkEnt'+sfx);
+  let entData=null;
+  if(chkE&&chkE.checked){
+    const g=id=>document.getElementById(id+sfx)||document.getElementById(id);
+    entData={
+      id:'E'+String(entregas.length+1).padStart(3,'0'),folio,cliente:cnombre,
+      dir:g('fDir').value||'Sin dirección',ref:g('fRef').value,
+      fecha:g('fFecha').value||fecha,hora:g('fHora').value||'—',
+      chofer:g('fChofer').value||'Sin asignar',
+      urgente:g('fUrg').value==='si',
+      notas:g('fNotas').value,estado:'pendiente'
+    };
+    entregas.push(entData);
+  }
+  // Generar orden de surtido agrupada por pasillo
+  const itemsOrdenados=[...carrito].sort((a,b)=>{
+    if(!a.ubic)return 1;if(!b.ubic)return -1;
+    return a.ubic.p.localeCompare(b.ubic.p)||parseInt(a.ubic.n.replace('N',''))-parseInt(b.ubic.n.replace('N',''));
+  });
+  const os={id:'OS'+String(ordenesSurtido.length+1).padStart(3,'0'),folio,fecha,hora,vendedor:vend,cliente:cnombre,items:itemsOrdenados,estado:'pendiente',ts:Date.now()};
+  ordenesSurtido.unshift(os);
+
+  const v={folio,fecha,hora,vend,cnombre,crfc,items:[...carrito],sub,iva,total,pago:pagoSel,ticket:ticketSel,entrega:entData};
+  ventas.push(v);
+  if(mobile) cerrarDrawer();
+  if(ticketSel==='sin') alert(`✅ ${folio} — $${total.toFixed(2)}${entData?' · Entrega programada ✓':''}`);
+  else if(ticketSel==='whatsapp') showWA(v);
+  else showTicket(v);
+  carrito=[];
+  ['cnombre','crfc','cnombreD','crfcD'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  ['chkEnt','chkEntD'].forEach(i=>{const el=document.getElementById(i);if(el)el.checked=false;});
+  ['et','etD'].forEach(i=>{const el=document.getElementById(i);if(el)el.classList.remove('activo');});
+  ['fEnt','fEntD'].forEach(i=>{const el=document.getElementById(i);if(el)el.classList.remove('show');});
+  ['fDir','fRef','fNotas','fDirD','fRefD','fNotasD'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  renderCarrito();renderCat(prods);
+}
+function cobrarD(){cobrar(true);}
+
+// ════ TICKET ════
+function showTicket(v){
+  const res=v.ticket==='resumido';
+  const itH=res?'':v.items.map(i=>`<div class="it-row"><span class="it-desc">${i.qty} ${i.nombre.substring(0,22)}${i.nombre.length>22?'…':''}</span><span>$${(i.precio*i.qty*1.16).toFixed(2)}</span></div>`).join('');
+  const entH=v.entrega?`<div class="entrega-bloque"><strong>📦 ORDEN DE ENTREGA ${v.entrega.id}</strong>Dirección: ${v.entrega.dir}${v.entrega.ref?'<br>Ref: '+v.entrega.ref:''}<br>Fecha/hora: ${v.entrega.fecha} ${v.entrega.hora}<br>Chofer: ${v.entrega.chofer}${v.entrega.urgente?'<br><strong style="color:var(--ro)">⚠ URGENTE</strong>':''}</div>`:'';
+  document.getElementById('ticketTitulo').textContent=v.entrega?'✅ Venta + Entrega registradas':'✅ Venta registrada';
+  document.getElementById('ticketCont').innerHTML=`
+    <div class="ticket-print">
+      <div class="th"><div class="empresa">🔩 FERREPOINT</div><div class="sub-emp">Sistema POS · Ferretería</div></div>
+      <hr>
+      <div class="meta"><span>Folio: ${v.folio}</span><span>${v.fecha} ${v.hora}</span></div>
+      <div class="meta"><span>Vendedor: ${v.vend}</span><span>Pago: ${v.pago}</span></div>
+      <div class="meta"><span>${v.cnombre}</span><span>${v.crfc}</span></div>
+      <hr>
+      ${!res?`<div>${itH}</div><hr>`:''}
+      <div class="tot-row"><span>Subtotal</span><span>$${v.sub.toFixed(2)}</span></div>
+      <div class="tot-row"><span>IVA 16%</span><span>$${v.iva.toFixed(2)}</span></div>
+      <div class="tot-row tot-grand"><span>TOTAL</span><span>$${v.total.toFixed(2)}</span></div>
+      ${entH}
+      <hr><div class="pie">¡Gracias por su preferencia!</div>
+    </div>`;
+  document.getElementById('btnPrint').style.display='inline-block';
+  document.getElementById('btnWA').style.display='none';
+  document.getElementById('ovTicket').classList.add('show');
+}
+function showWA(v){
+  const lineas=v.items.map(i=>`• ${i.qty}x ${i.nombre} — $${(i.precio*i.qty*1.16).toFixed(2)}`).join('\n');
+  const entT=v.entrega?`\n\n🚚 *Entrega a domicilio*\nDirección: ${v.entrega.dir}\nFecha/hora: ${v.entrega.fecha} ${v.entrega.hora}`:'';
+  window._wa=`🔩 *FERREPOINT*\nFolio: ${v.folio} | ${v.fecha}\n\n${lineas}\n\nSubtotal: $${v.sub.toFixed(2)}\nIVA: $${v.iva.toFixed(2)}\n*TOTAL: $${v.total.toFixed(2)}*\n\nPago: ${v.pago}${entT}\n\nGracias por su compra 👷`;
+  document.getElementById('ticketTitulo').textContent='💬 Ticket WhatsApp';
+  document.getElementById('ticketCont').innerHTML=`<div class="ticket-print"><p style="font-size:12px;color:var(--gm);margin-bottom:8px">Listo para copiar y enviar:</p><pre style="white-space:pre-wrap;font-size:12px;background:var(--gf);padding:10px;border-radius:6px;line-height:1.5">${window._wa}</pre></div>`;
+  document.getElementById('btnPrint').style.display='none';
+  document.getElementById('btnWA').style.display='inline-block';
+  document.getElementById('ovTicket').classList.add('show');
+}
+function copiarWA(){navigator.clipboard.writeText(window._wa||'');const b=document.getElementById('btnWA');b.textContent='✅ Copiado';setTimeout(()=>b.textContent='💬 Copiar',1500);}
+function cerrar(id){document.getElementById(id).classList.remove('show');}
+
+// ════ ENTREGAS ════
+function renderEntregas(){
+  [['pendiente','P'],['ruta','R'],['entregado','E']].forEach(([estado,suf])=>{
+    const lista=entregas.filter(e=>e.estado===estado);
+    document.getElementById('cnt'+suf).textContent=lista.length;
+    document.getElementById('col'+suf).innerHTML=lista.length?lista.map(e=>`
+      <div class="entrega-card">
+        <div class="ec-folio">${e.folio} · ${e.id}${e.urgente?'<span class="tag-urgente">URGENTE</span>':''}</div>
+        <div class="ec-cliente">${e.cliente}</div>
+        <div class="ec-dir">📍 ${e.dir}${e.ref?'<br>🏠 '+e.ref:''}</div>
+        <div class="ec-meta"><span class="ec-chofer">🚚 ${e.chofer}</span><span class="ec-hora">🕐 ${e.hora}</span></div>
+        ${e.notas?`<div style="font-size:10px;color:var(--gm);margin-top:3px">📝 ${e.notas}</div>`:''}
+        <div class="ec-btns">
+          ${estado==='pendiente'?`<button class="ec-btn ec-btn-r" onclick="chgEst('${e.id}','ruta')">🚛 En ruta</button>`:''}
+          ${estado==='ruta'?`<button class="ec-btn ec-btn-e" onclick="chgEst('${e.id}','entregado')">✅ Entregado</button>`:''}
+          ${estado==='entregado'?`<span style="font-size:10px;color:var(--ve);font-weight:600">✅ Completado</span>`:''}
+        </div>
+      </div>`).join(''):`<p style="color:var(--gm);font-size:11px;text-align:center;padding:16px">Sin registros</p>`;
+  });
+}
+function chgEst(id,nuevo){const e=entregas.find(x=>x.id===id);if(e){e.estado=nuevo;renderEntregas();}}
+
+// ════ INVENTARIO ════
+function renderInv(){
+  document.getElementById('tablaInv').innerHTML=`
+    <thead><tr><th>Clave</th><th>Nombre</th><th>Categoría</th><th>s/IVA</th><th>c/IVA</th><th>Stock</th><th>Ubicación</th><th></th></tr></thead>
+    <tbody>${prods.map(p=>{
+      const chip=p.stock>p.min?`<span class="stock-chip s-ok">${p.stock}</span>`:p.stock>0?`<span class="stock-chip s-w">${p.stock}</span>`:`<span class="stock-chip s-lo">AGOTADO</span>`;
+      const ubic=p.ubic?`<span style="font-size:10px;color:var(--az);background:var(--azl);border-radius:4px;padding:1px 6px;white-space:nowrap;font-weight:600">${fmtUbic(p.ubic)}</span>`:`<span style="font-size:10px;color:var(--gm)">—</span>`;
+      return`<tr><td style="font-family:'Barlow Condensed',sans-serif;font-size:11px;white-space:nowrap">${p.clave}</td><td style="font-weight:600;white-space:nowrap">${p.nombre}</td><td style="font-size:11px;color:var(--gm);white-space:nowrap">${p.cat}</td><td style="white-space:nowrap">$${p.precio.toFixed(2)}</td><td style="font-weight:600;white-space:nowrap">$${(p.precio*1.16).toFixed(2)}</td><td>${chip}</td><td>${ubic}</td><td style="white-space:nowrap"><button class="accion-btn" onclick="editProd(${p.id})">✏️</button><button class="accion-btn" onclick="delProd(${p.id})">🗑</button></td></tr>`;
+    }).join('')}</tbody>`;
+}
+function abrirModal(){
+  editId=null;document.getElementById('modalTit').textContent='Nuevo producto';
+  ['pClave','pNombre','pPrecio','pStock','pMin','pPos'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('pPasillo').value='';
+  document.getElementById('ovProd').classList.add('show');
+}
+function editProd(id){
+  const p=prods.find(x=>x.id===id);if(!p)return;
+  editId=id;document.getElementById('modalTit').textContent='Editar producto';
+  document.getElementById('pClave').value=p.clave;document.getElementById('pNombre').value=p.nombre;
+  document.getElementById('pPrecio').value=p.precio;document.getElementById('pStock').value=p.stock;
+  document.getElementById('pMin').value=p.min;
+  if(p.ubic){
+    document.getElementById('pPasillo').value=p.ubic.p||'';
+    document.getElementById('pNivel').value=p.ubic.n||'N1';
+    document.getElementById('pLado').value=p.ubic.l||'IZQ';
+    document.getElementById('pPos').value=p.ubic.pos||'';
+  }else{document.getElementById('pPasillo').value='';}
+  document.getElementById('ovProd').classList.add('show');
+}
+function guardarProd(){
+  const clave=document.getElementById('pClave').value.trim(),nombre=document.getElementById('pNombre').value.trim();
+  const precio=parseFloat(document.getElementById('pPrecio').value),stock=parseInt(document.getElementById('pStock').value),min=parseInt(document.getElementById('pMin').value);
+  const cat=document.getElementById('pCat').value,unidad=document.getElementById('pUnidad').value;
+  if(!nombre||!precio)return alert('Nombre y precio son obligatorios');
+  const pas=document.getElementById('pPasillo').value;
+  const ubic=pas?{p:pas,n:document.getElementById('pNivel').value,l:document.getElementById('pLado').value,pos:document.getElementById('pPos').value||'1'}:null;
+  if(editId){const p=prods.find(x=>x.id===editId);Object.assign(p,{clave,nombre,precio,stock,min,cat,unidad,ubic});}
+  else prods.push({id:Date.now(),clave,nombre,precio,stock,min,cat,unidad,ubic});
+  cerrar('ovProd');renderInv();renderCat(prods);
+}
+function delProd(id){if(!confirm('¿Eliminar?'))return;prods=prods.filter(x=>x.id!==id);renderInv();renderCat(prods);}
+function exportCSV(){
+  const rows=[['Clave','Nombre','Categoría','Precio s/IVA','Precio c/IVA','Stock','Mín','Unidad']];
+  prods.forEach(p=>rows.push([p.clave,p.nombre,p.cat,p.precio.toFixed(2),(p.precio*1.16).toFixed(2),p.stock,p.min,p.unidad]));
+  const csv=rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='inventario-ferrepoint.csv';a.click();
+}
+
+// ════ REPORTES ════
+function renderReportes(){
+  if(!ventas.length)[
+    {folio:'V50735',vend:'Vendedor 1',total:425,sub:366.38},
+    {folio:'V50736',vend:'Vendedor 2',total:1360,sub:1172.41},
+    {folio:'V50737',vend:'Vendedor 1',total:85,sub:73.28},
+    {folio:'V50738',vend:'Vendedor 3',total:2720,sub:2344.83},
+    {folio:'V50739',vend:'Vendedor 2',total:340,sub:293.10}
+  ].forEach(d=>ventas.push(d));
+  const tot=ventas.reduce((a,v)=>a+v.total,0),subT=ventas.reduce((a,v)=>a+v.sub,0);
+  const activas=entregas.filter(e=>e.estado!=='entregado').length;
+  document.getElementById('kVentas').textContent=ventas.length;
+  document.getElementById('kIngresos').textContent='$'+Math.round(subT).toLocaleString('es-MX');
+  document.getElementById('kEntregas').textContent=activas;
+  document.getElementById('kProm').textContent='$'+Math.round(tot/ventas.length).toLocaleString('es-MX');
+  const vm={};ventas.forEach(v=>{vm[v.vend]=(vm[v.vend]||0)+v.total;});
+  const max=Math.max(...Object.values(vm));
+  document.getElementById('repVend').innerHTML=Object.entries(vm).sort((a,b)=>b[1]-a[1]).map(([n,t])=>`
+    <div class="vend-row">
+      <div style="display:flex;align-items:center;gap:7px"><div class="avatar" style="width:22px;height:22px;font-size:10px">${n[0]}</div><span style="font-size:12px">${n}</span></div>
+      <div class="vend-bar-wrap"><div class="vend-bar" style="width:${(t/max*100).toFixed(0)}%"></div></div>
+      <div class="vend-monto">$${t.toLocaleString('es-MX')}</div>
+    </div>`).join('');
+  document.getElementById('repVentas').innerHTML=[...ventas].reverse().slice(0,5).map(v=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--gf)">
+      <div><div style="font-size:12px;font-weight:600">${v.folio}</div><div style="font-size:10px;color:var(--gm)">${v.vend}</div></div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--na)">$${v.total.toLocaleString('es-MX')}</div>
+    </div>`).join('');
+}
+
+// ════ BODEGA ════
+function renderBodega(){
+  const cont=document.getElementById('bodega-cont');
+  const filtro=document.getElementById('bodega-filtro')?document.getElementById('bodega-filtro').value:'todas';
+  const lista=filtro==='todas'?ordenesSurtido:ordenesSurtido.filter(o=>o.estado===filtro);
+
+  // KPIs
+  const pend=ordenesSurtido.filter(o=>o.estado==='pendiente').length;
+  const prog=ordenesSurtido.filter(o=>o.estado==='surtiendo').length;
+  const comp=ordenesSurtido.filter(o=>o.estado==='listo').length;
+  document.getElementById('bk-pend').textContent=pend;
+  document.getElementById('bk-prog').textContent=prog;
+  document.getElementById('bk-comp').textContent=comp;
+
+  if(!lista.length){
+    cont.innerHTML=`<div style="text-align:center;padding:40px 20px;color:var(--gm)"><div style="font-size:40px;margin-bottom:10px">📦</div><div style="font-size:14px">Sin órdenes${filtro!=='todas'?' en este estado':' de surtido'}</div><div style="font-size:12px;margin-top:6px">Aparecen aquí automáticamente cuando el vendedor cobra</div></div>`;
+    return;
+  }
+
+  const colores={pendiente:{bg:'var(--aml)',borde:'var(--am)',txt:'#7A5500',ico:'⏳'},surtiendo:{bg:'var(--azl)',borde:'var(--az)',txt:'var(--az)',ico:'🔍'},listo:{bg:'var(--vel)',borde:'var(--ve)',txt:'var(--ve)',ico:'✅'}};
+  cont.innerHTML=lista.map(o=>{
+    const col=colores[o.estado]||colores.pendiente;
+    const itemsHTML=o.items.map(it=>it.ubic?`
+      <div class="surtido-item" id="si-${o.id}-${it.id}">
+        <div class="si-ubic">
+          <span class="ubic-p">${it.ubic.p}</span>
+          <span class="ubic-det">${it.ubic.n} · ${it.ubic.l} · Pos.${it.ubic.pos}</span>
+        </div>
+        <div class="si-info">
+          <div class="si-nombre">${it.nombre}</div>
+          <div class="si-qty">${it.qty} ${it.unidad}</div>
+        </div>
+        <button class="si-check ${it._surtido?'done':''}" onclick="toggleSurtido('${o.id}',${it.id})" title="Marcar como surtido">
+          ${it._surtido?'✓':'○'}
+        </button>
+      </div>`:`
+      <div class="surtido-item">
+        <div class="si-ubic"><span class="ubic-p" style="background:var(--gb);color:var(--gm)">?</span><span class="ubic-det">Sin ubicación</span></div>
+        <div class="si-info"><div class="si-nombre">${it.nombre}</div><div class="si-qty">${it.qty} ${it.unidad}</div></div>
+        <button class="si-check" onclick="toggleSurtido('${o.id}',${it.id})">○</button>
+      </div>`).join('');
+    const surtidos=o.items.filter(i=>i._surtido).length;
+    const pctBar=Math.round(surtidos/o.items.length*100);
+    return`
+    <div class="orden-surtido" style="border-color:${col.borde}">
+      <div class="os-header" style="background:${col.bg}">
+        <div>
+          <div class="os-folio">${col.ico} Orden ${o.id} · Venta ${o.folio}</div>
+          <div class="os-meta">${o.cliente} · ${o.hora} · Vendedor: ${o.vendedor}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+          <span class="os-estado" style="color:${col.txt}">${o.estado.charAt(0).toUpperCase()+o.estado.slice(1)}</span>
+          ${o.estado!=='listo'?`
+          <div style="display:flex;gap:5px">
+            ${o.estado==='pendiente'?`<button class="os-btn os-btn-ini" onclick="iniciarSurtido('${o.id}')">Iniciar surtido</button>`:''}
+            <button class="os-btn os-btn-ok" onclick="completarOrden('${o.id}')">✅ Listo</button>
+          </div>`:''}
+        </div>
+      </div>
+      <div style="padding:0 14px 6px">
+        <div class="surtido-prog">
+          <div class="surtido-prog-bar" style="width:${pctBar}%"></div>
+        </div>
+        <div style="font-size:10px;color:var(--gm);margin-bottom:8px">${surtidos} de ${o.items.length} productos surtidos</div>
+      </div>
+      <div class="surtido-items">${itemsHTML}</div>
+    </div>`;
+  }).join('');
+}
+
+function iniciarSurtido(osId){
+  const o=ordenesSurtido.find(x=>x.id===osId);if(o)o.estado='surtiendo';renderBodega();
+}
+function toggleSurtido(osId,prodId){
+  const o=ordenesSurtido.find(x=>x.id===osId);if(!o)return;
+  const it=o.items.find(x=>x.id===prodId);if(!it)return;
+  it._surtido=!it._surtido;
+  if(o.estado==='pendiente')o.estado='surtiendo';
+  renderBodega();
+}
+function completarOrden(osId){
+  const o=ordenesSurtido.find(x=>x.id===osId);
+  if(!o)return;
+  o.estado='listo';
+  o.items.forEach(i=>i._surtido=true);
+  renderBodega();
+}
+
+// ════ MAPA VISUAL DE TIENDA ════
+function renderMapa(){
+  const canvas=document.getElementById('mapaCanvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Fondo
+  ctx.fillStyle='#F2F4F7';ctx.fillRect(0,0,W,H);
+
+  // Pasillos: definir posiciones x de cada pasillo
+  const pasillos=[
+    {id:'P01',x:40, label:'P01\nEstucos'},
+    {id:'P02',x:130,label:'P02\nCemento'},
+    {id:'P03',x:220,label:'P03\nAcero'},
+    {id:'P04',x:310,label:'P04\nPintura'},
+    {id:'P05',x:400,label:'P05\nPLOM/HERR'},
+  ];
+  const bodY=H-90, bodH=70;
+
+  // Resaltar pasillos con productos en el carrito
+  const pasCarrito=new Set(carrito.filter(i=>i.ubic&&i.ubic.p!=='BOD').map(i=>i.ubic.p));
+
+  pasillos.forEach(p=>{
+    const activo=pasCarrito.has(p.id);
+    // Estante izquierdo
+    ctx.fillStyle=activo?'#FFF0E6':'#E0E4EA';
+    ctx.fillRect(p.x,30,18,H-120);
+    ctx.strokeStyle=activo?'#E8610A':'#B0B8C8';ctx.lineWidth=activo?2:1;
+    ctx.strokeRect(p.x,30,18,H-120);
+
+    // Pasillo (corredor)
+    ctx.fillStyle='#F8F9FB';
+    ctx.fillRect(p.x+20,30,22,H-120);
+
+    // Estante derecho
+    ctx.fillStyle=activo?'#FFF0E6':'#E0E4EA';
+    ctx.fillRect(p.x+44,30,18,H-120);
+    ctx.strokeStyle=activo?'#E8610A':'#B0B8C8';ctx.lineWidth=activo?2:1;
+    ctx.strokeRect(p.x+44,30,18,H-120);
+
+    // Etiqueta pasillo
+    ctx.fillStyle=activo?'#E8610A':'#8A929E';
+    ctx.font=`bold ${activo?9:8}px sans-serif`;
+    ctx.textAlign='center';
+    const lines=p.label.split('\n');
+    lines.forEach((l,i)=>ctx.fillText(l,p.x+31,H-90+15+i*11));
+  });
+
+  // Bodega
+  ctx.fillStyle=pasCarrito.has('BOD')||carrito.some(i=>i.ubic&&i.ubic.p==='BOD')?'#FFF0E6':'#E0E4EA';
+  ctx.strokeStyle=carrito.some(i=>i.ubic&&i.ubic.p==='BOD')?'#E8610A':'#B0B8C8';
+  ctx.lineWidth=carrito.some(i=>i.ubic&&i.ubic.p==='BOD')?2:1;
+  ctx.fillRect(20,H-80,W-40,55);ctx.strokeRect(20,H-80,W-40,55);
+  ctx.fillStyle='#8A929E';ctx.font='bold 9px sans-serif';ctx.textAlign='center';
+  ctx.fillText('BODEGA / MATERIAL PESADO',W/2,H-50);
+
+  // Entrada
+  ctx.fillStyle='#2B2F35';ctx.font='bold 9px sans-serif';ctx.textAlign='center';
+  ctx.fillText('▲ ENTRADA',W/2,20);
+
+  // Puntos de productos del carrito
+  carrito.forEach(it=>{
+    if(!it.ubic||it.ubic.p==='BOD')return;
+    const p=pasillos.find(x=>x.id===it.ubic.p);if(!p)return;
+    const lado=it.ubic.l==='IZQ'?p.x+9:p.x+53;
+    const niv=parseInt(it.ubic.n.replace('N',''));
+    const y=40+(niv-1)*30+15;
+    ctx.fillStyle='#E8610A';
+    ctx.beginPath();ctx.arc(lado,y,6,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='bold 8px sans-serif';ctx.textAlign='center';
+    ctx.fillText(it.qty,lado,y+3);
+  });
+}
+
+// ════ DATOS CONTABLES ════
+const proveedores=[
+  {id:1,nombre:'Grupo Cementos del Norte',contacto:'Ing. Ramírez',tel:'844-200-1100',credito:30},
+  {id:2,nombre:'Distribuidora Aceros SA',contacto:'Carlos Vega',tel:'844-310-4400',credito:15},
+  {id:3,nombre:'Pinturas y Recubrimientos MX',contacto:'Ana Flores',tel:'844-105-2200',credito:45},
+  {id:4,nombre:'Ferremateriales Coahuila',contacto:'Pedro Salinas',tel:'844-410-3300',credito:30},
+];
+
+let compras=[
+  {id:'C001',fecha:'2026-06-20',proveedor:'Grupo Cementos del Norte',prodId:3,producto:'Cemento Gris 50 KG',qty:80,costoUnit:82.00,total:6560,estado:'pagada',vence:'2026-07-20'},
+  {id:'C002',fecha:'2026-06-22',proveedor:'Distribuidora Aceros SA',prodId:7,producto:'Varilla #3 Corrugada 6m',qty:30,costoUnit:74.50,total:2235,estado:'pendiente',vence:'2026-07-07'},
+  {id:'C003',fecha:'2026-06-25',proveedor:'Pinturas y Recubrimientos MX',prodId:9,producto:'Pintura Vinílica Blanca 19L',qty:12,costoUnit:490.00,total:5880,estado:'pendiente',vence:'2026-08-09'},
+  {id:'C004',fecha:'2026-07-01',proveedor:'Ferremateriales Coahuila',prodId:1,producto:'Estuco Premium 20 KG',qty:60,costoUnit:58.00,total:3480,estado:'pendiente',vence:'2026-07-31'},
+  {id:'C005',fecha:'2026-06-15',proveedor:'Grupo Cementos del Norte',prodId:4,producto:'Cemento Blanco 25 KG',qty:20,costoUnit:152.00,total:3040,estado:'pagada',vence:'2026-07-15'},
+];
+
+let cxcList=[
+  {id:'CXC001',folio:'V50710',cliente:'Constructora Ríos SA',monto:18400,abonado:5000,fecha:'2026-06-10',vence:'2026-07-10',estado:'parcial'},
+  {id:'CXC002',folio:'V50718',cliente:'Ing. Martínez Obras',monto:7250,abonado:0,fecha:'2026-06-20',vence:'2026-07-05',estado:'vencida'},
+  {id:'CXC003',folio:'V50725',cliente:'Grupo Constructor del Norte',monto:32100,abonado:32100,fecha:'2026-06-25',vence:'2026-07-25',estado:'pagada'},
+  {id:'CXC004',folio:'V50731',cliente:'Edificaciones Saltillo',monto:11500,abonado:0,fecha:'2026-07-01',vence:'2026-07-31',estado:'vigente'},
+];
+
+let cortesHistorial=[
+  {id:'CT001',fecha:'2026-07-06',sistema:24830,efectivo:24600,diferencia:-230,cajero:'Cajero 1',cerrado:true},
+  {id:'CT002',fecha:'2026-07-05',sistema:31450,efectivo:31450,diferencia:0,cajero:'Cajero 1',cerrado:true},
+  {id:'CT003',fecha:'2026-07-04',sistema:19200,efectivo:19350,diferencia:150,cajero:'Cajero 2',cerrado:true},
+];
+
+// Costos de compra por producto (para margen)
+const costosProd={1:58,2:42,3:82,4:152,5:6.8,6:2.7,7:74.5,8:245,9:490,10:620,11:138,12:172};
+
+// ════ CONTABILIDAD — RENDER ════
+let tabContab='resultados';
+
+function renderContabilidad(){
+  // Calcular métricas
+  const ingBruto=ventas.reduce((a,v)=>a+(v.sub||0),0)||18420;
+  const costoVenta=ventas.length?ventas.reduce((a,v)=>a+(v.items||[]).reduce((b,i)=>{
+    const c=costosProd[i.id]||i.precio*.72;return b+c*i.qty;
+  },0),0):11840;
+  const utilBruta=ingBruto-costoVenta;
+  const margenPct=ingBruto>0?((utilBruta/ingBruto)*100).toFixed(1):0;
+  const cxcPend=cxcList.filter(c=>c.estado!=='pagada').reduce((a,c)=>a+(c.monto-c.abonado),0);
+  const cxpPend=compras.filter(c=>c.estado==='pendiente').reduce((a,c)=>a+c.total,0);
+  const hoy=new Date();
+  const cxcVencidas=cxcList.filter(c=>c.estado==='vencida'||c.estado==='parcial'&&new Date(c.vence)<hoy);
+
+  const tabs=[
+    {k:'resultados',l:'📈 Estado de resultados'},
+    {k:'compras',l:'🛒 Compras'},
+    {k:'cxc',l:'📋 Cuentas x cobrar'},
+    {k:'corte',l:'🏦 Corte de caja'},
+    {k:'margenes',l:'📊 Márgenes'},
+  ];
+
+  document.getElementById('cont-tabs').innerHTML=tabs.map(t=>`
+    <button class="ctab ${tabContab===t.k?'active':''}" onclick="setTabContab('${t.k}')">${t.l}</button>`).join('');
+
+  // Render por tab
+  const body=document.getElementById('cont-body');
+
+  if(tabContab==='resultados'){
+    const gastos=3200; // fijos demo
+    const utilNeta=utilBruta-gastos;
+    body.innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px">
+        <div class="cont-kpi-card" style="border-color:var(--ve)">
+          <div class="ckpi-label">Ingresos del período</div>
+          <div class="ckpi-val" style="color:var(--ve)">$${ingBruto.toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+          <div class="ckpi-sub">ventas netas sin IVA · ${ventas.length||5} transacciones</div>
+        </div>
+        <div class="cont-kpi-card" style="border-color:var(--ro)">
+          <div class="ckpi-label">Costo de lo vendido</div>
+          <div class="ckpi-val" style="color:var(--ro)">$${costoVenta.toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+          <div class="ckpi-sub">precio de compra de la mercancía vendida</div>
+        </div>
+        <div class="cont-kpi-card" style="border-color:var(--na)">
+          <div class="ckpi-label">Utilidad bruta</div>
+          <div class="ckpi-val" style="color:var(--na)">$${utilBruta.toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+          <div class="ckpi-sub">margen bruto: <strong>${margenPct}%</strong></div>
+        </div>
+        <div class="cont-kpi-card" style="border-color:var(--az)">
+          <div class="ckpi-label">Utilidad neta estimada</div>
+          <div class="ckpi-val" style="color:var(--az)">$${utilNeta.toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+          <div class="ckpi-sub">después de gastos fijos ($${gastos.toLocaleString('es-MX')})</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <!-- Waterfall visual -->
+        <div class="cont-card">
+          <div class="cont-card-tit">Resumen financiero del período</div>
+          ${[
+            {l:'(+) Ventas netas',v:ingBruto,c:'var(--ve)',pos:true},
+            {l:'(−) Costo de mercancía',v:costoVenta,c:'var(--ro)',pos:false},
+            {l:'= Utilidad bruta',v:utilBruta,c:'var(--na)',pos:true,bold:true},
+            {l:'(−) Gastos operativos',v:gastos,c:'var(--ro)',pos:false},
+            {l:'= Utilidad neta',v:utilNeta,c:'var(--az)',pos:true,bold:true,grande:true},
+          ].map(r=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--gf);${r.grande?'margin-top:4px;border-top:2px solid var(--gb);':''}">
+              <span style="font-size:${r.grande?'14px':'13px'};${r.bold?'font-weight:700;':''}color:var(--tp)">${r.l}</span>
+              <span style="font-family:'Barlow Condensed',sans-serif;font-size:${r.grande?'20px':'16px'};font-weight:700;color:${r.c}">${r.pos?'':'-'}$${r.v.toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
+            </div>`).join('')}
+        </div>
+
+        <!-- Alertas -->
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="cont-card">
+            <div class="cont-card-tit">⚠ Alertas financieras</div>
+            ${cxcVencidas.length?`<div class="cont-alerta" style="background:var(--rol);border-color:var(--ro)">
+              <div style="font-weight:700;color:var(--ro);margin-bottom:2px">Cuentas por cobrar vencidas</div>
+              <div style="font-size:12px">${cxcVencidas.length} cliente(s) con $${cxcVencidas.reduce((a,c)=>a+(c.monto-c.abonado),0).toLocaleString('es-MX')} pendientes de cobro</div>
+            </div>`:''}
+            ${cxpPend>0?`<div class="cont-alerta" style="background:var(--aml);border-color:var(--am)">
+              <div style="font-weight:700;color:#7A5500;margin-bottom:2px">Cuentas por pagar</div>
+              <div style="font-size:12px">$${cxpPend.toLocaleString('es-MX')} pendientes con proveedores</div>
+            </div>`:''}
+            ${parseFloat(margenPct)<25?`<div class="cont-alerta" style="background:var(--rol);border-color:var(--ro)">
+              <div style="font-weight:700;color:var(--ro);margin-bottom:2px">Margen bajo</div>
+              <div style="font-size:12px">Margen bruto de ${margenPct}% está por debajo del 30% recomendado</div>
+            </div>`:'<div class="cont-alerta" style="background:var(--vel);border-color:var(--ve)"><div style="font-weight:700;color:var(--ve)">✅ Margen saludable</div><div style="font-size:12px">Margen bruto de ${margenPct}% sobre el umbral recomendado</div></div>'}
+          </div>
+          <div class="cont-card">
+            <div class="cont-card-tit">Posición financiera</div>
+            ${[
+              {l:'Cuentas por cobrar',v:cxcPend,c:'var(--az)'},
+              {l:'Cuentas por pagar',v:cxpPend,c:'var(--ro)'},
+              {l:'Posición neta',v:cxcPend-cxpPend,c:cxcPend-cxpPend>=0?'var(--ve)':'var(--ro)'},
+            ].map(r=>`
+              <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--gf)">
+                <span style="font-size:12px;color:var(--gm)">${r.l}</span>
+                <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:${r.c}">$${Math.abs(r.v).toLocaleString('es-MX')}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  else if(tabContab==='compras'){
+    const pend=compras.filter(c=>c.estado==='pendiente');
+    const pagadas=compras.filter(c=>c.estado==='pagada');
+    body.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;gap:10px">
+          <div class="cont-kpi-mini" style="border-color:var(--am)"><span style="color:var(--am);font-weight:700;font-size:18px;font-family:'Barlow Condensed',sans-serif">${pend.length}</span><br><span style="font-size:10px;color:var(--gm)">pendientes</span></div>
+          <div class="cont-kpi-mini" style="border-color:var(--ro)"><span style="color:var(--ro);font-weight:700;font-size:18px;font-family:'Barlow Condensed',sans-serif">$${pend.reduce((a,c)=>a+c.total,0).toLocaleString('es-MX')}</span><br><span style="font-size:10px;color:var(--gm)">por pagar</span></div>
+        </div>
+        <button class="btn-primary" style="font-size:12px" onclick="abrirModalCompra()">+ Nueva compra</button>
+      </div>
+      <div class="tabla-wrap">
+        <table class="tabla">
+          <thead><tr><th>Folio</th><th>Fecha</th><th>Proveedor</th><th>Producto</th><th>Qty</th><th>Costo unit.</th><th>Total</th><th>Vence</th><th>Estado</th><th></th></tr></thead>
+          <tbody>${compras.map(c=>{
+            const hoyD=new Date(),venceD=new Date(c.vence);
+            const diasRestantes=Math.ceil((venceD-hoyD)/(1000*60*60*24));
+            const vencido=diasRestantes<0&&c.estado==='pendiente';
+            const chip=c.estado==='pagada'
+              ?`<span class="stock-chip s-ok">Pagada</span>`
+              :vencido
+                ?`<span class="stock-chip s-lo">Vencida</span>`
+                :diasRestantes<=5
+                  ?`<span class="stock-chip s-w">Por vencer</span>`
+                  :`<span class="stock-chip" style="background:var(--azl);color:var(--az)">Pendiente</span>`;
+            return`<tr>
+              <td style="font-family:'Barlow Condensed',sans-serif;font-size:12px">${c.id}</td>
+              <td style="font-size:12px;white-space:nowrap">${c.fecha}</td>
+              <td style="font-size:12px;font-weight:600;white-space:nowrap">${c.proveedor}</td>
+              <td style="font-size:12px">${c.producto}</td>
+              <td style="text-align:center">${c.qty}</td>
+              <td style="font-family:'Barlow Condensed',sans-serif">$${c.costoUnit.toFixed(2)}</td>
+              <td style="font-family:'Barlow Condensed',sans-serif;font-weight:700">$${c.total.toLocaleString('es-MX')}</td>
+              <td style="font-size:11px;color:${vencido?'var(--ro)':diasRestantes<=5?'#7A5500':'var(--gm)'}">
+                ${c.vence}<br>${c.estado==='pendiente'?`<span style="font-size:10px">${diasRestantes>0?diasRestantes+' días':Math.abs(diasRestantes)+' días vencida'}</span>`:''}
+              </td>
+              <td>${chip}</td>
+              <td>${c.estado==='pendiente'?`<button class="os-btn os-btn-ok" style="font-size:11px" onclick="pagarCompra('${c.id}')">✓ Pagar</button>`:''}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>`;
+  }
+
+  else if(tabContab==='cxc'){
+    const total=cxcList.reduce((a,c)=>a+(c.monto-c.abonado),0);
+    const vencido=cxcList.filter(c=>c.estado==='vencida').reduce((a,c)=>a+(c.monto-c.abonado),0);
+    body.innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+        <div class="cont-kpi-card" style="border-color:var(--az)">
+          <div class="ckpi-label">Total por cobrar</div>
+          <div class="ckpi-val" style="color:var(--az)">$${total.toLocaleString('es-MX')}</div>
+          <div class="ckpi-sub">${cxcList.filter(c=>c.estado!=='pagada').length} clientes</div>
+        </div>
+        <div class="cont-kpi-card" style="border-color:var(--ro)">
+          <div class="ckpi-label">Vencido</div>
+          <div class="ckpi-val" style="color:var(--ro)">$${vencido.toLocaleString('es-MX')}</div>
+          <div class="ckpi-sub">requiere gestión inmediata</div>
+        </div>
+        <div class="cont-kpi-card" style="border-color:var(--ve)">
+          <div class="ckpi-label">Cobrado este mes</div>
+          <div class="ckpi-val" style="color:var(--ve)">$${cxcList.filter(c=>c.estado==='pagada').reduce((a,c)=>a+c.monto,0).toLocaleString('es-MX')}</div>
+          <div class="ckpi-sub">saldadas correctamente</div>
+        </div>
+      </div>
+      <div class="tabla-wrap">
+        <table class="tabla">
+          <thead><tr><th>Folio</th><th>Cliente</th><th>Monto</th><th>Abonado</th><th>Saldo</th><th>Vence</th><th>Estado</th><th></th></tr></thead>
+          <tbody>${cxcList.map(c=>{
+            const saldo=c.monto-c.abonado;
+            const pct=Math.round(c.abonado/c.monto*100);
+            const chips={vigente:`<span class="stock-chip" style="background:var(--azl);color:var(--az)">Vigente</span>`,
+              parcial:`<span class="stock-chip s-w">Parcial ${pct}%</span>`,
+              vencida:`<span class="stock-chip s-lo">Vencida</span>`,
+              pagada:`<span class="stock-chip s-ok">Pagada</span>`};
+            return`<tr>
+              <td style="font-family:'Barlow Condensed',sans-serif;font-size:12px">${c.folio}</td>
+              <td style="font-weight:600">${c.cliente}</td>
+              <td style="font-family:'Barlow Condensed',sans-serif">$${c.monto.toLocaleString('es-MX')}</td>
+              <td style="font-family:'Barlow Condensed',sans-serif;color:var(--ve)">$${c.abonado.toLocaleString('es-MX')}</td>
+              <td style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:${saldo>0?'var(--ro)':'var(--ve)'}">$${saldo.toLocaleString('es-MX')}</td>
+              <td style="font-size:11px;color:var(--gm)">${c.vence}</td>
+              <td>${chips[c.estado]||''}</td>
+              <td>${saldo>0?`<button class="os-btn os-btn-ok" style="font-size:11px" onclick="registrarAbono('${c.id}')">+ Abono</button>`:''}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>`;
+  }
+
+  else if(tabContab==='corte'){
+    const ventasHoy=ventas.filter(v=>v.fecha===new Date().toLocaleDateString('es-MX'));
+    const totalHoy=ventasHoy.reduce((a,v)=>a+(v.total||0),0)||24830;
+    const efecHoy=ventasHoy.filter(v=>v.pago==='Efectivo').reduce((a,v)=>a+(v.total||0),0)||18640;
+    body.innerHTML=`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <!-- Corte actual -->
+        <div class="cont-card">
+          <div class="cont-card-tit">🏦 Corte de hoy</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+            ${[
+              {l:'Total ventas del día',v:totalHoy,c:'var(--ac)'},
+              {l:'  · En efectivo',v:efecHoy,c:'var(--gm)'},
+              {l:'  · Transferencia',v:totalHoy-efecHoy,c:'var(--gm)'},
+            ].map(r=>`
+              <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--gf)">
+                <span style="font-size:13px;color:${r.c==='var(--gm)'?'var(--gm)':'var(--tp)'}">${r.l}</span>
+                <span style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:${r.c}">$${r.v.toLocaleString('es-MX')}</span>
+              </div>`).join('')}
+          </div>
+          <div style="background:var(--gf);border-radius:8px;padding:14px;margin-bottom:12px">
+            <div style="font-size:11px;font-weight:700;color:var(--gm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Efectivo reportado por el cajero</div>
+            <input type="number" id="efectivoReportado" placeholder="0.00" inputmode="decimal"
+              style="width:100%;padding:10px 12px;border:1.5px solid var(--gb);border-radius:7px;font-size:20px;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-align:center;outline:none"
+              oninput="calcularDiferencia(${efecHoy})"
+              onfocus="this.style.borderColor='var(--na)'" onblur="this.style.borderColor='var(--gb)'">
+            <div id="diferencia-corte" style="margin-top:10px;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--gm)">
+              Ingresa el efectivo contado para ver la diferencia
+            </div>
+          </div>
+          <button class="btn-primary" style="width:100%" onclick="cerrarCorte(${efecHoy},${totalHoy})">Cerrar corte del día</button>
+        </div>
+
+        <!-- Historial de cortes -->
+        <div class="cont-card">
+          <div class="cont-card-tit">Historial de cortes</div>
+          ${cortesHistorial.map(c=>{
+            const ok=c.diferencia===0;
+            const pos=c.diferencia>0;
+            return`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--gf)">
+              <div>
+                <div style="font-size:12px;font-weight:600">${c.fecha}</div>
+                <div style="font-size:11px;color:var(--gm)">${c.cajero} · Sistema: $${c.sistema.toLocaleString('es-MX')}</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:${ok?'var(--ve)':pos?'var(--az)':'var(--ro)'}">
+                  ${ok?'✅ Cuadrado':pos?'+':''}$${c.diferencia.toLocaleString('es-MX')}
+                </div>
+                <div style="font-size:10px;color:var(--gm)">${ok?'Sin diferencia':pos?'Sobrante':'Faltante'}</div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }
+
+  else if(tabContab==='margenes'){
+    body.innerHTML=`
+      <div style="margin-bottom:14px;font-size:13px;color:var(--gm)">
+        Margen bruto por producto — diferencia entre precio de venta y costo de compra
+      </div>
+      <div class="tabla-wrap">
+        <table class="tabla">
+          <thead><tr><th>Producto</th><th>Costo compra</th><th>Precio venta</th><th>Margen $</th><th>Margen %</th><th>Semáforo</th></tr></thead>
+          <tbody>${prods.map(p=>{
+            const costo=costosProd[p.id]||p.precio*.72;
+            const margenAbs=p.precio-costo;
+            const margenPctP=(margenAbs/p.precio*100).toFixed(1);
+            const semaforo=parseFloat(margenPctP)>=30
+              ?`<span class="stock-chip s-ok">Bueno</span>`
+              :parseFloat(margenPctP)>=20
+                ?`<span class="stock-chip s-w">Regular</span>`
+                :`<span class="stock-chip s-lo">Bajo</span>`;
+            // Barra visual
+            const barW=Math.min(100,parseFloat(margenPctP)/50*100);
+            return`<tr>
+              <td style="font-weight:600">${p.nombre}</td>
+              <td style="font-family:'Barlow Condensed',sans-serif;color:var(--ro)">$${costo.toFixed(2)}</td>
+              <td style="font-family:'Barlow Condensed',sans-serif">$${p.precio.toFixed(2)}</td>
+              <td style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--ve)">+$${margenAbs.toFixed(2)}</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:7px">
+                  <div style="flex:1;height:6px;background:var(--gf);border-radius:3px;min-width:50px">
+                    <div style="height:100%;width:${barW}%;background:${parseFloat(margenPctP)>=30?'var(--ve)':parseFloat(margenPctP)>=20?'var(--am)':'var(--ro)'};border-radius:3px"></div>
+                  </div>
+                  <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;min-width:36px">${margenPctP}%</span>
+                </div>
+              </td>
+              <td>${semaforo}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;background:var(--azl);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--az)">
+        💡 <strong>Los costos se actualizan automáticamente</strong> cuando registras una nueva compra. El margen refleja siempre el costo más reciente de cada proveedor.
+      </div>`;
+  }
+}
+
+function setTabContab(t){tabContab=t;renderContabilidad();}
+
+function calcularDiferencia(efecSistema){
+  const reportado=parseFloat(document.getElementById('efectivoReportado').value)||0;
+  const dif=reportado-efecSistema;
+  const el=document.getElementById('diferencia-corte');
+  if(!reportado){el.textContent='Ingresa el efectivo contado para ver la diferencia';el.style.color='var(--gm)';return;}
+  el.textContent=dif===0?'✅ Caja cuadrada perfectamente'
+    :dif>0?`⬆ Sobrante: $${dif.toFixed(2)}`
+    :`⬇ Faltante: $${Math.abs(dif).toFixed(2)}`;
+  el.style.color=dif===0?'var(--ve)':dif>0?'var(--az)':'var(--ro)';
+}
+
+function cerrarCorte(efecSistema,totalSistema){
+  const reportado=parseFloat(document.getElementById('efectivoReportado').value);
+  if(!reportado)return alert('Ingresa el efectivo contado antes de cerrar el corte');
+  const dif=reportado-efecSistema;
+  const nuevo={id:'CT'+String(cortesHistorial.length+1).padStart(3,'0'),
+    fecha:new Date().toLocaleDateString('es-MX'),
+    sistema:efecSistema,efectivo:reportado,diferencia:dif,
+    cajero:'Cajero 1',cerrado:true};
+  cortesHistorial.unshift(nuevo);
+  alert(`✅ Corte cerrado\nSistema: $${efecSistema.toLocaleString('es-MX')}\nContado: $${reportado.toLocaleString('es-MX')}\nDiferencia: ${dif>=0?'+':''}$${dif.toFixed(2)}`);
+  renderContabilidad();
+}
+
+function pagarCompra(id){
+  const c=compras.find(x=>x.id===id);
+  if(c&&confirm(`¿Registrar pago de $${c.total.toLocaleString('es-MX')} a ${c.proveedor}?`)){
+    c.estado='pagada';renderContabilidad();
+  }
+}
+
+function registrarAbono(id){
+  const c=cxcList.find(x=>x.id===id);if(!c)return;
+  const monto=parseFloat(prompt(`Abono para ${c.cliente}\nSaldo pendiente: $${(c.monto-c.abonado).toLocaleString('es-MX')}\n\nMonto del abono:`));
+  if(!monto||isNaN(monto))return;
+  c.abonado=Math.min(c.monto,c.abonado+monto);
+  c.estado=c.abonado>=c.monto?'pagada':'parcial';
+  renderContabilidad();
+}
+
+function abrirModalCompra(){
+  document.getElementById('ovCompra').classList.add('show');
+  document.getElementById('cFecha').valueAsDate=new Date();
+}
+
+function calcularTotalCompra(){
+  const qty=parseFloat(document.getElementById('cQty').value)||0;
+  const costo=parseFloat(document.getElementById('cCosto').value)||0;
+  document.getElementById('cTotal').textContent='$'+(qty*costo).toLocaleString('es-MX',{minimumFractionDigits:2});
+}
+
+function guardarCompra(){
+  const prov=document.getElementById('cProv').value;
+  const prodId=parseInt(document.getElementById('cProd').value);
+  const prod=prods.find(x=>x.id===prodId);
+  const qty=parseInt(document.getElementById('cQty').value);
+  const costo=parseFloat(document.getElementById('cCosto').value);
+  const cond=parseInt(document.getElementById('cCondicion').value);
+  const estado=document.getElementById('cEstado').value;
+  if(!qty||!costo)return alert('Ingresa cantidad y costo');
+  const fechaCompra=document.getElementById('cFecha').value||new Date().toISOString().split('T')[0];
+  const vence=new Date(fechaCompra);vence.setDate(vence.getDate()+(cond||0));
+  const nueva={
+    id:'C'+String(compras.length+1).padStart(3,'0'),
+    fecha:fechaCompra,proveedor:prov,prodId,
+    producto:prod?prod.nombre:'Producto',
+    qty,costoUnit:costo,total:qty*costo,estado,
+    vence:cond===0?fechaCompra:vence.toISOString().split('T')[0]
+  };
+  compras.unshift(nueva);
+  if(prod){costosProd[prodId]=costo;prod.stock+=qty;}
+  cerrar('ovCompra');
+  renderContabilidad();
+  renderCat(prods);
+  alert(`✅ Compra registrada\n${qty} × ${prod?.nombre}\nTotal: $${(qty*costo).toLocaleString('es-MX')}`);
+}
+
+// ════ ROLES Y USUARIOS ════
+
+const ROLES = {
+  dueno: {
+    label: 'Dueño / Admin',
+    color: '#7B2D8B', bg: '#F5E6FA',
+    icon: '👑',
+    descripcion: 'Acceso total al sistema',
+    modulos: ['pos','entregas','bodega','inventario','reportes','contabilidad','usuarios','facturacion'],
+    badge: 'ADMIN',
+  },
+  vendedor: {
+    label: 'Vendedor',
+    color: '#E8610A', bg: '#FFF0E6',
+    icon: '🛒',
+    descripcion: 'POS, catálogo y sus ventas del día',
+    modulos: ['pos'],
+    badge: 'VENDEDOR',
+  },
+  cajero: {
+    label: 'Cajero',
+    color: '#1A5FA8', bg: '#E8F0FB',
+    icon: '💵',
+    descripcion: 'Cola de cobros pendientes únicamente',
+    modulos: ['caja'],
+    badge: 'CAJERO',
+  },
+  bodeguero: {
+    label: 'Bodeguero',
+    color: '#1A8A4A', bg: '#E8F5EE',
+    icon: '📦',
+    descripcion: 'Órdenes de surtido y ubicaciones',
+    modulos: ['bodega'],
+    badge: 'BODEGA',
+  },
+  chofer: {
+    label: 'Chofer / Repartidor',
+    color: '#E8A20A', bg: '#FFF8E1',
+    icon: '🚚',
+    descripcion: 'Sus entregas del día, marcar entregado',
+    modulos: ['entregas'],
+    badge: 'CHOFER',
+  },
+};
+
+let usuarios = [
+  {id:1, nombre:'Carlos Mendoza',   email:'carlos@ferreteria.com', rol:'dueno',     suc:'Todas',      activo:true,  ultimo:'Hoy 09:14'},
+  {id:2, nombre:'Nuria Vázquez',    email:'nuria@ferreteria.com',  rol:'vendedor',  suc:'Sucursal 1', activo:true,  ultimo:'Hoy 08:52'},
+  {id:3, nombre:'Arturo Flores',    email:'arturo@ferreteria.com', rol:'vendedor',  suc:'Sucursal 2', activo:true,  ultimo:'Hoy 09:01'},
+  {id:4, nombre:'Patricia Salinas', email:'paty@ferreteria.com',   rol:'cajero',    suc:'Sucursal 1', activo:true,  ultimo:'Hoy 08:45'},
+  {id:5, nombre:'Roberto Garza',    email:'roberto@ferreteria.com',rol:'bodeguero', suc:'Sucursal 1', activo:true,  ultimo:'Hoy 09:05'},
+  {id:6, nombre:'Juan Pérez',       email:'juan@ferreteria.com',   rol:'chofer',    suc:'Todas',      activo:false, ultimo:'Ayer 17:30'},
+];
+
+let rolActivo = 'dueno'; // rol que se está simulando
+let editUsuarioId = null;
+
+// Permisos granulares por rol
+const PERMISOS = {
+  dueno:     { verPrecios:true,  verCostos:true,  verMargenes:true,  verCxC:true,  modificarProductos:true,  verCorte:true,  darDeAlta:true  },
+  vendedor:  { verPrecios:true,  verCostos:false, verMargenes:false, verCxC:false, modificarProductos:false, verCorte:false, darDeAlta:false },
+  cajero:    { verPrecios:true,  verCostos:false, verMargenes:false, verCxC:false, modificarProductos:false, verCorte:true,  darDeAlta:false },
+  bodeguero: { verPrecios:false, verCostos:false, verMargenes:false, verCxC:false, modificarProductos:false, verCorte:false, darDeAlta:false },
+  chofer:    { verPrecios:false, verCostos:false, verMargenes:false, verCxC:false, modificarProductos:false, verCorte:false, darDeAlta:false },
+};
+
+function renderUsuarios() {
+  const cont = document.getElementById('usuarios-cont');
+  if (!cont) return;
+
+  const rolInfo = ROLES[rolActivo];
+  const perms = PERMISOS[rolActivo];
+
+  cont.innerHTML = `
+    <!-- BANNER ROL ACTIVO -->
+    <div id="rol-banner" style="
+      background:${rolInfo.bg};border:2px solid ${rolInfo.color};
+      border-radius:12px;padding:14px 18px;margin-bottom:20px;
+      display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px
+    ">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:28px">${rolInfo.icon}</div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:${rolInfo.color};text-transform:uppercase;letter-spacing:.5px">Vista activa</div>
+          <div style="font-size:16px;font-weight:700;color:var(--ac)">${rolInfo.label}</div>
+          <div style="font-size:12px;color:var(--gm)">${rolInfo.descripcion}</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div style="font-size:11px;color:var(--gm)">Simular vista de:</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
+          ${Object.entries(ROLES).map(([k,r])=>`
+            <button onclick="simularRol('${k}')" style="
+              padding:5px 10px;border-radius:6px;border:1.5px solid ${k===rolActivo?r.color:'var(--gb)'};
+              background:${k===rolActivo?r.color:'var(--bl)'};color:${k===rolActivo?'#fff':'var(--gm)'};
+              font-size:11px;font-weight:600;cursor:pointer;font-family:'Barlow',sans-serif;
+              transition:all .15s;
+            ">${r.icon} ${r.label}</button>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px" id="roles-grid">
+
+      <!-- LISTA USUARIOS -->
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div class="seccion-titulo" style="font-size:18px">Equipo de trabajo</div>
+          ${perms.darDeAlta?`<button class="btn-primary" style="font-size:12px" onclick="abrirModalUsuario()">+ Invitar usuario</button>`:''}
+        </div>
+        ${usuarios.map(u=>{
+          const r=ROLES[u.rol];
+          return`<div style="
+            background:var(--bl);border:1.5px solid var(--gb);border-radius:10px;
+            padding:12px 14px;margin-bottom:8px;
+            display:flex;align-items:center;gap:12px;
+            opacity:${u.activo?1:.55};
+          ">
+            <div style="
+              width:38px;height:38px;background:${r.bg};border:1.5px solid ${r.color};
+              border-radius:50%;display:flex;align-items:center;justify-content:center;
+              font-size:17px;flex-shrink:0;
+            ">${r.icon}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.nombre}</div>
+              <div style="font-size:11px;color:var(--gm)">${u.email}</div>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+                <span style="font-size:10px;font-weight:700;color:${r.color};background:${r.bg};padding:1px 6px;border-radius:20px">${r.badge}</span>
+                <span style="font-size:10px;color:var(--gm)">${u.suc}</span>
+                ${!u.activo?`<span style="font-size:10px;color:var(--ro);font-weight:600">Inactivo</span>`:''}
+              </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-size:10px;color:var(--gm)">Último acceso</div>
+              <div style="font-size:11px;font-weight:600">${u.ultimo}</div>
+              ${perms.darDeAlta?`<div style="display:flex;gap:4px;margin-top:6px;justify-content:flex-end">
+                <button class="accion-btn" onclick="editarUsuario(${u.id})" title="Editar">✏️</button>
+                <button class="accion-btn" onclick="toggleActivo(${u.id})" title="${u.activo?'Desactivar':'Activar'}">${u.activo?'🔒':'🔓'}</button>
+              </div>`:''}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <!-- PERMISOS DEL ROL ACTIVO -->
+      <div>
+        <div class="seccion-titulo" style="font-size:18px;margin-bottom:12px">
+          Lo que ve ${rolInfo.icon} ${rolInfo.label}
+        </div>
+
+        <!-- Módulos accesibles -->
+        <div style="background:var(--bl);border:1.5px solid var(--gb);border-radius:10px;padding:14px;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;color:var(--gm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Módulos del sistema</div>
+          ${[
+            {k:'pos',         ico:'🛒', l:'Punto de venta'},
+            {k:'caja',        ico:'💵', l:'Caja (cobros pendientes)'},
+            {k:'entregas',    ico:'🚚', l:'Entregas a domicilio'},
+            {k:'bodega',      ico:'📦', l:'Bodega y surtido'},
+            {k:'inventario',  ico:'🗃', l:'Inventario'},
+            {k:'reportes',    ico:'📊', l:'Reportes del día'},
+            {k:'contabilidad',ico:'💰', l:'Contabilidad'},
+            {k:'usuarios',    ico:'👥', l:'Gestión de usuarios'},
+            {k:'facturacion', ico:'🧾', l:'Facturación CFDI 4.0'},
+          ].map(m=>{
+            const tiene=rolInfo.modulos.includes(m.k);
+            return`<div style="
+              display:flex;align-items:center;gap:10px;padding:7px 8px;
+              border-radius:7px;margin-bottom:4px;
+              background:${tiene?rolInfo.bg:'var(--gf)'};
+            ">
+              <span style="font-size:15px">${m.ico}</span>
+              <span style="font-size:12px;font-weight:${tiene?700:400};color:${tiene?rolInfo.color:'var(--gm)'};">${m.l}</span>
+              <span style="margin-left:auto;font-size:12px">${tiene?'✅':'—'}</span>
+            </div>`;
+          }).join('')}
+        </div>
+
+        <!-- Permisos de datos -->
+        <div style="background:var(--bl);border:1.5px solid var(--gb);border-radius:10px;padding:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--gm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Visibilidad de datos</div>
+          ${[
+            {k:'verPrecios',        l:'Ver precios de venta'},
+            {k:'verCostos',         l:'Ver costos de compra'},
+            {k:'verMargenes',       l:'Ver márgenes por producto'},
+            {k:'verCxC',            l:'Ver cuentas por cobrar'},
+            {k:'verCorte',          l:'Ver / cerrar corte de caja'},
+            {k:'modificarProductos',l:'Agregar o editar productos'},
+            {k:'darDeAlta',         l:'Dar de alta usuarios'},
+          ].map(p=>{
+            const tiene=perms[p.k];
+            return`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--gf)">
+              <span style="font-size:12px;color:${tiene?'var(--tp)':'var(--gm)'};flex:1">${p.l}</span>
+              <span style="font-size:13px">${tiene?'✅':'🚫'}</span>
+            </div>`;
+          }).join('')}
+        </div>
+
+        <!-- Nota de seguridad -->
+        <div style="margin-top:10px;background:var(--ac);border-radius:8px;padding:10px 13px;font-size:11px;color:#aaa;line-height:1.6">
+          🔒 <strong style="color:#fff">Seguridad real:</strong> En producción los permisos se validan en el servidor (Firebase). Ocultar una pantalla en el cliente no es suficiente — la base de datos rechaza cualquier consulta no autorizada aunque el empleado conozca la URL.
+        </div>
+      </div>
+    </div>
+
+    <!-- PREVIEW VISUAL DE PANTALLA POR ROL -->
+    <div style="background:var(--bl);border:1.5px solid ${rolInfo.color};border-radius:12px;padding:16px">
+      <div style="font-size:12px;font-weight:700;color:${rolInfo.color};margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px">
+        ${rolInfo.icon} Así ve el sistema ${rolInfo.label}
+      </div>
+      <div id="preview-rol" style="background:var(--ac);border-radius:8px;overflow:hidden">
+        ${renderPreviewRol(rolActivo)}
+      </div>
+    </div>
+  `;
+}
+
+function renderPreviewRol(rol) {
+  const r = ROLES[rol];
+  const navItems = r.modulos.map(m => {
+    const mapa = {pos:'🛒 Vender',caja:'💵 Caja',entregas:'🚚 Entregas',bodega:'📦 Bodega',inventario:'🗃 Inventario',reportes:'📊 Reportes',contabilidad:'💰 Contabilidad',usuarios:'👥 Usuarios',facturacion:'🧾 CFDI 4.0'};
+    return mapa[m]||m;
+  });
+
+  const pantallas = {
+    dueno: `
+      <div style="padding:10px 12px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid #3E4550">
+        ${navItems.map((n,i)=>`<div style="padding:4px 9px;border-radius:4px;font-size:10px;font-weight:600;background:${i===0?'#E8610A':'transparent'};color:${i===0?'#fff':'#bbb'}">${n}</div>`).join('')}
+      </div>
+      <div style="padding:14px 12px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+          ${[{l:'Ventas hoy',v:'$24,830',c:'#E8610A'},{l:'Margen bruto',v:'35.2%',c:'#1A8A4A'},{l:'CxC pendiente',v:'$38,250',c:'#1A5FA8'},{l:'Por pagar',v:'$11,615',c:'#C0392B'}].map(k=>`
+            <div style="background:#3E4550;border-radius:6px;padding:8px">
+              <div style="font-size:9px;color:#888;margin-bottom:3px">${k.l}</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:${k.c}">${k.v}</div>
+            </div>`).join('')}
+        </div>
+        <div style="font-size:10px;color:#666;text-align:center">Panel completo — todos los módulos visibles</div>
+      </div>`,
+
+    vendedor: `
+      <div style="padding:10px 12px;border-bottom:1px solid #3E4550;display:flex;align-items:center;gap:8px">
+        <div style="padding:4px 9px;border-radius:4px;font-size:10px;font-weight:600;background:#E8610A;color:#fff">🛒 Vender</div>
+        <div style="font-size:10px;color:#555;font-style:italic">Solo ve este módulo</div>
+      </div>
+      <div style="padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+        ${['Estuco 20KG\n$85.00','Cemento Gris\n$126.00','Block 15cm\n$10.00','Varilla #3\n$111.00','Pintura 19L\n$700.00','Pala Truper\n$260.00'].map(p=>`
+          <div style="background:#3E4550;border-radius:5px;padding:7px 6px;font-size:9px;color:#ccc;line-height:1.5;white-space:pre-line">${p}</div>`).join('')}
+      </div>
+      <div style="padding:0 12px 12px;font-size:10px;color:#666;text-align:center">Sin acceso a costos, márgenes ni contabilidad</div>`,
+
+    cajero: `
+      <div style="padding:10px 12px;border-bottom:1px solid #3E4550;display:flex;align-items:center;gap:8px">
+        <div style="padding:4px 9px;border-radius:4px;font-size:10px;font-weight:600;background:#1A5FA8;color:#fff">💵 Caja</div>
+        <div style="font-size:10px;color:#555;font-style:italic">Cola de cobros pendientes</div>
+      </div>
+      <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px">
+        ${[{f:'V50741',c:'Constructora Ríos',t:'$3,480'},
+           {f:'V50742',c:'Ing. Martínez',t:'$890'},
+           {f:'V50743',c:'Público General',t:'$245'}].map((v,i)=>`
+          <div style="background:#3E4550;border-radius:6px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:10px;color:#aaa">${v.f}</div>
+              <div style="font-size:11px;color:#fff;font-weight:600">${v.c}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:#E8610A">${v.t}</div>
+              ${i===0?`<div style="background:#E8610A;color:#fff;font-size:9px;font-weight:700;padding:3px 7px;border-radius:4px">COBRAR</div>`:''}
+            </div>
+          </div>`).join('')}
+        <div style="font-size:10px;color:#666;text-align:center;margin-top:2px">Sin acceso a inventario, reportes ni contabilidad</div>
+      </div>`,
+
+    bodeguero: `
+      <div style="padding:10px 12px;border-bottom:1px solid #3E4550;display:flex;align-items:center;gap:8px">
+        <div style="padding:4px 9px;border-radius:4px;font-size:10px;font-weight:600;background:#1A8A4A;color:#fff">📦 Bodega</div>
+        <div style="font-size:10px;color:#555;font-style:italic">Órdenes de surtido</div>
+      </div>
+      <div style="padding:10px 12px">
+        <div style="background:#3E4550;border-radius:7px;padding:10px;margin-bottom:6px">
+          <div style="font-size:10px;color:#aaa;margin-bottom:5px">⏳ OS004 · V50741 · Constructora Ríos</div>
+          ${[{p:'P01',n:'Estuco Premium 20KG',qty:'3 SACO'},{p:'P02',n:'Cemento Gris 50KG',qty:'5 SACO'},{p:'P05',n:'Tubo PVC 4" × 6m',qty:'2 PZA'}].map(i=>`
+            <div style="display:flex;align-items:center;gap:7px;padding:4px 0;border-bottom:1px solid #4a5160">
+              <div style="background:#E8610A;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;min-width:28px;text-align:center">${i.p}</div>
+              <div style="flex:1;font-size:10px;color:#ccc">${i.n}</div>
+              <div style="font-size:10px;color:#E8610A;font-weight:700">${i.qty}</div>
+              <div style="font-size:14px;cursor:pointer">○</div>
+            </div>`).join('')}
+        </div>
+        <div style="font-size:10px;color:#666;text-align:center">Sin precios, sin caja, sin contabilidad</div>
+      </div>`,
+
+    chofer: `
+      <div style="padding:10px 12px;border-bottom:1px solid #3E4550;display:flex;align-items:center;gap:8px">
+        <div style="padding:4px 9px;border-radius:4px;font-size:10px;font-weight:600;background:#E8A20A;color:#fff">🚚 Mis entregas</div>
+      </div>
+      <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px">
+        ${[{id:'E001',c:'Constructora Ríos',dir:'Blvd. Independencia 4521',hora:'10:00',est:'pendiente'},
+           {id:'E002',c:'Roberto Martínez',dir:'Calle 8 #88, Col. San Jorge',hora:'12:30',est:'pendiente'},
+           {id:'E003',c:'Ing. García Obras',dir:'Privada Las Palmas 12',hora:'14:00',est:'ruta'}].map(e=>`
+          <div style="background:#3E4550;border-radius:6px;padding:8px 10px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+              <div style="font-size:11px;color:#fff;font-weight:600">${e.c}</div>
+              <div style="font-size:10px;color:#E8A20A">🕐 ${e.hora}</div>
+            </div>
+            <div style="font-size:10px;color:#aaa;margin-bottom:5px">📍 ${e.dir}</div>
+            <div style="background:${e.est==='ruta'?'#1A8A4A':'#E8610A'};color:#fff;font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;display:inline-block">
+              ${e.est==='ruta'?'✅ Marcar entregado':'🚛 Salir a ruta'}
+            </div>
+          </div>`).join('')}
+        <div style="font-size:10px;color:#666;text-align:center">Sin precios, sin caja, sin bodega</div>
+      </div>`,
+  };
+  return pantallas[rol] || pantallas.vendedor;
+}
+
+function simularRol(rol) {
+  rolActivo = rol;
+  renderUsuarios();
+  // Hacer scroll suave al preview
+  setTimeout(()=>{
+    const el=document.getElementById('preview-rol');
+    if(el) el.scrollIntoView({behavior:'smooth',block:'nearest'});
+  },100);
+}
+
+function toggleActivo(id) {
+  const u = usuarios.find(x => x.id === id);
+  if (u) { u.activo = !u.activo; renderUsuarios(); }
+}
+
+function abrirModalUsuario(id = null) {
+  editUsuarioId = id;
+  const u = id ? usuarios.find(x => x.id === id) : null;
+  document.getElementById('uModalTit').textContent = u ? 'Editar usuario' : 'Invitar usuario';
+  document.getElementById('uNombre').value = u?.nombre || '';
+  document.getElementById('uEmail').value  = u?.email  || '';
+  document.getElementById('uRol').value    = u?.rol    || 'vendedor';
+  document.getElementById('uSuc').value    = u?.suc    || 'Sucursal 1';
+  document.getElementById('ovUsuario').classList.add('show');
+}
+
+function editarUsuario(id) { abrirModalUsuario(id); }
+
+function guardarUsuario() {
+  const nombre = document.getElementById('uNombre').value.trim();
+  const email  = document.getElementById('uEmail').value.trim();
+  const rol    = document.getElementById('uRol').value;
+  const suc    = document.getElementById('uSuc').value;
+  if (!nombre || !email) return alert('Nombre y correo son obligatorios');
+  if (editUsuarioId) {
+    const u = usuarios.find(x => x.id === editUsuarioId);
+    Object.assign(u, { nombre, email, rol, suc });
+  } else {
+    usuarios.push({ id: Date.now(), nombre, email, rol, suc, activo: true, ultimo: 'Nunca' });
+    alert(`✅ Invitación enviada a ${email}\n\nEl usuario recibirá un correo para crear su contraseña y acceder como ${ROLES[rol].label}.`);
+  }
+  cerrar('ovUsuario');
+  renderUsuarios();
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  renderCat(prods);
+  renderCarrito();
+  document.getElementById('fFecha').valueAsDate = new Date();
+  document.getElementById('fFechaD').valueAsDate = new Date();
+});
+</script>
+</body>
+</html>
