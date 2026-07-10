@@ -3,35 +3,26 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DATABASE_URL_UNPOOLED")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
-// ===== LEVEL 1: Businesses (Tenants) =====
 model Business {
   id        String   @id @default(cuid())
   name      String   @unique
   rfc       String   @unique
   plan      String   @default("starter")
-  features  Json     @default("{}")
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   locations         Location[]
   users             User[]
   products          Product[]
   sales             Sale[]
   surtidoOrders     SurtidoOrder[]
-  deliveries        Delivery[]
-  purchases         Purchase[]
-  accountsReceivable AccountsReceivable[]
-  cashRegisters     CashRegister[]
 
   @@map("businesses")
 }
 
-// ===== LEVEL 2: Locations (Branches) =====
 model Location {
   id         String   @id @default(cuid())
   businessId String
@@ -44,16 +35,12 @@ model Location {
   products  Product[]
   sales     Sale[]
   surtidoOrders SurtidoOrder[]
-  deliveries Delivery[]
-  purchases Purchase[]
-  cashRegisters CashRegister[]
 
   @@unique([businessId, clave])
   @@index([businessId])
   @@map("locations")
 }
 
-// ===== Users (Employees) =====
 model User {
   id         String   @id @default(cuid())
   businessId String
@@ -61,7 +48,6 @@ model User {
   password   String
   name       String
   role       String   @default("vendedor")
-  locations  String[]
   active     Boolean  @default(true)
   createdAt  DateTime @default(now())
 
@@ -73,7 +59,6 @@ model User {
   @@map("users")
 }
 
-// ===== Products =====
 model Product {
   id         String   @id @default(cuid())
   businessId String
@@ -81,11 +66,10 @@ model Product {
   clave      String
   name       String
   category   String
-  price      Decimal  @db.Decimal(12, 2)
+  price      Float
   stock      Int
   minStock   Int      @default(0)
   unit       String
-  ubicacion  Json?
   active     Boolean  @default(true)
   createdAt  DateTime @default(now())
 
@@ -99,7 +83,6 @@ model Product {
   @@map("products")
 }
 
-// ===== Sales (POS) =====
 model Sale {
   id             String   @id @default(cuid())
   businessId     String
@@ -110,9 +93,9 @@ model Sale {
   clientRfc      String?
   paymentMethod  String
   comprobante    String
-  subtotal       Decimal  @db.Decimal(12, 2)
-  iva            Decimal  @db.Decimal(12, 2)
-  total          Decimal  @db.Decimal(12, 2)
+  subtotal       Float
+  iva            Float
+  total          Float
   createdAt      DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
@@ -120,8 +103,6 @@ model Sale {
   vendor   User @relation(fields: [vendorId], references: [id], onDelete: Restrict)
   items    SaleItem[]
   surtidoOrder SurtidoOrder?
-  delivery Delivery?
-  cxc      AccountsReceivable?
 
   @@unique([businessId, folio])
   @@index([businessId])
@@ -135,8 +116,8 @@ model SaleItem {
   saleId    String
   productId String
   qty       Int
-  price     Decimal  @db.Decimal(12, 2)
-  subtotal  Decimal  @db.Decimal(12, 2)
+  price     Float
+  subtotal  Float
 
   sale    Sale @relation(fields: [saleId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
@@ -144,7 +125,6 @@ model SaleItem {
   @@map("sale_items")
 }
 
-// ===== Surtido Orders (Bodega) =====
 model SurtidoOrder {
   id         String   @id @default(cuid())
   businessId String
@@ -174,93 +154,4 @@ model SurtidoItem {
   product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
 
   @@map("surtido_items")
-}
-
-// ===== Deliveries =====
-model Delivery {
-  id             String   @id @default(cuid())
-  businessId     String
-  locationId     String
-  saleId         String   @unique
-  clientName     String
-  address        String
-  reference      String?
-  deliveryDate   String
-  deliveryTime   String?
-  driverId       String?
-  urgent         Boolean  @default(false)
-  status         String   @default("pendiente")
-  createdAt      DateTime @default(now())
-
-  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  location Location @relation(fields: [locationId], references: [id], onDelete: Restrict)
-  sale     Sale @relation(fields: [saleId], references: [id], onDelete: Cascade)
-
-  @@index([businessId])
-  @@index([status])
-  @@map("deliveries")
-}
-
-// ===== Purchases =====
-model Purchase {
-  id         String   @id @default(cuid())
-  businessId String
-  locationId String
-  productId  String
-  supplier   String
-  qty        Int
-  costUnit   Decimal  @db.Decimal(12, 2)
-  total      Decimal  @db.Decimal(12, 2)
-  status     String   @default("pendiente")
-  dueDate    DateTime
-  createdAt  DateTime @default(now())
-
-  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  location Location @relation(fields: [locationId], references: [id], onDelete: Restrict)
-  product  Product @relation(fields: [productId], references: [id], onDelete: Restrict)
-
-  @@index([businessId])
-  @@index([status])
-  @@map("purchases")
-}
-
-// ===== Accounts Receivable =====
-model AccountsReceivable {
-  id         String   @id @default(cuid())
-  businessId String
-  saleId     String   @unique
-  clientName String
-  clientRfc  String?
-  total      Decimal  @db.Decimal(12, 2)
-  balance    Decimal  @db.Decimal(12, 2)
-  dueDate    DateTime
-  status     String   @default("vigente")
-  createdAt  DateTime @default(now())
-
-  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  sale     Sale @relation(fields: [saleId], references: [id], onDelete: Cascade)
-
-  @@index([businessId])
-  @@index([status])
-  @@map("accounts_receivable")
-}
-
-// ===== Cash Registers =====
-model CashRegister {
-  id             String   @id @default(cuid())
-  businessId     String
-  locationId     String
-  date           DateTime
-  totalSales     Decimal  @db.Decimal(12, 2)
-  cashReported   Decimal  @db.Decimal(12, 2)
-  difference     Decimal  @db.Decimal(12, 2)
-  closed         Boolean  @default(false)
-  createdAt      DateTime @default(now())
-
-  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  location Location @relation(fields: [locationId], references: [id], onDelete: Restrict)
-
-  @@index([businessId])
-  @@index([date])
-  @@map("cash_registers")
 }
