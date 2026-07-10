@@ -7,19 +7,19 @@ export async function actionGetProducts(businessId: string, search?: string) {
     const products = await prisma.product.findMany({
       where: {
         businessId,
-        active: true,
-        OR: search
-          ? [
-              { name: { contains: search, mode: 'insensitive' } },
-              { clave: { contains: search, mode: 'insensitive' } }
-            ]
-          : undefined
+        active: true
       },
       orderBy: { name: 'asc' },
       take: 100
     })
 
-    return products
+    if (!search) return products
+
+    const searchLower = search.toLowerCase()
+    return products.filter(p =>
+      p.name.toLowerCase().includes(searchLower) ||
+      p.clave.toLowerCase().includes(searchLower)
+    )
   } catch (error) {
     console.error('Error fetching products:', error)
     return []
