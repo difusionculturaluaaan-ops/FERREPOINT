@@ -42,9 +42,10 @@ export default function Home() {
           <li>✅ Prisma ORM multi-tenant</li>
           <li>✅ Stack: Next.js 15 + React 18</li>
           <li>✅ API endpoints (POS, Productos)</li>
-          <li>🔄 Interfaz POS (carrito, cobro, ticket)</li>
-          <li>⏳ Bodega (órdenes de surtido)</li>
+          <li>✅ Interfaz POS (carrito, cobro, ticket)</li>
+          <li>🔄 Bodega (órdenes de surtido, checklist)</li>
           <li>⏳ Reportes (KPIs)</li>
+          <li>⏳ Inventario (CRUD productos)</li>
         </ul>
       </div>
 
@@ -68,23 +69,40 @@ export default function Home() {
         {isPending ? '⏳ Poblando BD...' : '🌱 Poblar BD con datos de demo'}
       </button>
 
-      <a
-        href="/pos"
-        style={{
-          display: 'block',
-          background: '#2B2F35',
-          color: '#fff',
-          padding: '12px 24px',
-          borderRadius: '8px',
-          textAlign: 'center',
-          textDecoration: 'none',
-          fontSize: '16px',
-          fontWeight: 'bold',
-          marginBottom: '2rem'
-        }}
-      >
-        📊 Ir al POS →
-      </a>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
+        <a
+          href="/pos"
+          style={{
+            display: 'block',
+            background: '#2B2F35',
+            color: '#fff',
+            padding: '12px 24px',
+            borderRadius: '8px',
+            textAlign: 'center',
+            textDecoration: 'none',
+            fontSize: '16px',
+            fontWeight: 'bold'
+          }}
+        >
+          📊 POS
+        </a>
+        <a
+          href="/bodega"
+          style={{
+            display: 'block',
+            background: '#E8610A',
+            color: '#fff',
+            padding: '12px 24px',
+            borderRadius: '8px',
+            textAlign: 'center',
+            textDecoration: 'none',
+            fontSize: '16px',
+            fontWeight: 'bold'
+          }}
+        >
+          🏭 Bodega
+        </a>
+      </div>
 
       <p style={{ fontSize: '12px', color: '#999', lineHeight: '1.6' }}>
         <strong>Credenciales de demo:</strong><br/>
