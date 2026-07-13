@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { actionGetSurtidoOrders, actionUpdateSurtidoItem, actionCompleteSurtidoOrder, actionGetBodegaStats } from '@/features/bodega/server'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 interface SurtidoItem {
   id: string
@@ -91,11 +92,11 @@ export default function BodegaPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#F8F9FA'
+        background: 'var(--bg-secondary)'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <h1 style={{ fontSize: '24px', color: '#202124' }}>Cargando contexto...</h1>
-          <a href="/" style={{ color: '#1A73E8', textDecoration: 'none' }}>
+          <h1 style={{ fontSize: '24px', color: 'var(--text-primary)' }}>Cargando contexto...</h1>
+          <a href="/" style={{ color: 'var(--accent-orange)', textDecoration: 'none' }}>
             Volver al inicio
           </a>
         </div>
@@ -106,11 +107,11 @@ export default function BodegaPage() {
   const filteredOrders = orders.filter(o => o.status === activeTab)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F8F9FA' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-secondary)' }}>
       {/* Header */}
       <div style={{
-        background: '#FFFFFF',
-        borderBottom: '1px solid #DADCE0',
+        background: 'var(--bg-primary)',
+        borderBottom: '1px solid var(--border-color)',
         padding: '1.5rem 2rem',
         display: 'flex',
         justifyContent: 'space-between',
@@ -119,22 +120,25 @@ export default function BodegaPage() {
         <h1 style={{
           fontSize: '28px',
           fontWeight: '600',
-          color: '#202124',
+          color: 'var(--text-primary)',
           margin: '0'
         }}>
           Bodega
         </h1>
-        <a
-          href="/"
-          style={{
-            color: '#1A73E8',
-            textDecoration: 'none',
-            fontWeight: '500',
-            fontSize: '14px'
-          }}
-        >
-          Volver al inicio
-        </a>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <ThemeToggle />
+          <a
+            href="/"
+            style={{
+              color: 'var(--accent-orange)',
+              textDecoration: 'none',
+              fontWeight: '500',
+              fontSize: '14px'
+            }}
+          >
+            Volver al inicio
+          </a>
+        </div>
       </div>
 
       {/* Stats */}
@@ -147,8 +151,8 @@ export default function BodegaPage() {
         margin: '0 auto'
       }}>
         <div style={{
-          background: '#FFFFFF',
-          border: '1px solid #DADCE0',
+          background: 'var(--bg-primary)',
+          border: '1px solid var(--border-color)',
           borderRadius: '4px',
           padding: '1.5rem',
           textAlign: 'center'
@@ -156,13 +160,13 @@ export default function BodegaPage() {
           <div style={{
             fontSize: '28px',
             fontWeight: '600',
-            color: '#EA4335'
+            color: 'var(--error)'
           }}>
             {stats.pending}
           </div>
           <div style={{
             fontSize: '12px',
-            color: '#5F6368',
+            color: 'var(--text-secondary)',
             marginTop: '0.5rem',
             textTransform: 'uppercase',
             letterSpacing: '0.5px'
@@ -171,8 +175,8 @@ export default function BodegaPage() {
           </div>
         </div>
         <div style={{
-          background: '#FFFFFF',
-          border: '1px solid #DADCE0',
+          background: 'var(--bg-primary)',
+          border: '1px solid var(--border-color)',
           borderRadius: '4px',
           padding: '1.5rem',
           textAlign: 'center'
@@ -180,13 +184,13 @@ export default function BodegaPage() {
           <div style={{
             fontSize: '28px',
             fontWeight: '600',
-            color: '#FBBC04'
+            color: 'var(--warning)'
           }}>
             {stats.inProgress}
           </div>
           <div style={{
             fontSize: '12px',
-            color: '#5F6368',
+            color: 'var(--text-secondary)',
             marginTop: '0.5rem',
             textTransform: 'uppercase',
             letterSpacing: '0.5px'
@@ -195,8 +199,8 @@ export default function BodegaPage() {
           </div>
         </div>
         <div style={{
-          background: '#FFFFFF',
-          border: '1px solid #DADCE0',
+          background: 'var(--bg-primary)',
+          border: '1px solid var(--border-color)',
           borderRadius: '4px',
           padding: '1.5rem',
           textAlign: 'center'
@@ -204,13 +208,13 @@ export default function BodegaPage() {
           <div style={{
             fontSize: '28px',
             fontWeight: '600',
-            color: '#34A853'
+            color: 'var(--success)'
           }}>
             {stats.completed}
           </div>
           <div style={{
             fontSize: '12px',
-            color: '#5F6368',
+            color: 'var(--text-secondary)',
             marginTop: '0.5rem',
             textTransform: 'uppercase',
             letterSpacing: '0.5px'
@@ -219,8 +223,8 @@ export default function BodegaPage() {
           </div>
         </div>
         <div style={{
-          background: '#FFFFFF',
-          border: '1px solid #DADCE0',
+          background: 'var(--bg-primary)',
+          border: '1px solid var(--border-color)',
           borderRadius: '4px',
           padding: '1.5rem',
           textAlign: 'center'
@@ -228,13 +232,13 @@ export default function BodegaPage() {
           <div style={{
             fontSize: '28px',
             fontWeight: '600',
-            color: '#1A73E8'
+            color: 'var(--accent-orange)'
           }}>
             {stats.total}
           </div>
           <div style={{
             fontSize: '12px',
-            color: '#5F6368',
+            color: 'var(--text-secondary)',
             marginTop: '0.5rem',
             textTransform: 'uppercase',
             letterSpacing: '0.5px'
@@ -259,9 +263,9 @@ export default function BodegaPage() {
             onClick={() => setActiveTab(tab)}
             style={{
               padding: '10px 16px',
-              background: activeTab === tab ? '#1A73E8' : '#FFFFFF',
-              color: activeTab === tab ? '#FFFFFF' : '#5F6368',
-              border: `1px solid ${activeTab === tab ? '#1A73E8' : '#DADCE0'}`,
+              background: activeTab === tab ? 'var(--accent-orange)' : 'var(--bg-primary)',
+              color: activeTab === tab ? 'var(--bg-primary)' : 'var(--text-secondary)',
+              border: `1px solid ${activeTab === tab ? 'var(--accent-orange)' : 'var(--border-color)'}`,
               borderRadius: '4px',
               cursor: 'pointer',
               fontWeight: '500',
@@ -270,12 +274,12 @@ export default function BodegaPage() {
             }}
             onMouseEnter={e => {
               if (activeTab !== tab) {
-                e.currentTarget.style.background = '#F8F9FA'
+                e.currentTarget.style.background = 'var(--bg-secondary)'
               }
             }}
             onMouseLeave={e => {
               if (activeTab !== tab) {
-                e.currentTarget.style.background = '#FFFFFF'
+                e.currentTarget.style.background = 'var(--bg-primary)'
               }
             }}
           >
@@ -300,7 +304,7 @@ export default function BodegaPage() {
           <div style={{
             textAlign: 'center',
             padding: '3rem',
-            color: '#5F6368'
+            color: 'var(--text-secondary)'
           }}>
             Cargando órdenes...
           </div>
@@ -308,7 +312,7 @@ export default function BodegaPage() {
           <div style={{
             textAlign: 'center',
             padding: '3rem',
-            color: '#5F6368'
+            color: 'var(--text-secondary)'
           }}>
             No hay órdenes para mostrar
           </div>
@@ -317,8 +321,8 @@ export default function BodegaPage() {
             <div
               key={order.id}
               style={{
-                background: '#FFFFFF',
-                border: '1px solid #DADCE0',
+                background: 'var(--bg-primary)',
+                border: '1px solid var(--border-color)',
                 borderRadius: '4px',
                 padding: '1.5rem'
               }}
@@ -330,19 +334,19 @@ export default function BodegaPage() {
                 alignItems: 'flex-start',
                 marginBottom: '1.5rem',
                 paddingBottom: '1rem',
-                borderBottom: '1px solid #DADCE0'
+                borderBottom: '1px solid var(--border-color)'
               }}>
                 <div>
                   <div style={{
                     fontSize: '16px',
                     fontWeight: '600',
-                    color: '#202124'
+                    color: 'var(--text-primary)'
                   }}>
                     Orden {order.sale?.folio || order.id.substring(0, 8)}
                   </div>
                   <div style={{
                     fontSize: '12px',
-                    color: '#5F6368',
+                    color: 'var(--text-secondary)',
                     marginTop: '0.25rem'
                   }}>
                     {new Date(order.createdAt).toLocaleString('es-MX')}
@@ -352,7 +356,7 @@ export default function BodegaPage() {
                   <div style={{
                     fontSize: '14px',
                     fontWeight: '600',
-                    color: '#1A73E8'
+                    color: 'var(--accent-orange)'
                   }}>
                     ${order.sale?.total.toFixed(2) || '0.00'}
                   </div>
@@ -398,10 +402,10 @@ export default function BodegaPage() {
                     <div
                       key={item.id}
                       style={{
-                        background: '#F8F9FA',
+                        background: 'var(--bg-secondary)',
                         padding: '1rem',
                         borderRadius: '4px',
-                        border: `1px solid ${isComplete ? '#34A853' : '#FBBC04'}`,
+                        border: `1px solid ${isComplete ? 'var(--success)' : 'var(--warning)'}`,
                         display: 'grid',
                         gridTemplateColumns: 'auto 1fr auto auto',
                         gap: '1rem',
@@ -412,7 +416,7 @@ export default function BodegaPage() {
                         style={{
                           fontSize: '20px',
                           fontWeight: '600',
-                          color: isComplete ? '#34A853' : '#FBBC04',
+                          color: isComplete ? 'var(--success)' : 'var(--warning)',
                           textAlign: 'center'
                         }}
                       >
@@ -423,13 +427,13 @@ export default function BodegaPage() {
                         <div style={{
                           fontSize: '14px',
                           fontWeight: '600',
-                          color: '#202124'
+                          color: 'var(--text-primary)'
                         }}>
                           {item.product.name}
                         </div>
                         <div style={{
                           fontSize: '12px',
-                          color: '#5F6368'
+                          color: 'var(--text-secondary)'
                         }}>
                           {item.product.clave}
                         </div>
@@ -438,14 +442,14 @@ export default function BodegaPage() {
                       <div style={{ textAlign: 'center' }}>
                         <div style={{
                           fontSize: '12px',
-                          color: '#5F6368'
+                          color: 'var(--text-secondary)'
                         }}>
                           Necesarios
                         </div>
                         <div style={{
                           fontSize: '18px',
                           fontWeight: '600',
-                          color: '#202124'
+                          color: 'var(--text-primary)'
                         }}>
                           {item.qty}
                         </div>
@@ -455,8 +459,8 @@ export default function BodegaPage() {
                         <button
                           onClick={() => handleQtyChange(item.id, Math.max(0, item.qtyPicked - 1))}
                           style={{
-                            background: '#1A73E8',
-                            color: '#FFFFFF',
+                            background: 'var(--accent-orange)',
+                            color: 'var(--bg-primary)',
                             border: 'none',
                             padding: '4px 8px',
                             borderRadius: '3px',
@@ -474,7 +478,7 @@ export default function BodegaPage() {
                             width: '50px',
                             padding: '4px',
                             textAlign: 'center',
-                            border: `2px solid ${isComplete ? '#34A853' : '#FBBC04'}`,
+                            border: `2px solid ${isComplete ? 'var(--success)' : 'var(--warning)'}`,
                             borderRadius: '3px',
                             fontSize: '14px',
                             fontWeight: '600'
@@ -483,8 +487,8 @@ export default function BodegaPage() {
                         <button
                           onClick={() => handleQtyChange(item.id, item.qtyPicked + 1)}
                           style={{
-                            background: '#1A73E8',
-                            color: '#FFFFFF',
+                            background: 'var(--accent-orange)',
+                            color: 'var(--bg-primary)',
                             border: 'none',
                             padding: '4px 8px',
                             borderRadius: '3px',
@@ -509,9 +513,9 @@ export default function BodegaPage() {
                     width: '100%',
                     padding: '12px',
                     background: order.items.every(i => i.qtyPicked >= i.qty)
-                      ? '#34A853'
-                      : '#DADCE0',
-                    color: '#FFFFFF',
+                      ? 'var(--success)'
+                      : 'var(--border-color)',
+                    color: 'var(--bg-primary)',
                     border: 'none',
                     borderRadius: '4px',
                     fontWeight: '600',
@@ -527,7 +531,7 @@ export default function BodegaPage() {
                   }}
                   onMouseLeave={e => {
                     if (order.items.every(i => i.qtyPicked >= i.qty)) {
-                      e.currentTarget.style.background = '#34A853'
+                      e.currentTarget.style.background = 'var(--success)'
                     }
                   }}
                 >

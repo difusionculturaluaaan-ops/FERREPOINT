@@ -1,6 +1,7 @@
 'use client'
 
 import { useTransition } from 'react'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 export default function Home() {
   const [isPending, startTransition] = useTransition()
@@ -25,19 +26,28 @@ export default function Home() {
   return (
     <main style={{
       minHeight: '100vh',
-      background: '#F8F9FA',
+      background: 'var(--bg-secondary)',
       padding: '2rem',
       display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center'
     }}>
+      <div style={{
+        position: 'absolute',
+        top: '2rem',
+        right: '2rem'
+      }}>
+        <ThemeToggle />
+      </div>
+
       <div style={{ maxWidth: '600px', width: '100%' }}>
         {/* Header */}
         <div style={{ marginBottom: '3rem' }}>
           <h1 style={{
             fontSize: '32px',
             fontWeight: '600',
-            color: '#202124',
+            color: 'var(--accent-orange)',
             margin: '0 0 0.5rem 0',
             letterSpacing: '-0.5px'
           }}>
@@ -45,7 +55,7 @@ export default function Home() {
           </h1>
           <p style={{
             fontSize: '16px',
-            color: '#5F6368',
+            color: 'var(--text-secondary)',
             margin: '0',
             fontWeight: '400'
           }}>
@@ -55,8 +65,8 @@ export default function Home() {
 
         {/* Status Card */}
         <div style={{
-          background: '#FFFFFF',
-          border: '1px solid #DADCE0',
+          background: 'var(--bg-primary)',
+          border: `1px solid var(--border-color)`,
           borderRadius: '8px',
           padding: '1.5rem',
           marginBottom: '2rem'
@@ -64,7 +74,7 @@ export default function Home() {
           <h2 style={{
             fontSize: '14px',
             fontWeight: '600',
-            color: '#202124',
+            color: 'var(--text-primary)',
             margin: '0 0 1rem 0',
             textTransform: 'uppercase',
             letterSpacing: '0.5px'
@@ -75,37 +85,37 @@ export default function Home() {
           <ul style={{
             fontSize: '14px',
             lineHeight: '2',
-            color: '#5F6368',
+            color: 'var(--text-secondary)',
             margin: '0',
             paddingLeft: '0',
             listStyle: 'none'
           }}>
             <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: '#34A853', fontWeight: 'bold' }}>✓</span>
+              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
               Base de datos (SQLite)
             </li>
             <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: '#34A853', fontWeight: 'bold' }}>✓</span>
+              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
               Prisma ORM multi-tenant
             </li>
             <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: '#34A853', fontWeight: 'bold' }}>✓</span>
+              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
               Stack Next.js 15 + React 18
             </li>
             <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: '#34A853', fontWeight: 'bold' }}>✓</span>
+              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
               Módulo POS (carrito, cobro)
             </li>
             <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: '#34A853', fontWeight: 'bold' }}>✓</span>
+              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
               Módulo Bodega (surtido)
             </li>
             <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: '#FBBC04', fontWeight: 'bold' }}>○</span>
+              <span style={{ color: 'var(--warning)', fontWeight: 'bold' }}>○</span>
               Módulo Reportes (KPIs)
             </li>
             <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: '#FBBC04', fontWeight: 'bold' }}>○</span>
+              <span style={{ color: 'var(--warning)', fontWeight: 'bold' }}>○</span>
               Módulo Inventario
             </li>
           </ul>
@@ -117,7 +127,7 @@ export default function Home() {
           disabled={isPending}
           style={{
             width: '100%',
-            background: '#1A73E8',
+            background: 'var(--accent-orange)',
             color: '#FFFFFF',
             border: 'none',
             padding: '12px 24px',
@@ -129,8 +139,8 @@ export default function Home() {
             marginBottom: '1rem',
             transition: 'background 0.2s'
           }}
-          onMouseEnter={e => !isPending && (e.currentTarget.style.background = '#1565C0')}
-          onMouseLeave={e => !isPending && (e.currentTarget.style.background = '#1A73E8')}
+          onMouseEnter={e => !isPending && (e.currentTarget.style.background = 'var(--accent-orange-dark)')}
+          onMouseLeave={e => !isPending && (e.currentTarget.style.background = 'var(--accent-orange)')}
         >
           {isPending ? 'Poblando base de datos...' : 'Preparar datos de demostración'}
         </button>
@@ -148,9 +158,9 @@ export default function Home() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: '#FFFFFF',
-              color: '#1A73E8',
-              border: '1px solid #DADCE0',
+              background: 'var(--bg-primary)',
+              color: 'var(--accent-orange)',
+              border: `1px solid var(--border-color)`,
               padding: '12px 24px',
               borderRadius: '4px',
               textAlign: 'center',
@@ -161,12 +171,10 @@ export default function Home() {
               cursor: 'pointer'
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = '#F8F9FA'
-              e.currentTarget.style.borderColor = '#1A73E8'
+              e.currentTarget.style.background = 'var(--bg-tertiary)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = '#FFFFFF'
-              e.currentTarget.style.borderColor = '#DADCE0'
+              e.currentTarget.style.background = 'var(--bg-primary)'
             }}
           >
             Punto de Venta
@@ -177,9 +185,9 @@ export default function Home() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: '#FFFFFF',
-              color: '#34A853',
-              border: '1px solid #DADCE0',
+              background: 'var(--bg-primary)',
+              color: 'var(--accent-orange)',
+              border: `1px solid var(--border-color)`,
               padding: '12px 24px',
               borderRadius: '4px',
               textAlign: 'center',
@@ -190,12 +198,10 @@ export default function Home() {
               cursor: 'pointer'
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = '#F8F9FA'
-              e.currentTarget.style.borderColor = '#34A853'
+              e.currentTarget.style.background = 'var(--bg-tertiary)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = '#FFFFFF'
-              e.currentTarget.style.borderColor = '#DADCE0'
+              e.currentTarget.style.background = 'var(--bg-primary)'
             }}
           >
             Bodega
@@ -204,15 +210,15 @@ export default function Home() {
 
         {/* Credentials */}
         <div style={{
-          background: '#FFF8DC',
-          border: '1px solid #F0E68C',
+          background: 'var(--bg-tertiary)',
+          border: `1px solid var(--border-color)`,
           borderRadius: '4px',
           padding: '1rem',
           fontSize: '13px',
-          color: '#5F6368',
+          color: 'var(--text-secondary)',
           lineHeight: '1.8'
         }}>
-          <strong style={{ color: '#202124', display: 'block', marginBottom: '0.5rem' }}>
+          <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '0.5rem' }}>
             Credenciales de demostración:
           </strong>
           Dueño: dueno@ferreteria.com / password123<br />

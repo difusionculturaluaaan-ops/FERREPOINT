@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { actionGetProducts, actionCreateSale } from '@/features/pos/server'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 interface Product {
   id: string
@@ -128,17 +129,17 @@ export default function POSPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#F8F9FA',
+        background: 'var(--bg-secondary)',
         padding: '2rem'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <h1 style={{ fontSize: '24px', color: '#202124', marginBottom: '0.5rem' }}>
+          <h1 style={{ fontSize: '24px', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
             Cargando contexto...
           </h1>
-          <p style={{ fontSize: '14px', color: '#5F6368', marginBottom: '2rem' }}>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '2rem' }}>
             Si esta página no carga, asegúrate de haber ejecutado el seed primero.
           </p>
-          <a href="/" style={{ color: '#1A73E8', textDecoration: 'none', fontWeight: '500' }}>
+          <a href="/" style={{ color: 'var(--accent-orange)', textDecoration: 'none', fontWeight: '500' }}>
             Volver al inicio
           </a>
         </div>
@@ -152,14 +153,14 @@ export default function POSPage() {
       gridTemplateColumns: '1fr 380px',
       gap: '0',
       height: '100vh',
-      background: '#F8F9FA'
+      background: 'var(--bg-secondary)'
     }}>
       {/* Products Section */}
-      <div style={{ display: 'flex', flexDirection: 'column', borderRight: '1px solid #DADCE0' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border-color)' }}>
         {/* Header */}
         <div style={{
-          background: '#FFFFFF',
-          borderBottom: '1px solid #DADCE0',
+          background: 'var(--bg-primary)',
+          borderBottom: '1px solid var(--border-color)',
           padding: '1.5rem',
           display: 'flex',
           justifyContent: 'space-between',
@@ -168,26 +169,29 @@ export default function POSPage() {
           <h1 style={{
             fontSize: '24px',
             fontWeight: '600',
-            color: '#202124',
+            color: 'var(--text-primary)',
             margin: '0'
           }}>
             Punto de Venta
           </h1>
-          <a
-            href="/"
-            style={{
-              fontSize: '13px',
-              color: '#1A73E8',
-              textDecoration: 'none',
-              fontWeight: '500'
-            }}
-          >
-            Volver
-          </a>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <ThemeToggle />
+            <a
+              href="/"
+              style={{
+                fontSize: '13px',
+                color: 'var(--accent-orange)',
+                textDecoration: 'none',
+                fontWeight: '500'
+              }}
+            >
+              Volver
+            </a>
+          </div>
         </div>
 
         {/* Search */}
-        <div style={{ padding: '1rem', background: '#FFFFFF', borderBottom: '1px solid #DADCE0' }}>
+        <div style={{ padding: '1rem', background: 'var(--bg-primary)', borderBottom: '1px solid var(--border-color)' }}>
           <input
             type="text"
             placeholder="Buscar por nombre o código..."
@@ -197,7 +201,7 @@ export default function POSPage() {
               width: '100%',
               padding: '10px 12px',
               fontSize: '14px',
-              border: '1px solid #DADCE0',
+              border: '1px solid var(--border-color)',
               borderRadius: '4px',
               boxSizing: 'border-box',
               fontFamily: 'inherit'
@@ -213,14 +217,14 @@ export default function POSPage() {
           gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
           gap: '1rem',
           padding: '1rem',
-          background: '#F8F9FA'
+          background: 'var(--bg-secondary)'
         }}>
           {isLoading ? (
-            <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#5F6368', padding: '2rem' }}>
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
               Cargando productos...
             </div>
           ) : products.length === 0 ? (
-            <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#5F6368', padding: '2rem' }}>
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
               No se encontraron productos
             </div>
           ) : (
@@ -229,8 +233,8 @@ export default function POSPage() {
                 key={product.id}
                 onClick={() => addToCart(product)}
                 style={{
-                  background: '#FFFFFF',
-                  border: '1px solid #DADCE0',
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--border-color)',
                   borderRadius: '4px',
                   padding: '1rem',
                   cursor: 'pointer',
@@ -239,18 +243,18 @@ export default function POSPage() {
                   fontFamily: 'inherit'
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = '#1A73E8'
-                  e.currentTarget.style.background = '#F8F9FA'
+                  e.currentTarget.style.borderColor = 'var(--accent-orange)'
+                  e.currentTarget.style.background = 'var(--bg-secondary)'
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = '#DADCE0'
-                  e.currentTarget.style.background = '#FFFFFF'
+                  e.currentTarget.style.borderColor = 'var(--border-color)'
+                  e.currentTarget.style.background = 'var(--bg-primary)'
                 }}
               >
                 <div style={{
                   fontSize: '13px',
                   fontWeight: '600',
-                  color: '#202124',
+                  color: 'var(--text-primary)',
                   marginBottom: '0.25rem',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -260,7 +264,7 @@ export default function POSPage() {
                 </div>
                 <div style={{
                   fontSize: '11px',
-                  color: '#5F6368',
+                  color: 'var(--text-secondary)',
                   marginBottom: '0.5rem'
                 }}>
                   {product.clave}
@@ -270,19 +274,19 @@ export default function POSPage() {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   paddingTop: '0.5rem',
-                  borderTop: '1px solid #DADCE0'
+                  borderTop: '1px solid var(--border-color)'
                 }}>
                   <span style={{
                     fontSize: '14px',
                     fontWeight: '600',
-                    color: '#1A73E8'
+                    color: 'var(--accent-orange)'
                   }}>
                     ${product.price.toFixed(2)}
                   </span>
                   <span style={{
                     fontSize: '11px',
                     background: '#E8F0FE',
-                    color: '#1A73E8',
+                    color: 'var(--accent-orange)',
                     padding: '2px 6px',
                     borderRadius: '3px',
                     fontWeight: '500'
@@ -298,7 +302,7 @@ export default function POSPage() {
 
       {/* Cart Section */}
       <div style={{
-        background: '#FFFFFF',
+        background: 'var(--bg-primary)',
         display: 'flex',
         flexDirection: 'column',
         height: '100%'
@@ -306,20 +310,20 @@ export default function POSPage() {
         {/* Cart Header */}
         <div style={{
           padding: '1.5rem',
-          borderBottom: '1px solid #DADCE0',
-          background: '#FFFFFF'
+          borderBottom: '1px solid var(--border-color)',
+          background: 'var(--bg-primary)'
         }}>
           <h2 style={{
             fontSize: '16px',
             fontWeight: '600',
-            color: '#202124',
+            color: 'var(--text-primary)',
             margin: '0'
           }}>
             Carrito
           </h2>
           <div style={{
             fontSize: '13px',
-            color: '#5F6368',
+            color: 'var(--text-secondary)',
             marginTop: '0.25rem'
           }}>
             {cart.length} artículo{cart.length !== 1 ? 's' : ''}
@@ -334,7 +338,7 @@ export default function POSPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#5F6368',
+              color: 'var(--text-secondary)',
               fontSize: '14px'
             }}>
               Carrito vacío
@@ -345,8 +349,8 @@ export default function POSPage() {
                 <div
                   key={item.product.id}
                   style={{
-                    background: '#F8F9FA',
-                    border: '1px solid #DADCE0',
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-color)',
                     borderRadius: '4px',
                     padding: '0.75rem',
                     fontSize: '13px'
@@ -354,7 +358,7 @@ export default function POSPage() {
                 >
                   <div style={{
                     fontWeight: '600',
-                    color: '#202124',
+                    color: 'var(--text-primary)',
                     marginBottom: '0.5rem',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -371,7 +375,7 @@ export default function POSPage() {
                     <button
                       onClick={() => updateQty(item.product.id, item.qty - 1)}
                       style={{
-                        background: '#1A73E8',
+                        background: 'var(--accent-orange)',
                         color: '#fff',
                         border: 'none',
                         padding: '2px 6px',
@@ -392,14 +396,14 @@ export default function POSPage() {
                         padding: '2px 4px',
                         textAlign: 'center',
                         fontSize: '12px',
-                        border: '1px solid #DADCE0',
+                        border: '1px solid var(--border-color)',
                         borderRadius: '3px'
                       }}
                     />
                     <button
                       onClick={() => updateQty(item.product.id, item.qty + 1)}
                       style={{
-                        background: '#1A73E8',
+                        background: 'var(--accent-orange)',
                         color: '#fff',
                         border: 'none',
                         padding: '2px 6px',
@@ -431,11 +435,11 @@ export default function POSPage() {
                   <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
-                    color: '#5F6368',
+                    color: 'var(--text-secondary)',
                     fontSize: '12px'
                   }}>
                     <span>${item.product.price.toFixed(2)} × {item.qty}</span>
-                    <span style={{ fontWeight: '600', color: '#202124' }}>
+                    <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
                       ${(item.product.price * item.qty).toFixed(2)}
                     </span>
                   </div>
@@ -448,8 +452,8 @@ export default function POSPage() {
         {/* Totals */}
         <div style={{
           padding: '1rem',
-          borderTop: '1px solid #DADCE0',
-          background: '#FFFFFF',
+          borderTop: '1px solid var(--border-color)',
+          background: 'var(--bg-primary)',
           display: 'flex',
           flexDirection: 'column',
           gap: '0.75rem'
@@ -458,7 +462,7 @@ export default function POSPage() {
             display: 'flex',
             justifyContent: 'space-between',
             fontSize: '13px',
-            color: '#5F6368'
+            color: 'var(--text-secondary)'
           }}>
             <span>Subtotal</span>
             <span>${subtotal.toFixed(2)}</span>
@@ -467,7 +471,7 @@ export default function POSPage() {
             display: 'flex',
             justifyContent: 'space-between',
             fontSize: '13px',
-            color: '#5F6368'
+            color: 'var(--text-secondary)'
           }}>
             <span>IVA (16%)</span>
             <span>${iva.toFixed(2)}</span>
@@ -477,19 +481,19 @@ export default function POSPage() {
             justifyContent: 'space-between',
             fontSize: '15px',
             fontWeight: '600',
-            color: '#202124',
+            color: 'var(--text-primary)',
             paddingTop: '0.75rem',
-            borderTop: '1px solid #DADCE0'
+            borderTop: '1px solid var(--border-color)'
           }}>
             <span>Total</span>
-            <span style={{ color: '#1A73E8' }}>${total.toFixed(2)}</span>
+            <span style={{ color: 'var(--accent-orange)' }}>${total.toFixed(2)}</span>
           </div>
 
           <button
             onClick={handleCheckout}
             disabled={cart.length === 0 || isCreatingSale}
             style={{
-              background: cart.length === 0 ? '#DADCE0' : '#34A853',
+              background: cart.length === 0 ? 'var(--border-color)' : 'var(--success)',
               color: '#fff',
               border: 'none',
               padding: '12px',
@@ -501,7 +505,7 @@ export default function POSPage() {
               transition: 'background 0.2s'
             }}
             onMouseEnter={e => cart.length > 0 && (e.currentTarget.style.background = '#2D7A3A')}
-            onMouseLeave={e => cart.length > 0 && (e.currentTarget.style.background = '#34A853')}
+            onMouseLeave={e => cart.length > 0 && (e.currentTarget.style.background = 'var(--success)')}
           >
             {isCreatingSale ? 'Procesando transacción...' : 'Cobrar'}
           </button>
