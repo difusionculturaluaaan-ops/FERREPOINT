@@ -222,10 +222,11 @@ export default function POSPage() {
           flex: 1,
           overflow: 'auto',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-          gap: '1rem',
-          padding: '1rem',
-          background: 'var(--bg-secondary)'
+          gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+          gap: '0.75rem',
+          padding: '0.75rem',
+          background: 'var(--bg-secondary)',
+          autoRows: 'max-content'
         }}>
           {isLoading ? (
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
@@ -264,13 +265,13 @@ export default function POSPage() {
                 {/* Product Image */}
                 <div style={{
                   width: '100%',
-                  height: '120px',
+                  height: '100px',
                   background: 'var(--bg-secondary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: '0.5rem',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  borderRadius: '4px 4px 0 0'
                 }}>
                   {product.image?.imageUrl ? (
                     <img
@@ -288,9 +289,10 @@ export default function POSPage() {
                     />
                   ) : (
                     <div style={{
-                      fontSize: '12px',
+                      fontSize: '11px',
                       color: 'var(--text-secondary)',
-                      textAlign: 'center'
+                      textAlign: 'center',
+                      padding: '0.5rem'
                     }}>
                       Sin imagen
                     </div>
@@ -298,22 +300,26 @@ export default function POSPage() {
                 </div>
 
                 {/* Product Info */}
-                <div style={{ padding: '0.75rem' }}>
+                <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                   <div style={{
-                    fontSize: '12px',
+                    fontSize: '11px',
                     fontWeight: '600',
                     color: 'var(--text-primary)',
-                    marginBottom: '0.25rem',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    lineHeight: '1.2'
                   }}>
                     {product.name}
                   </div>
                   <div style={{
-                    fontSize: '10px',
+                    fontSize: '9px',
                     color: 'var(--text-secondary)',
-                    marginBottom: '0.5rem'
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
                   }}>
                     {product.clave}
                   </div>
@@ -321,23 +327,26 @@ export default function POSPage() {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    paddingTop: '0.5rem',
-                    borderTop: '1px solid var(--border-color)'
+                    paddingTop: '0.35rem',
+                    borderTop: '1px solid var(--border-color)',
+                    gap: '0.25rem'
                   }}>
                     <span style={{
-                      fontSize: '13px',
+                      fontSize: '12px',
                       fontWeight: '600',
-                      color: 'var(--accent-orange)'
+                      color: 'var(--accent-orange)',
+                      flex: 1
                     }}>
                       ${product.price.toFixed(2)}
                     </span>
                     <span style={{
-                      fontSize: '10px',
+                      fontSize: '9px',
                       background: 'var(--bg-secondary)',
                       color: 'var(--accent-orange)',
-                      padding: '2px 6px',
-                      borderRadius: '3px',
-                      fontWeight: '500'
+                      padding: '1px 4px',
+                      borderRadius: '2px',
+                      fontWeight: '500',
+                      whiteSpace: 'nowrap'
                     }}>
                       {product.stock}
                     </span>
