@@ -28,11 +28,45 @@ export interface Product {
   name: string
   category: string
   price: number
+  costPrice: number
+  margin: number
   stock: number
   minStock: number
   unit: string
   businessId: string
   locationId?: string
+  image?: ProductImage
+  supplier?: Supplier
+}
+
+export interface ProductImage {
+  id: string
+  name: string
+  category: string
+  imageUrl: string
+}
+
+export interface Supplier {
+  id: string
+  name: string
+  contact?: string
+  email?: string
+  phone?: string
+  address?: string
+  businessId: string
+  products?: Product[]
+}
+
+export interface StockMovement {
+  id: string
+  businessId: string
+  productId: string
+  type: 'entrada' | 'salida' | 'ajuste'
+  qty: number
+  reason?: string
+  reference?: string
+  createdAt: Date
+  product?: Product
 }
 
 // Sales

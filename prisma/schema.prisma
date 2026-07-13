@@ -14,11 +14,13 @@ model Business {
   plan      String   @default("starter")
   createdAt DateTime @default(now())
 
-  locations         Location[]
-  users             User[]
-  products          Product[]
-  sales             Sale[]
-  surtidoOrders     SurtidoOrder[]
+  locations      Location[]
+  users          User[]
+  products       Product[]
+  sales          Sale[]
+  surtidoOrders  SurtidoOrder[]
+  suppliers      Supplier[]
+  stockMovements StockMovement[]
 
   @@map("businesses")
 }
@@ -72,30 +74,73 @@ model ProductImage {
   @@map("product_images")
 }
 
+model Supplier {
+  id         String   @id @default(cuid())
+  businessId String
+  name       String
+  contact    String?
+  email      String?
+  phone      String?
+  address    String?
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@index([businessId])
+  @@map("suppliers")
+}
+
 model Product {
   id         String   @id @default(cuid())
   businessId String
   locationId String?
   imageId    String?
+  supplierId String?
   clave      String
   name       String
   category   String
+  costPrice  Float    @default(0)
   price      Float
+  margin     Float    @default(0)
   stock      Int
   minStock   Int      @default(0)
   unit       String
   active     Boolean  @default(true)
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   location Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
   image    ProductImage? @relation(fields: [imageId], references: [id], onDelete: SetNull)
+  supplier Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   saleItems SaleItem[]
   surtidoItems SurtidoItem[]
+  stockMovements StockMovement[]
 
   @@unique([businessId, clave])
   @@index([businessId])
   @@map("products")
+}
+
+model StockMovement {
+  id        String   @id @default(cuid())
+  businessId String
+  productId String
+  type      String   // 'entrada' | 'salida' | 'ajuste'
+  qty       Int
+  reason    String?
+  reference String?
+  createdAt DateTime @default(now())
+  createdBy String?
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  product  Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([productId])
+  @@index([createdAt])
+  @@map("stock_movements")
 }
 
 model Sale {

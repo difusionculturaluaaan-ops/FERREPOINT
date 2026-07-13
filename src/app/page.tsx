@@ -115,8 +115,8 @@ export default function Home() {
               Módulo Reportes (KPIs)
             </li>
             <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: 'var(--warning)', fontWeight: 'bold' }}>○</span>
-              Módulo Inventario
+              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
+              Módulo Inventario (costos, márgenes, stock)
             </li>
           </ul>
         </div>
@@ -148,7 +148,7 @@ export default function Home() {
         {/* Navigation Buttons */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          gridTemplateColumns: '1fr 1fr 1fr',
           gap: '1rem',
           marginBottom: '2rem'
         }}>
@@ -205,6 +205,33 @@ export default function Home() {
             }}
           >
             Bodega
+          </a>
+          <a
+            href="/inventario"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'var(--bg-primary)',
+              color: 'var(--accent-orange)',
+              border: `1px solid var(--border-color)`,
+              padding: '12px 24px',
+              borderRadius: '4px',
+              textAlign: 'center',
+              textDecoration: 'none',
+              fontSize: '16px',
+              fontWeight: '500',
+              transition: 'all 0.2s',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'var(--bg-tertiary)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'var(--bg-primary)'
+            }}
+          >
+            Inventario
           </a>
         </div>
 
