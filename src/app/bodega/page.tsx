@@ -62,7 +62,7 @@ export default function BodegaPage() {
   const loadOrders = async () => {
     setIsLoading(true)
     const result = await actionGetSurtidoOrders(businessId!, locationId!, activeTab)
-    setOrders(result)
+    setOrders(result as any)
     setIsLoading(false)
   }
 

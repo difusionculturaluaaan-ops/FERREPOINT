@@ -226,8 +226,8 @@ export default function POSPage() {
           gap: '0.75rem',
           padding: '0.75rem',
           background: 'var(--bg-secondary)',
-          autoRows: 'max-content'
-        }}>
+          gridAutoRows: 'max-content'
+        } as React.CSSProperties}>
           {isLoading ? (
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
               Cargando productos...

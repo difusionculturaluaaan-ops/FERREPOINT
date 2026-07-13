@@ -35,8 +35,8 @@ export async function actionUpdateSurtidoItem(
   try {
     const item = await prisma.surtidoItem.update({
       where: { id: surtidoItemId },
-      data: { qtyPicked },
-      include: { surtidoOrder: true }
+      data: { qtyPicked } as any,
+      include: { order: true }
     })
 
     return { success: true, item }
