@@ -78,7 +78,7 @@ export default function BodegaPage() {
   const handleCompleteOrder = async (orderId: string) => {
     const result = await actionCompleteSurtidoOrder(orderId)
     if (result.success) {
-      alert(result.message)
+      alert('Orden completada exitosamente')
       await loadOrders()
       await loadStats()
     }
@@ -86,11 +86,19 @@ export default function BodegaPage() {
 
   if (!businessId || !locationId) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <h1>⏳ Cargando contexto...</h1>
-        <a href="/" style={{ color: '#E8610A', textDecoration: 'underline' }}>
-          Volver al inicio
-        </a>
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#F8F9FA'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ fontSize: '24px', color: '#202124' }}>Cargando contexto...</h1>
+          <a href="/" style={{ color: '#1A73E8', textDecoration: 'none' }}>
+            Volver al inicio
+          </a>
+        </div>
       </div>
     )
   }
@@ -98,224 +106,398 @@ export default function BodegaPage() {
   const filteredOrders = orders.filter(o => o.status === activeTab)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f5f5', padding: '1rem' }}>
+    <div style={{ minHeight: '100vh', background: '#F8F9FA' }}>
       {/* Header */}
-      <div style={{ background: '#fff', padding: '1.5rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h1 style={{ fontSize: '28px', margin: 0 }}>🏭 Bodega</h1>
-          <a
-            href="/pos"
-            style={{
-              background: '#2B2F35',
-              color: '#fff',
-              padding: '10px 20px',
-              borderRadius: '6px',
-              textDecoration: 'none',
-              fontSize: '14px',
-              fontWeight: 'bold'
-            }}
-          >
-            ← Volver al POS
-          </a>
-        </div>
+      <div style={{
+        background: '#FFFFFF',
+        borderBottom: '1px solid #DADCE0',
+        padding: '1.5rem 2rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <h1 style={{
+          fontSize: '28px',
+          fontWeight: '600',
+          color: '#202124',
+          margin: '0'
+        }}>
+          Bodega
+        </h1>
+        <a
+          href="/"
+          style={{
+            color: '#1A73E8',
+            textDecoration: 'none',
+            fontWeight: '500',
+            fontSize: '14px'
+          }}
+        >
+          Volver al inicio
+        </a>
+      </div>
 
-        {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-          <div style={{ background: '#FFF3E0', padding: '1rem', borderRadius: '6px', textAlign: 'center' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#E8610A' }}>{stats.pending}</div>
-            <div style={{ fontSize: '12px', color: '#666' }}>Pendientes</div>
+      {/* Stats */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, 1fr)',
+        gap: '1.5rem',
+        padding: '2rem',
+        maxWidth: '1400px',
+        margin: '0 auto'
+      }}>
+        <div style={{
+          background: '#FFFFFF',
+          border: '1px solid #DADCE0',
+          borderRadius: '4px',
+          padding: '1.5rem',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            fontSize: '28px',
+            fontWeight: '600',
+            color: '#EA4335'
+          }}>
+            {stats.pending}
           </div>
-          <div style={{ background: '#E3F2FD', padding: '1rem', borderRadius: '6px', textAlign: 'center' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1976D2' }}>{stats.inProgress}</div>
-            <div style={{ fontSize: '12px', color: '#666' }}>En Proceso</div>
+          <div style={{
+            fontSize: '12px',
+            color: '#5F6368',
+            marginTop: '0.5rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px'
+          }}>
+            Pendientes
           </div>
-          <div style={{ background: '#E8F5E9', padding: '1rem', borderRadius: '6px', textAlign: 'center' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#388E3C' }}>{stats.completed}</div>
-            <div style={{ fontSize: '12px', color: '#666' }}>Completadas</div>
+        </div>
+        <div style={{
+          background: '#FFFFFF',
+          border: '1px solid #DADCE0',
+          borderRadius: '4px',
+          padding: '1.5rem',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            fontSize: '28px',
+            fontWeight: '600',
+            color: '#FBBC04'
+          }}>
+            {stats.inProgress}
           </div>
-          <div style={{ background: '#F3E5F5', padding: '1rem', borderRadius: '6px', textAlign: 'center' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#7B1FA2' }}>{stats.total}</div>
-            <div style={{ fontSize: '12px', color: '#666' }}>Total</div>
+          <div style={{
+            fontSize: '12px',
+            color: '#5F6368',
+            marginTop: '0.5rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px'
+          }}>
+            En Proceso
+          </div>
+        </div>
+        <div style={{
+          background: '#FFFFFF',
+          border: '1px solid #DADCE0',
+          borderRadius: '4px',
+          padding: '1.5rem',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            fontSize: '28px',
+            fontWeight: '600',
+            color: '#34A853'
+          }}>
+            {stats.completed}
+          </div>
+          <div style={{
+            fontSize: '12px',
+            color: '#5F6368',
+            marginTop: '0.5rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px'
+          }}>
+            Completadas
+          </div>
+        </div>
+        <div style={{
+          background: '#FFFFFF',
+          border: '1px solid #DADCE0',
+          borderRadius: '4px',
+          padding: '1.5rem',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            fontSize: '28px',
+            fontWeight: '600',
+            color: '#1A73E8'
+          }}>
+            {stats.total}
+          </div>
+          <div style={{
+            fontSize: '12px',
+            color: '#5F6368',
+            marginTop: '0.5rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px'
+          }}>
+            Total
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+      <div style={{
+        display: 'flex',
+        gap: '1rem',
+        padding: '0 2rem',
+        maxWidth: '1400px',
+        margin: '0 auto',
+        marginBottom: '2rem'
+      }}>
         {(['pendiente', 'en_proceso', 'completado'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             style={{
-              padding: '10px 20px',
-              background: activeTab === tab ? '#E8610A' : '#fff',
-              color: activeTab === tab ? '#fff' : '#666',
-              border: 'none',
-              borderRadius: '6px',
+              padding: '10px 16px',
+              background: activeTab === tab ? '#1A73E8' : '#FFFFFF',
+              color: activeTab === tab ? '#FFFFFF' : '#5F6368',
+              border: `1px solid ${activeTab === tab ? '#1A73E8' : '#DADCE0'}`,
+              borderRadius: '4px',
               cursor: 'pointer',
-              fontWeight: 'bold',
-              fontSize: '14px'
+              fontWeight: '500',
+              fontSize: '14px',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={e => {
+              if (activeTab !== tab) {
+                e.currentTarget.style.background = '#F8F9FA'
+              }
+            }}
+            onMouseLeave={e => {
+              if (activeTab !== tab) {
+                e.currentTarget.style.background = '#FFFFFF'
+              }
             }}
           >
-            {tab === 'pendiente' && '⏳ Pendientes'}
-            {tab === 'en_proceso' && '🔄 En Proceso'}
-            {tab === 'completado' && '✅ Completadas'}
+            {tab === 'pendiente' && 'Pendientes'}
+            {tab === 'en_proceso' && 'En Proceso'}
+            {tab === 'completado' && 'Completadas'}
           </button>
         ))}
       </div>
 
       {/* Orders List */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div style={{
+        padding: '0 2rem',
+        maxWidth: '1400px',
+        margin: '0 auto',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1.5rem',
+        marginBottom: '2rem'
+      }}>
         {isLoading ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>
+          <div style={{
+            textAlign: 'center',
+            padding: '3rem',
+            color: '#5F6368'
+          }}>
             Cargando órdenes...
           </div>
         ) : filteredOrders.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>
-            No hay órdenes {activeTab === 'pendiente' ? 'pendientes' : activeTab === 'en_proceso' ? 'en proceso' : 'completadas'}
+          <div style={{
+            textAlign: 'center',
+            padding: '3rem',
+            color: '#5F6368'
+          }}>
+            No hay órdenes para mostrar
           </div>
         ) : (
           filteredOrders.map(order => (
             <div
               key={order.id}
               style={{
-                background: '#fff',
-                padding: '1.5rem',
-                borderRadius: '8px',
-                border: `2px solid ${
-                  order.status === 'pendiente'
-                    ? '#FFB74D'
-                    : order.status === 'en_proceso'
-                    ? '#64B5F6'
-                    : '#81C784'
-                }`
+                background: '#FFFFFF',
+                border: '1px solid #DADCE0',
+                borderRadius: '4px',
+                padding: '1.5rem'
               }}
             >
               {/* Order Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: '1.5rem',
+                paddingBottom: '1rem',
+                borderBottom: '1px solid #DADCE0'
+              }}>
                 <div>
-                  <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
-                    {order.sale?.folio || `Orden ${order.id.substring(0, 8)}`}
+                  <div style={{
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: '#202124'
+                  }}>
+                    Orden {order.sale?.folio || order.id.substring(0, 8)}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#999' }}>
-                    {new Date(order.createdAt).toLocaleTimeString('es-MX', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#5F6368',
+                    marginTop: '0.25rem'
+                  }}>
+                    {new Date(order.createdAt).toLocaleString('es-MX')}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#E8610A' }}>
-                    ${order.sale?.total.toFixed(2) || 'N/A'}
+                  <div style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#1A73E8'
+                  }}>
+                    ${order.sale?.total.toFixed(2) || '0.00'}
                   </div>
                   <div
                     style={{
                       fontSize: '12px',
                       padding: '4px 8px',
-                      borderRadius: '4px',
+                      borderRadius: '3px',
+                      marginTop: '0.5rem',
+                      fontWeight: '500',
+                      display: 'inline-block',
                       background:
                         order.status === 'pendiente'
-                          ? '#FFF3E0'
+                          ? '#FCEAA3'
                           : order.status === 'en_proceso'
                           ? '#E3F2FD'
                           : '#E8F5E9',
                       color:
                         order.status === 'pendiente'
-                          ? '#E8610A'
+                          ? '#9D6C1D'
                           : order.status === 'en_proceso'
-                          ? '#1976D2'
-                          : '#388E3C',
-                      fontWeight: 'bold'
+                          ? '#1565C0'
+                          : '#2E7D32'
                     }}
                   >
-                    {order.status === 'pendiente' && '⏳ Pendiente'}
-                    {order.status === 'en_proceso' && '🔄 En Proceso'}
-                    {order.status === 'completado' && '✅ Completado'}
+                    {order.status === 'pendiente' && 'Pendiente'}
+                    {order.status === 'en_proceso' && 'En Proceso'}
+                    {order.status === 'completado' && 'Completado'}
                   </div>
                 </div>
               </div>
 
               {/* Items */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
-                {order.items.map(item => (
-                  <div
-                    key={item.id}
-                    style={{
-                      background: '#f9f9f9',
-                      padding: '0.75rem',
-                      borderRadius: '6px',
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 100px 100px',
-                      gap: '1rem',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontSize: '14px', fontWeight: 'bold' }}>
-                        {item.product.name}
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#999' }}>
-                        {item.product.clave}
-                      </div>
-                    </div>
-
-                    {/* Required vs Picked */}
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: '12px', color: '#666' }}>Necesarios</div>
-                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#E8610A' }}>
-                        {item.qty}
-                      </div>
-                    </div>
-
-                    {/* Qty Picker */}
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <button
-                        onClick={() => handleQtyChange(item.id, Math.max(0, item.qtyPicked - 1))}
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem',
+                marginBottom: '1.5rem'
+              }}>
+                {order.items.map(item => {
+                  const isComplete = item.qtyPicked >= item.qty
+                  return (
+                    <div
+                      key={item.id}
+                      style={{
+                        background: '#F8F9FA',
+                        padding: '1rem',
+                        borderRadius: '4px',
+                        border: `1px solid ${isComplete ? '#34A853' : '#FBBC04'}`,
+                        display: 'grid',
+                        gridTemplateColumns: 'auto 1fr auto auto',
+                        gap: '1rem',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <div
                         style={{
-                          background: '#E8610A',
-                          color: '#fff',
-                          border: 'none',
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontWeight: 'bold'
+                          fontSize: '20px',
+                          fontWeight: '600',
+                          color: isComplete ? '#34A853' : '#FBBC04',
+                          textAlign: 'center'
                         }}
                       >
-                        −
-                      </button>
-                      <input
-                        type="number"
-                        value={item.qtyPicked}
-                        onChange={e => handleQtyChange(item.id, parseInt(e.target.value) || 0)}
-                        style={{
-                          width: '50px',
-                          padding: '4px',
-                          textAlign: 'center',
-                          border: `2px solid ${
-                            item.qtyPicked >= item.qty ? '#388E3C' : '#FFB74D'
-                          }`,
-                          borderRadius: '4px',
+                        {isComplete ? '✓' : '○'}
+                      </div>
+
+                      <div>
+                        <div style={{
                           fontSize: '14px',
-                          fontWeight: 'bold'
-                        }}
-                      />
-                      <button
-                        onClick={() => handleQtyChange(item.id, item.qtyPicked + 1)}
-                        style={{
-                          background: '#E8610A',
-                          color: '#fff',
-                          border: 'none',
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontWeight: 'bold'
-                        }}
-                      >
-                        +
-                      </button>
+                          fontWeight: '600',
+                          color: '#202124'
+                        }}>
+                          {item.product.name}
+                        </div>
+                        <div style={{
+                          fontSize: '12px',
+                          color: '#5F6368'
+                        }}>
+                          {item.product.clave}
+                        </div>
+                      </div>
+
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                          fontSize: '12px',
+                          color: '#5F6368'
+                        }}>
+                          Necesarios
+                        </div>
+                        <div style={{
+                          fontSize: '18px',
+                          fontWeight: '600',
+                          color: '#202124'
+                        }}>
+                          {item.qty}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <button
+                          onClick={() => handleQtyChange(item.id, Math.max(0, item.qtyPicked - 1))}
+                          style={{
+                            background: '#1A73E8',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            padding: '4px 8px',
+                            borderRadius: '3px',
+                            cursor: 'pointer',
+                            fontWeight: '600'
+                          }}
+                        >
+                          −
+                        </button>
+                        <input
+                          type="number"
+                          value={item.qtyPicked}
+                          onChange={e => handleQtyChange(item.id, parseInt(e.target.value) || 0)}
+                          style={{
+                            width: '50px',
+                            padding: '4px',
+                            textAlign: 'center',
+                            border: `2px solid ${isComplete ? '#34A853' : '#FBBC04'}`,
+                            borderRadius: '3px',
+                            fontSize: '14px',
+                            fontWeight: '600'
+                          }}
+                        />
+                        <button
+                          onClick={() => handleQtyChange(item.id, item.qtyPicked + 1)}
+                          style={{
+                            background: '#1A73E8',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            padding: '4px 8px',
+                            borderRadius: '3px',
+                            cursor: 'pointer',
+                            fontWeight: '600'
+                          }}
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
 
               {/* Complete Button */}
@@ -327,18 +509,29 @@ export default function BodegaPage() {
                     width: '100%',
                     padding: '12px',
                     background: order.items.every(i => i.qtyPicked >= i.qty)
-                      ? '#388E3C'
-                      : '#ccc',
-                    color: '#fff',
+                      ? '#34A853'
+                      : '#DADCE0',
+                    color: '#FFFFFF',
                     border: 'none',
-                    borderRadius: '6px',
-                    fontWeight: 'bold',
+                    borderRadius: '4px',
+                    fontWeight: '600',
                     cursor: order.items.every(i => i.qtyPicked >= i.qty)
                       ? 'pointer'
-                      : 'not-allowed'
+                      : 'not-allowed',
+                    fontSize: '14px'
+                  }}
+                  onMouseEnter={e => {
+                    if (order.items.every(i => i.qtyPicked >= i.qty)) {
+                      e.currentTarget.style.background = '#2D7A3A'
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (order.items.every(i => i.qtyPicked >= i.qty)) {
+                      e.currentTarget.style.background = '#34A853'
+                    }
                   }}
                 >
-                  ✅ Completar Orden
+                  Completar Orden
                 </button>
               )}
             </div>

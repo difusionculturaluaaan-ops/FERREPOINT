@@ -123,214 +123,387 @@ export default function POSPage() {
 
   if (!businessId || !locationId || !vendorId) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <h1>⏳ Cargando contexto...</h1>
-        <p>Si esta página no carga, asegúrate de haber ejecutado el seed primero.</p>
-        <a href="/" style={{ color: '#E8610A', textDecoration: 'underline' }}>
-          Volver al inicio
-        </a>
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#F8F9FA',
+        padding: '2rem'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ fontSize: '24px', color: '#202124', marginBottom: '0.5rem' }}>
+            Cargando contexto...
+          </h1>
+          <p style={{ fontSize: '14px', color: '#5F6368', marginBottom: '2rem' }}>
+            Si esta página no carga, asegúrate de haber ejecutado el seed primero.
+          </p>
+          <a href="/" style={{ color: '#1A73E8', textDecoration: 'none', fontWeight: '500' }}>
+            Volver al inicio
+          </a>
+        </div>
       </div>
     )
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '1rem', height: '100vh', padding: '1rem', background: '#f5f5f5' }}>
-      {/* Products side */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ background: '#fff', padding: '1rem', borderRadius: '8px' }}>
-          <h1 style={{ fontSize: '24px', marginBottom: '1rem' }}>📊 POS</h1>
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: '1fr 380px',
+      gap: '0',
+      height: '100vh',
+      background: '#F8F9FA'
+    }}>
+      {/* Products Section */}
+      <div style={{ display: 'flex', flexDirection: 'column', borderRight: '1px solid #DADCE0' }}>
+        {/* Header */}
+        <div style={{
+          background: '#FFFFFF',
+          borderBottom: '1px solid #DADCE0',
+          padding: '1.5rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <h1 style={{
+            fontSize: '24px',
+            fontWeight: '600',
+            color: '#202124',
+            margin: '0'
+          }}>
+            Punto de Venta
+          </h1>
+          <a
+            href="/"
+            style={{
+              fontSize: '13px',
+              color: '#1A73E8',
+              textDecoration: 'none',
+              fontWeight: '500'
+            }}
+          >
+            Volver
+          </a>
+        </div>
+
+        {/* Search */}
+        <div style={{ padding: '1rem', background: '#FFFFFF', borderBottom: '1px solid #DADCE0' }}>
           <input
             type="text"
-            placeholder="Buscar producto..."
+            placeholder="Buscar por nombre o código..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{
               width: '100%',
-              padding: '10px',
+              padding: '10px 12px',
               fontSize: '14px',
-              border: '1px solid #ddd',
-              borderRadius: '6px'
+              border: '1px solid #DADCE0',
+              borderRadius: '4px',
+              boxSizing: 'border-box',
+              fontFamily: 'inherit'
             }}
           />
         </div>
 
+        {/* Products Grid */}
         <div style={{
           flex: 1,
           overflow: 'auto',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-          gap: '1rem'
+          gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+          gap: '1rem',
+          padding: '1rem',
+          background: '#F8F9FA'
         }}>
           {isLoading ? (
-            <div>Cargando...</div>
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#5F6368', padding: '2rem' }}>
+              Cargando productos...
+            </div>
+          ) : products.length === 0 ? (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#5F6368', padding: '2rem' }}>
+              No se encontraron productos
+            </div>
           ) : (
             products.map(product => (
-              <div
+              <button
                 key={product.id}
-                style={{
-                  background: '#fff',
-                  padding: '1rem',
-                  borderRadius: '8px',
-                  border: '1px solid #ddd',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
                 onClick={() => addToCart(product)}
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid #DADCE0',
+                  borderRadius: '4px',
+                  padding: '1rem',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s',
+                  fontFamily: 'inherit'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = '#1A73E8'
+                  e.currentTarget.style.background = '#F8F9FA'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = '#DADCE0'
+                  e.currentTarget.style.background = '#FFFFFF'
+                }}
               >
-                <h3 style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                  {product.name.substring(0, 30)}
-                </h3>
-                <p style={{ fontSize: '11px', color: '#666', marginBottom: '0.5rem' }}>
+                <div style={{
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  color: '#202124',
+                  marginBottom: '0.25rem',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {product.name}
+                </div>
+                <div style={{
+                  fontSize: '11px',
+                  color: '#5F6368',
+                  marginBottom: '0.5rem'
+                }}>
                   {product.clave}
-                </p>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#E8610A' }}>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  paddingTop: '0.5rem',
+                  borderTop: '1px solid #DADCE0'
+                }}>
+                  <span style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#1A73E8'
+                  }}>
                     ${product.price.toFixed(2)}
                   </span>
-                  <span style={{ fontSize: '11px', background: '#f0f0f0', padding: '2px 6px', borderRadius: '4px' }}>
+                  <span style={{
+                    fontSize: '11px',
+                    background: '#E8F0FE',
+                    color: '#1A73E8',
+                    padding: '2px 6px',
+                    borderRadius: '3px',
+                    fontWeight: '500'
+                  }}>
                     {product.stock}
                   </span>
                 </div>
-              </div>
+              </button>
             ))
           )}
         </div>
       </div>
 
-      {/* Cart side */}
+      {/* Cart Section */}
       <div style={{
-        background: '#fff',
-        borderRadius: '8px',
+        background: '#FFFFFF',
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        height: '100%'
       }}>
-        <div style={{ padding: '1rem', borderBottom: '1px solid #ddd' }}>
-          <h2 style={{ fontSize: '18px', margin: 0 }}>🛒 Carrito</h2>
+        {/* Cart Header */}
+        <div style={{
+          padding: '1.5rem',
+          borderBottom: '1px solid #DADCE0',
+          background: '#FFFFFF'
+        }}>
+          <h2 style={{
+            fontSize: '16px',
+            fontWeight: '600',
+            color: '#202124',
+            margin: '0'
+          }}>
+            Carrito
+          </h2>
+          <div style={{
+            fontSize: '13px',
+            color: '#5F6368',
+            marginTop: '0.25rem'
+          }}>
+            {cart.length} artículo{cart.length !== 1 ? 's' : ''}
+          </div>
         </div>
 
-        <div style={{ flex: 1, overflow: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {/* Cart Items */}
+        <div style={{ flex: 1, overflow: 'auto', padding: '1rem' }}>
           {cart.length === 0 ? (
-            <p style={{ color: '#999', fontSize: '14px' }}>Vacío</p>
+            <div style={{
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#5F6368',
+              fontSize: '14px'
+            }}>
+              Carrito vacío
+            </div>
           ) : (
-            cart.map(item => (
-              <div
-                key={item.product.id}
-                style={{
-                  background: '#f9f9f9',
-                  padding: '0.75rem',
-                  borderRadius: '6px',
-                  fontSize: '12px'
-                }}
-              >
-                <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                  {item.product.name.substring(0, 20)}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {cart.map(item => (
+                <div
+                  key={item.product.id}
+                  style={{
+                    background: '#F8F9FA',
+                    border: '1px solid #DADCE0',
+                    borderRadius: '4px',
+                    padding: '0.75rem',
+                    fontSize: '13px'
+                  }}
+                >
+                  <div style={{
+                    fontWeight: '600',
+                    color: '#202124',
+                    marginBottom: '0.5rem',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {item.product.name}
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    gap: '0.5rem',
+                    marginBottom: '0.5rem',
+                    alignItems: 'center'
+                  }}>
+                    <button
+                      onClick={() => updateQty(item.product.id, item.qty - 1)}
+                      style={{
+                        background: '#1A73E8',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '2px 6px',
+                        borderRadius: '3px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: '500'
+                      }}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      value={item.qty}
+                      onChange={e => updateQty(item.product.id, parseInt(e.target.value) || 0)}
+                      style={{
+                        width: '40px',
+                        padding: '2px 4px',
+                        textAlign: 'center',
+                        fontSize: '12px',
+                        border: '1px solid #DADCE0',
+                        borderRadius: '3px'
+                      }}
+                    />
+                    <button
+                      onClick={() => updateQty(item.product.id, item.qty + 1)}
+                      style={{
+                        background: '#1A73E8',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '2px 6px',
+                        borderRadius: '3px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: '500'
+                      }}
+                    >
+                      +
+                    </button>
+                    <button
+                      onClick={() => removeFromCart(item.product.id)}
+                      style={{
+                        background: '#EA4335',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '2px 6px',
+                        borderRadius: '3px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        marginLeft: 'auto'
+                      }}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    color: '#5F6368',
+                    fontSize: '12px'
+                  }}>
+                    <span>${item.product.price.toFixed(2)} × {item.qty}</span>
+                    <span style={{ fontWeight: '600', color: '#202124' }}>
+                      ${(item.product.price * item.qty).toFixed(2)}
+                    </span>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <button
-                    onClick={() => updateQty(item.product.id, item.qty - 1)}
-                    style={{
-                      background: '#E8610A',
-                      color: '#fff',
-                      border: 'none',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '12px'
-                    }}
-                  >
-                    −
-                  </button>
-                  <input
-                    type="number"
-                    value={item.qty}
-                    onChange={e => updateQty(item.product.id, parseInt(e.target.value) || 0)}
-                    style={{
-                      width: '40px',
-                      padding: '2px',
-                      textAlign: 'center',
-                      fontSize: '12px'
-                    }}
-                  />
-                  <button
-                    onClick={() => updateQty(item.product.id, item.qty + 1)}
-                    style={{
-                      background: '#E8610A',
-                      color: '#fff',
-                      border: 'none',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '12px'
-                    }}
-                  >
-                    +
-                  </button>
-                  <button
-                    onClick={() => removeFromCart(item.product.id)}
-                    style={{
-                      background: '#d32f2f',
-                      color: '#fff',
-                      border: 'none',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      marginLeft: 'auto'
-                    }}
-                  >
-                    ✕
-                  </button>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#666' }}>
-                  <span>${item.product.price.toFixed(2)} x {item.qty}</span>
-                  <span style={{ fontWeight: 'bold', color: '#000' }}>
-                    ${(item.product.price * item.qty).toFixed(2)}
-                  </span>
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
 
-        <div style={{ padding: '1rem', borderTop: '1px solid #ddd', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-            <span>Subtotal:</span>
+        {/* Totals */}
+        <div style={{
+          padding: '1rem',
+          borderTop: '1px solid #DADCE0',
+          background: '#FFFFFF',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.75rem'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            fontSize: '13px',
+            color: '#5F6368'
+          }}>
+            <span>Subtotal</span>
             <span>${subtotal.toFixed(2)}</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-            <span>IVA (16%):</span>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            fontSize: '13px',
+            color: '#5F6368'
+          }}>
+            <span>IVA (16%)</span>
             <span>${iva.toFixed(2)}</span>
           </div>
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
-            fontSize: '16px',
-            fontWeight: 'bold',
+            fontSize: '15px',
+            fontWeight: '600',
+            color: '#202124',
             paddingTop: '0.75rem',
-            borderTop: '1px solid #ddd'
+            borderTop: '1px solid #DADCE0'
           }}>
-            <span>Total:</span>
-            <span style={{ color: '#E8610A' }}>${total.toFixed(2)}</span>
+            <span>Total</span>
+            <span style={{ color: '#1A73E8' }}>${total.toFixed(2)}</span>
           </div>
 
           <button
             onClick={handleCheckout}
             disabled={cart.length === 0 || isCreatingSale}
             style={{
-              background: cart.length === 0 ? '#ccc' : '#2B2F35',
+              background: cart.length === 0 ? '#DADCE0' : '#34A853',
               color: '#fff',
               border: 'none',
               padding: '12px',
-              borderRadius: '6px',
-              fontWeight: 'bold',
+              borderRadius: '4px',
+              fontWeight: '600',
               cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
               fontSize: '14px',
-              marginTop: '0.5rem'
+              marginTop: '0.5rem',
+              transition: 'background 0.2s'
             }}
+            onMouseEnter={e => cart.length > 0 && (e.currentTarget.style.background = '#2D7A3A')}
+            onMouseLeave={e => cart.length > 0 && (e.currentTarget.style.background = '#34A853')}
           >
-            {isCreatingSale ? '⏳ Procesando...' : '✓ Cobrar'}
+            {isCreatingSale ? 'Procesando transacción...' : 'Cobrar'}
           </button>
         </div>
       </div>
