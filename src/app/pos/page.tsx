@@ -4,6 +4,13 @@ import { useState, useEffect } from 'react'
 import { actionGetProducts, actionCreateSale } from '@/features/pos/server'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
+interface ProductImage {
+  id: string
+  name: string
+  category: string
+  imageUrl: string
+}
+
 interface Product {
   id: string
   name: string
@@ -11,6 +18,7 @@ interface Product {
   category: string
   price: number
   stock: number
+  image?: ProductImage | null
 }
 
 interface CartItem {
@@ -236,63 +244,104 @@ export default function POSPage() {
                   background: 'var(--bg-primary)',
                   border: '1px solid var(--border-color)',
                   borderRadius: '4px',
-                  padding: '1rem',
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'all 0.2s',
-                  fontFamily: 'inherit'
+                  fontFamily: 'inherit',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden'
                 }}
                 onMouseEnter={e => {
                   e.currentTarget.style.borderColor = 'var(--accent-orange)'
-                  e.currentTarget.style.background = 'var(--bg-secondary)'
+                  e.currentTarget.style.transform = 'translateY(-2px)'
                 }}
                 onMouseLeave={e => {
                   e.currentTarget.style.borderColor = 'var(--border-color)'
-                  e.currentTarget.style.background = 'var(--bg-primary)'
+                  e.currentTarget.style.transform = 'translateY(0)'
                 }}
               >
+                {/* Product Image */}
                 <div style={{
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  color: 'var(--text-primary)',
-                  marginBottom: '0.25rem',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}>
-                  {product.name}
-                </div>
-                <div style={{
-                  fontSize: '11px',
-                  color: 'var(--text-secondary)',
-                  marginBottom: '0.5rem'
-                }}>
-                  {product.clave}
-                </div>
-                <div style={{
+                  width: '100%',
+                  height: '120px',
+                  background: 'var(--bg-secondary)',
                   display: 'flex',
-                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  paddingTop: '0.5rem',
-                  borderTop: '1px solid var(--border-color)'
+                  justifyContent: 'center',
+                  marginBottom: '0.5rem',
+                  overflow: 'hidden'
                 }}>
-                  <span style={{
-                    fontSize: '14px',
+                  {product.image?.imageUrl ? (
+                    <img
+                      src={product.image.imageUrl}
+                      alt={product.name}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                      onError={e => {
+                        e.currentTarget.style.display = 'none'
+                        e.currentTarget.parentElement!.textContent = 'Sin imagen'
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      fontSize: '12px',
+                      color: 'var(--text-secondary)',
+                      textAlign: 'center'
+                    }}>
+                      Sin imagen
+                    </div>
+                  )}
+                </div>
+
+                {/* Product Info */}
+                <div style={{ padding: '0.75rem' }}>
+                  <div style={{
+                    fontSize: '12px',
                     fontWeight: '600',
-                    color: 'var(--accent-orange)'
+                    color: 'var(--text-primary)',
+                    marginBottom: '0.25rem',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
                   }}>
-                    ${product.price.toFixed(2)}
-                  </span>
-                  <span style={{
-                    fontSize: '11px',
-                    background: '#E8F0FE',
-                    color: 'var(--accent-orange)',
-                    padding: '2px 6px',
-                    borderRadius: '3px',
-                    fontWeight: '500'
+                    {product.name}
+                  </div>
+                  <div style={{
+                    fontSize: '10px',
+                    color: 'var(--text-secondary)',
+                    marginBottom: '0.5rem'
                   }}>
-                    {product.stock}
-                  </span>
+                    {product.clave}
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingTop: '0.5rem',
+                    borderTop: '1px solid var(--border-color)'
+                  }}>
+                    <span style={{
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      color: 'var(--accent-orange)'
+                    }}>
+                      ${product.price.toFixed(2)}
+                    </span>
+                    <span style={{
+                      fontSize: '10px',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--accent-orange)',
+                      padding: '2px 6px',
+                      borderRadius: '3px',
+                      fontWeight: '500'
+                    }}>
+                      {product.stock}
+                    </span>
+                  </div>
                 </div>
               </button>
             ))

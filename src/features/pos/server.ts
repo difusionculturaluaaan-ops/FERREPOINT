@@ -9,6 +9,9 @@ export async function actionGetProducts(businessId: string, search?: string) {
         businessId,
         active: true
       },
+      include: {
+        image: true
+      },
       orderBy: { name: 'asc' },
       take: 100
     })
