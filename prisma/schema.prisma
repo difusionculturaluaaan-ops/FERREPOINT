@@ -25,6 +25,7 @@ model Business {
   accountsReceivable AccountsReceivable[]
   accountsPayable   AccountsPayable[]
   cashCloses        CashClose[]
+  deliveries        Delivery[]
 
   @@map("businesses")
 }
@@ -42,6 +43,7 @@ model Location {
   sales     Sale[]
   surtidoOrders SurtidoOrder[]
   cashCloses CashClose[]
+  deliveries Delivery[]
 
   @@unique([businessId, clave])
   @@index([businessId])
@@ -60,6 +62,7 @@ model User {
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   sales    Sale[]
+  deliveries Delivery[]
 
   @@unique([email, businessId])
   @@index([businessId])
@@ -125,6 +128,7 @@ model Product {
   surtidoItems SurtidoItem[]
   stockMovements StockMovement[]
   purchaseOrderItems PurchaseOrderItem[]
+  deliveryItems DeliveryItem[]
 
   @@unique([businessId, clave])
   @@index([businessId])
@@ -172,6 +176,7 @@ model Sale {
   items    SaleItem[]
   surtidoOrder SurtidoOrder?
   cxc      AccountsReceivable?
+  deliveries Delivery[]
 
   @@unique([businessId, folio])
   @@index([businessId])
@@ -350,4 +355,45 @@ model CashClose {
   @@index([locationId])
   @@index([date])
   @@map("cash_closes")
+}
+
+model Delivery {
+  id                String   @id @default(cuid())
+  businessId        String
+  locationId        String
+  driverId          String
+  saleId            String
+  clientName        String
+  clientPhone       String
+  address           String
+  latitude          Float?
+  longitude         Float?
+  lastLocationUpdate DateTime?
+  status            String   @default("pendiente") // pendiente, en_ruta, completado, cancelado
+  completedAt       DateTime?
+  createdAt         DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  location Location @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  driver   User @relation(fields: [driverId], references: [id], onDelete: Restrict)
+  sale     Sale @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  items    DeliveryItem[]
+
+  @@index([businessId])
+  @@index([locationId])
+  @@index([driverId])
+  @@index([status])
+  @@map("deliveries")
+}
+
+model DeliveryItem {
+  id         String   @id @default(cuid())
+  deliveryId String
+  productId  String
+  qty        Int
+
+  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  product  Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@map("delivery_items")
 }
