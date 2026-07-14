@@ -156,3 +156,8 @@ export async function actionGetUsers(businessId: string) {
     return []
   }
 }
+
+export async function actionLogout() {
+  // Client-side lo maneja: eliminar token + redirect
+  return { success: true }
+}
