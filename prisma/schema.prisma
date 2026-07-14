@@ -14,14 +14,17 @@ model Business {
   plan      String   @default("starter")
   createdAt DateTime @default(now())
 
-  locations       Location[]
-  users           User[]
-  products        Product[]
-  sales           Sale[]
-  surtidoOrders   SurtidoOrder[]
-  suppliers       Supplier[]
-  stockMovements  StockMovement[]
-  purchaseOrders  PurchaseOrder[]
+  locations         Location[]
+  users             User[]
+  products          Product[]
+  sales             Sale[]
+  surtidoOrders     SurtidoOrder[]
+  suppliers         Supplier[]
+  stockMovements    StockMovement[]
+  purchaseOrders    PurchaseOrder[]
+  accountsReceivable AccountsReceivable[]
+  accountsPayable   AccountsPayable[]
+  cashCloses        CashClose[]
 
   @@map("businesses")
 }
@@ -38,6 +41,7 @@ model Location {
   products  Product[]
   sales     Sale[]
   surtidoOrders SurtidoOrder[]
+  cashCloses CashClose[]
 
   @@unique([businessId, clave])
   @@index([businessId])
@@ -88,6 +92,7 @@ model Supplier {
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   products Product[]
   purchaseOrders PurchaseOrder[]
+  accountsPayable AccountsPayable[]
 
   @@index([businessId])
   @@map("suppliers")
@@ -166,6 +171,7 @@ model Sale {
   vendor   User @relation(fields: [vendorId], references: [id], onDelete: Restrict)
   items    SaleItem[]
   surtidoOrder SurtidoOrder?
+  cxc      AccountsReceivable?
 
   @@unique([businessId, folio])
   @@index([businessId])
@@ -232,6 +238,7 @@ model PurchaseOrder {
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   items    PurchaseOrderItem[]
+  cxp      AccountsPayable?
 
   @@unique([businessId, poNumber])
   @@index([businessId])
@@ -251,4 +258,96 @@ model PurchaseOrderItem {
   product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
 
   @@map("purchase_order_items")
+}
+
+model AccountsReceivable {
+  id         String   @id @default(cuid())
+  businessId String
+  saleId     String   @unique
+  clientName String
+  amount     Float
+  amountPaid Float    @default(0)
+  dueDate    DateTime
+  status     String   @default("pendiente") // pendiente, parcial, pagado
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  sale     Sale @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  payments PaymentReceivable[]
+
+  @@index([businessId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("accounts_receivable")
+}
+
+model PaymentReceivable {
+  id           String   @id @default(cuid())
+  cxcId        String
+  amount       Float
+  paymentMethod String
+  paymentDate  DateTime @default(now())
+
+  cxc AccountsReceivable @relation(fields: [cxcId], references: [id], onDelete: Cascade)
+
+  @@map("payment_receivable")
+}
+
+model AccountsPayable {
+  id         String   @id @default(cuid())
+  businessId String
+  poId       String   @unique
+  supplierId String
+  amount     Float
+  amountPaid Float    @default(0)
+  dueDate    DateTime
+  status     String   @default("pendiente") // pendiente, parcial, pagado
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  po       PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Restrict)
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  payments PaymentPayable[]
+
+  @@index([businessId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("accounts_payable")
+}
+
+model PaymentPayable {
+  id           String   @id @default(cuid())
+  cxpId        String
+  amount       Float
+  paymentMethod String
+  paymentDate  DateTime @default(now())
+
+  cxp AccountsPayable @relation(fields: [cxpId], references: [id], onDelete: Cascade)
+
+  @@map("payment_payable")
+}
+
+model CashClose {
+  id          String   @id @default(cuid())
+  businessId  String
+  locationId  String
+  date        DateTime
+  initialCash Float
+  finalCash   Float
+  totalSales  Int
+  totalIngresos Float
+  totalCosto  Float
+  margin      Float
+  difference  Float
+  status      String   @default("cuadrado") // cuadrado, faltante, sobrante
+  observations String?
+  createdAt   DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  location Location @relation(fields: [locationId], references: [id], onDelete: Restrict)
+
+  @@index([businessId])
+  @@index([locationId])
+  @@index([date])
+  @@map("cash_closes")
 }

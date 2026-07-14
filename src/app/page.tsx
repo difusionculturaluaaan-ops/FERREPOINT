@@ -126,6 +126,10 @@ export default function Home() {
               <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
               Módulo Compras (órdenes, recepción automática)
             </li>
+            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
+              Módulo Contabilidad (CxC, CxP, flujo de caja, rentabilidad)
+            </li>
           </ul>
         </div>
 
@@ -321,6 +325,33 @@ export default function Home() {
             }}
           >
             Compras
+          </a>
+          <a
+            href="/contabilidad"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'var(--bg-primary)',
+              color: 'var(--accent-orange)',
+              border: `1px solid var(--border-color)`,
+              padding: '12px 24px',
+              borderRadius: '4px',
+              textAlign: 'center',
+              textDecoration: 'none',
+              fontSize: '16px',
+              fontWeight: '500',
+              transition: 'all 0.2s',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'var(--bg-tertiary)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'var(--bg-primary)'
+            }}
+          >
+            Contabilidad
           </a>
         </div>
 
