@@ -1,17 +1,23 @@
-﻿import jwt from "jsonwebtoken"
+﻿import { SignJWT, jwtVerify } from "jose"
 import type { JWTPayload } from "@/types/auth"
 
-const SECRET = process.env.JWT_SECRET || "tu-secret-key-cambiar-en-produccion"
+const SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || "your-secret-key-change-in-production"
+)
 const EXPIRATION = "7d" // 7 días
 
-export function generateToken(payload: Omit<JWTPayload, "iat" | "exp">): string {
-  return jwt.sign(payload, SECRET, { expiresIn: EXPIRATION })
+export async function generateToken(payload: Omit<JWTPayload, "iat" | "exp">): Promise<string> {
+  const token = await new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("7d")
+    .sign(SECRET)
+  return token
 }
 
-export function verifyToken(token: string): JWTPayload | null {
+export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
-    const decoded = jwt.verify(token, SECRET)
-    return decoded as JWTPayload
+    const verified = await jwtVerify(token, SECRET)
+    return verified.payload as unknown as JWTPayload
   } catch (error) {
     console.error("Token verification failed:", error)
     return null
@@ -20,7 +26,10 @@ export function verifyToken(token: string): JWTPayload | null {
 
 export function decodeToken(token: string): JWTPayload | null {
   try {
-    return jwt.decode(token) as JWTPayload
+    const parts = token.split(".")
+    if (parts.length !== 3) return null
+    const decoded = JSON.parse(Buffer.from(parts[1], "base64").toString())
+    return decoded as JWTPayload
   } catch (error) {
     return null
   }

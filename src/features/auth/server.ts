@@ -32,7 +32,7 @@ export async function actionLogin(email: string, password: string): Promise<Logi
     }
 
     // Generar token JWT
-    const token = generateToken({
+    const token = await generateToken({
       userId: user.id,
       email: user.email,
       role: user.role,

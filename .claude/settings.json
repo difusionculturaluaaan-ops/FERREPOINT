@@ -8,7 +8,8 @@
       "Read(//tmp/**)",
       "Read(//c/tmp/**)",
       "Bash(curl -s http://localhost:3001)",
-      "PowerShell(\"V Servidor detenido\")"
+      "PowerShell(\"V Servidor detenido\")",
+      "PowerShell(\"V Detenido\")"
     ]
   }
 }
