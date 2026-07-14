@@ -171,6 +171,33 @@ export async function POST() {
           name: 'Carlos Vendedor',
           role: 'vendedor'
         }
+      }),
+      prisma.user.create({
+        data: {
+          businessId: business.id,
+          email: 'chofer1@ferreteria.com',
+          password: await hash('password123', 10),
+          name: 'Miguel Repartidor',
+          role: 'chofer'
+        }
+      }),
+      prisma.user.create({
+        data: {
+          businessId: business.id,
+          email: 'chofer2@ferreteria.com',
+          password: await hash('password123', 10),
+          name: 'Pedro Entregador',
+          role: 'chofer'
+        }
+      }),
+      prisma.user.create({
+        data: {
+          businessId: business.id,
+          email: 'chofer3@ferreteria.com',
+          password: await hash('password123', 10),
+          name: 'Luis Distribuidor',
+          role: 'chofer'
+        }
       })
     ])
 
@@ -212,7 +239,8 @@ export async function POST() {
       message: 'Database seeded with demo data',
       credentials: {
         dueno: 'dueno@ferreteria.com / password123',
-        vendedor: 'vendedor@ferreteria.com / password123'
+        vendedor: 'vendedor@ferreteria.com / password123',
+        choferes: '3 conductores disponibles para entregas'
       }
     })
   } catch (error) {
