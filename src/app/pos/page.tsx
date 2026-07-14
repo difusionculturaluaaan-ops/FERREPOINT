@@ -48,6 +48,7 @@ export default function POSPage() {
   const [comprobante, setComprobante] = useState('completo')
   const [clientName, setClientName] = useState('')
   const [clientRfc, setClientRfc] = useState('')
+  const [clientPhone, setClientPhone] = useState('')
   const [drivers, setDrivers] = useState<Driver[]>([])
   const [selectedDriver, setSelectedDriver] = useState('')
   const [deliveryAddress, setDeliveryAddress] = useState('')
@@ -191,7 +192,7 @@ Comprobante: ${comprobante === 'completo' ? 'COMPLETO' : comprobante === 'resumi
             selectedDriver,
             result.sale.id,
             clientName || 'Cliente sin nombre',
-            '000-0000',
+            clientPhone || '000-0000',
             deliveryAddress
           )
         }
@@ -206,6 +207,7 @@ Comprobante: ${comprobante === 'completo' ? 'COMPLETO' : comprobante === 'resumi
         setShowCheckout(false)
         setClientName('')
         setClientRfc('')
+        setClientPhone('')
         setSelectedDriver('')
         setDeliveryAddress('')
         await loadProducts()
@@ -720,6 +722,23 @@ Comprobante: ${comprobante === 'completo' ? 'COMPLETO' : comprobante === 'resumi
                   background: 'var(--bg-secondary)',
                   color: 'var(--text-primary)',
                   fontSize: '14px',
+                  marginBottom: '0.75rem',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <input
+                type="tel"
+                value={clientPhone}
+                onChange={e => setClientPhone(e.target.value)}
+                placeholder="Teléfono / WhatsApp (opcional)"
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '4px',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  fontSize: '14px',
                   boxSizing: 'border-box'
                 }}
               />
@@ -766,6 +785,7 @@ Comprobante: ${comprobante === 'completo' ? 'COMPLETO' : comprobante === 'resumi
                 {[
                   { value: 'completo', label: '✓ Completo' },
                   { value: 'resumido', label: 'Resumido' },
+                  { value: 'whatsapp', label: 'WhatsApp' },
                   { value: 'sin', label: 'Sin papel' }
                 ].map(opt => (
                   <button
