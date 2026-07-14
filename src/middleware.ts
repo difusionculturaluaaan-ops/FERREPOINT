@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyToken } from '@/lib/jwt'
+import { jwtVerify } from 'jose'
+
+const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key')
 
 const publicRoutes = ['/login', '/api/auth/login', '/_next', '/static']
 const roleRoutes: Record<string, string[]> = {
@@ -10,9 +12,11 @@ const roleRoutes: Record<string, string[]> = {
   chofer: ['/entregas']
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const token = request.cookies.get('token')?.value
+
+  console.log('[Middleware] Path:', pathname, 'Has token:', !!token)
 
   // Rutas públicas — pasar sin verificación
   if (publicRoutes.some(route => pathname.startsWith(route))) {
@@ -26,7 +30,8 @@ export function middleware(request: NextRequest) {
 
   // Verificar JWT
   try {
-    const payload = verifyToken(token)
+    const verified = await jwtVerify(token, secret)
+    const payload = verified.payload
 
     // Verificar acceso por rol
     const allowedRoutes = roleRoutes[payload.role as string] || []
@@ -46,6 +51,7 @@ export function middleware(request: NextRequest) {
 
     return NextResponse.next()
   } catch (error) {
+    console.log('[Middleware] Token verification failed:', error)
     // Token inválido — redirigir a login
     return NextResponse.redirect(new URL('/login', request.url))
   }

@@ -7,7 +7,8 @@
       "PowerShell(\"V Procesos Node detenidos\")",
       "Read(//tmp/**)",
       "Read(//c/tmp/**)",
-      "Bash(curl -s http://localhost:3001)"
+      "Bash(curl -s http://localhost:3001)",
+      "PowerShell(\"V Servidor detenido\")"
     ]
   }
 }

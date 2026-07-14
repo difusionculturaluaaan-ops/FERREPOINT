@@ -54,12 +54,16 @@ export default function LoginPage() {
         if (result.user) localStorage.setItem('user', JSON.stringify(result.user))
 
         // Set cookie for middleware
-        document.cookie = `token=${result.token}; path=/; max-age=${7 * 24 * 60 * 60}`
+        const cookieString = `token=${result.token}; path=/; max-age=${7 * 24 * 60 * 60}`
+        document.cookie = cookieString
+        console.log('Cookie set:', cookieString)
+        console.log('All cookies:', document.cookie)
 
         setShowSuccess(true)
 
         setTimeout(() => {
           if (result.user) {
+            console.log('User data:', result.user)
             const dashboardMap: Record<string, string> = {
               dueno: '/',
               vendedor: '/pos',
@@ -67,7 +71,11 @@ export default function LoginPage() {
               chofer: '/entregas',
               cajero: '/pos'
             }
-            router.push(dashboardMap[result.user.role] || '/')
+            const target = dashboardMap[result.user.role] || '/'
+            console.log('Redirecting to:', target)
+            router.push(target)
+          } else {
+            console.log('No user data returned')
           }
         }, 2200)
       } else {
