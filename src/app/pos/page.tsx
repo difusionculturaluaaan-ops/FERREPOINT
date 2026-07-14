@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { actionGetProducts, actionCreateSale } from '@/features/pos/server'
+import { actionCreateDelivery, actionGetAvailableDrivers } from '@/features/entregas/server'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
 interface ProductImage {
@@ -17,6 +18,7 @@ interface Product {
   clave: string
   category: string
   price: number
+  costPrice: number
   stock: number
   image?: ProductImage | null
 }
@@ -24,6 +26,12 @@ interface Product {
 interface CartItem {
   product: Product
   qty: number
+}
+
+interface Driver {
+  id: string
+  name: string
+  email: string
 }
 
 export default function POSPage() {
@@ -35,6 +43,15 @@ export default function POSPage() {
   const [businessId, setBusinessId] = useState<string | null>(null)
   const [locationId, setLocationId] = useState<string | null>(null)
   const [vendorId, setVendorId] = useState<string | null>(null)
+  const [showCheckout, setShowCheckout] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState('tarjeta')
+  const [comprobante, setComprobante] = useState('completo')
+  const [clientName, setClientName] = useState('')
+  const [clientRfc, setClientRfc] = useState('')
+  const [drivers, setDrivers] = useState<Driver[]>([])
+  const [selectedDriver, setSelectedDriver] = useState('')
+  const [deliveryAddress, setDeliveryAddress] = useState('')
+  const [lastSale, setLastSale] = useState<any>(null)
 
   useEffect(() => {
     loadContext()
@@ -51,6 +68,9 @@ export default function POSPage() {
       setBusinessId(data.businessId)
       setLocationId(data.locationId)
       setVendorId(data.vendorId)
+
+      const drv = await actionGetAvailableDrivers(data.businessId, data.locationId)
+      setDrivers(drv as any)
     } catch (error) {
       alert('Error cargando contexto')
     }
@@ -107,7 +127,45 @@ export default function POSPage() {
     return { subtotal, iva, total: subtotal + iva }
   }
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
+    if (cart.length === 0) return
+    setShowCheckout(true)
+  }
+
+  const handlePrintReceipt = () => {
+    const content = `
+FERREPOINT - RECIBO DE VENTA
+================================
+Fecha: ${new Date().toLocaleString('es-MX')}
+
+${clientName ? `Cliente: ${clientName}\n` : ''}${clientRfc ? `RFC: ${clientRfc}\n` : ''}
+
+ARTÍCULOS:
+${cart.map(item => `
+${item.product.clave} - ${item.product.name}
+$${item.product.price.toFixed(2)} × ${item.qty} = $${(item.product.price * item.qty).toFixed(2)}
+Costo: $${item.product.costPrice.toFixed(2)} × ${item.qty}
+`).join('')}
+
+Subtotal: $${subtotal.toFixed(2)}
+IVA (16%): $${iva.toFixed(2)}
+TOTAL: $${total.toFixed(2)}
+
+Forma de pago: TARJETA
+Comprobante: ${comprobante === 'completo' ? 'COMPLETO' : comprobante === 'resumido' ? 'RESUMIDO' : 'SIN PAPEL'}
+
+================================
+    `.trim()
+
+    const printWindow = window.open('', '_blank')
+    if (printWindow) {
+      printWindow.document.write('<pre style="font-family: monospace; font-size: 12px;">' + content + '</pre>')
+      printWindow.document.close()
+      printWindow.print()
+    }
+  }
+
+  const handleCompleteSale = async () => {
     if (cart.length === 0) return
     setIsCreatingSale(true)
     try {
@@ -115,11 +173,41 @@ export default function POSPage() {
         businessId,
         locationId,
         vendorId,
-        cart.map(item => ({ productId: item.product.id, qty: item.qty }))
+        cart.map(item => ({ productId: item.product.id, qty: item.qty })),
+        clientName || undefined,
+        clientRfc || undefined,
+        paymentMethod,
+        comprobante
       )
+
       if (result.success) {
+        setLastSale(result.sale)
+
+        // Crear entrega si se seleccionó conductor
+        if (selectedDriver && deliveryAddress) {
+          await actionCreateDelivery(
+            businessId,
+            locationId,
+            selectedDriver,
+            result.sale.id,
+            clientName || 'Cliente sin nombre',
+            '000-0000',
+            deliveryAddress
+          )
+        }
+
+        // Imprimir si se seleccionó
+        if (comprobante !== 'sin') {
+          handlePrintReceipt()
+        }
+
         alert(`✓ ${result.sale.message}`)
         setCart([])
+        setShowCheckout(false)
+        setClientName('')
+        setClientRfc('')
+        setSelectedDriver('')
+        setDeliveryAddress('')
         await loadProducts()
       }
     } catch (error) {
@@ -569,6 +657,250 @@ export default function POSPage() {
           </button>
         </div>
       </div>
+
+      {/* Checkout Modal */}
+      {showCheckout && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'var(--bg-primary)',
+            borderRadius: '8px',
+            padding: '2rem',
+            width: '90%',
+            maxWidth: '500px',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            <h2 style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text-primary)', margin: '0 0 1.5rem 0' }}>
+              Venta Actual
+            </h2>
+
+            {/* Cliente Info */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>
+                Cliente (opcional)
+              </label>
+              <input
+                type="text"
+                value={clientName}
+                onChange={e => setClientName(e.target.value)}
+                placeholder="Nombre del cliente"
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '4px',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  fontSize: '14px',
+                  marginBottom: '0.5rem',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <input
+                type="text"
+                value={clientRfc}
+                onChange={e => setClientRfc(e.target.value)}
+                placeholder="RFC"
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '4px',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  fontSize: '14px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* Forma de Pago */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.75rem' }}>
+                FORMA DE PAGO
+              </label>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button
+                  onClick={() => setPaymentMethod('tarjeta')}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    background: paymentMethod === 'tarjeta' ? 'var(--accent-orange)' : 'var(--bg-secondary)',
+                    color: paymentMethod === 'tarjeta' ? '#fff' : 'var(--text-primary)',
+                    border: `1px solid ${paymentMethod === 'tarjeta' ? 'var(--accent-orange)' : 'var(--border-color)'}`,
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    fontSize: '12px'
+                  }}
+                >
+                  💳 TARJETA
+                </button>
+              </div>
+            </div>
+
+            {/* Comprobante */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.75rem' }}>
+                COMPROBANTE
+              </label>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {[
+                  { value: 'completo', label: '✓ Completo' },
+                  { value: 'resumido', label: 'Resumido' },
+                  { value: 'sin', label: 'Sin papel' }
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setComprobante(opt.value)}
+                    style={{
+                      padding: '8px 12px',
+                      background: comprobante === opt.value ? 'var(--success)' : 'var(--bg-secondary)',
+                      color: comprobante === opt.value ? '#fff' : 'var(--text-primary)',
+                      border: `1px solid ${comprobante === opt.value ? 'var(--success)' : 'var(--border-color)'}`,
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      fontSize: '12px'
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Entrega */}
+            <div style={{ marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
+              <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem' }}>
+                Entregar a Domicilio (opcional)
+              </label>
+              <select
+                value={selectedDriver}
+                onChange={e => setSelectedDriver(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '4px',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  fontSize: '14px',
+                  marginBottom: '0.5rem',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <option value="">Sin entrega</option>
+                {drivers.map(driver => (
+                  <option key={driver.id} value={driver.id}>
+                    {driver.name}
+                  </option>
+                ))}
+              </select>
+              {selectedDriver && (
+                <input
+                  type="text"
+                  value={deliveryAddress}
+                  onChange={e => setDeliveryAddress(e.target.value)}
+                  placeholder="Dirección de entrega"
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '4px',
+                    background: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Totals */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontSize: '14px',
+                marginBottom: '0.5rem'
+              }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Subtotal:</span>
+                <span style={{ color: 'var(--text-primary)' }}>${subtotal.toFixed(2)}</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontSize: '14px',
+                marginBottom: '1rem'
+              }}>
+                <span style={{ color: 'var(--text-secondary)' }}>IVA (16%):</span>
+                <span style={{ color: 'var(--text-primary)' }}>${iva.toFixed(2)}</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontSize: '16px',
+                fontWeight: '600',
+                paddingTop: '1rem',
+                borderTop: '1px solid var(--border-color)'
+              }}>
+                <span style={{ color: 'var(--text-primary)' }}>TOTAL:</span>
+                <span style={{ color: 'var(--accent-orange)' }}>${total.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button
+                onClick={() => setShowCheckout(false)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: 'var(--border-color)',
+                  color: 'var(--text-primary)',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '14px'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleCompleteSale}
+                disabled={isCreatingSale}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: 'var(--accent-orange)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: isCreatingSale ? 'not-allowed' : 'pointer',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  opacity: isCreatingSale ? 0.7 : 1
+                }}
+              >
+                {isCreatingSale ? 'PROCESANDO...' : `COBRAR - $${total.toFixed(2)}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
