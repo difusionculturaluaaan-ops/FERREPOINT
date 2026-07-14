@@ -44,7 +44,7 @@ export default function POSPage() {
   const [locationId, setLocationId] = useState<string | null>(null)
   const [vendorId, setVendorId] = useState<string | null>(null)
   const [showCheckout, setShowCheckout] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState('tarjeta')
+  const [paymentMethod, setPaymentMethod] = useState('efectivo')
   const [comprobante, setComprobante] = useState('completo')
   const [clientName, setClientName] = useState('')
   const [clientRfc, setClientRfc] = useState('')
@@ -731,22 +731,29 @@ Comprobante: ${comprobante === 'completo' ? 'COMPLETO' : comprobante === 'resumi
                 FORMA DE PAGO
               </label>
               <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button
-                  onClick={() => setPaymentMethod('tarjeta')}
-                  style={{
-                    flex: 1,
-                    padding: '10px',
-                    background: paymentMethod === 'tarjeta' ? 'var(--accent-orange)' : 'var(--bg-secondary)',
-                    color: paymentMethod === 'tarjeta' ? '#fff' : 'var(--text-primary)',
-                    border: `1px solid ${paymentMethod === 'tarjeta' ? 'var(--accent-orange)' : 'var(--border-color)'}`,
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: '600',
-                    fontSize: '12px'
-                  }}
-                >
-                  💳 TARJETA
-                </button>
+                {[
+                  { value: 'efectivo', label: '💵 Efectivo' },
+                  { value: 'transferencia', label: '🏦 Transferencia' },
+                  { value: 'tarjeta', label: '💳 Tarjeta' }
+                ].map(method => (
+                  <button
+                    key={method.value}
+                    onClick={() => setPaymentMethod(method.value)}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      background: paymentMethod === method.value ? 'var(--accent-orange)' : 'var(--bg-secondary)',
+                      color: paymentMethod === method.value ? '#fff' : 'var(--text-primary)',
+                      border: `1px solid ${paymentMethod === method.value ? 'var(--accent-orange)' : 'var(--border-color)'}`,
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      fontSize: '12px'
+                    }}
+                  >
+                    {method.label}
+                  </button>
+                ))}
               </div>
             </div>
 
