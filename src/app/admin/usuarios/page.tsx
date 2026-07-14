@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { actionGetUsers, actionCreateUser, actionUpdateUser } from '@/features/auth/server'
+import { actionGetUsers, actionCreateUser, actionUpdateUser, actionResetUserPassword } from '@/features/auth/server'
 import { LogoutButton } from '@/components/LogoutButton'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
@@ -36,11 +36,13 @@ export default function UsuariosPage() {
   const [form, setForm] = useState({
     name: '',
     email: '',
-    role: 'vendedor',
-    password: ''
+    role: 'vendedor'
   })
 
-  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; general?: string }>({})
+  const [errors, setErrors] = useState<{ name?: string; email?: string; general?: string }>({})
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [generatedPassword, setGeneratedPassword] = useState('')
+  const [passwordCopied, setPasswordCopied] = useState(false)
 
   const businessId = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}').businessId : ''
 
@@ -70,7 +72,6 @@ export default function UsuariosPage() {
     if (!form.name) newErrors.name = 'Nombre requerido'
     if (!form.email) newErrors.email = 'Email requerido'
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = 'Email inválido'
-    if (!editingId && !form.password) newErrors.password = 'Contraseña requerida'
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
@@ -87,14 +88,18 @@ export default function UsuariosPage() {
           role: form.role
         })
         setToast('Usuario actualizado')
+        setShowModal(false)
+        await loadUsers()
       } else {
-        await actionCreateUser(businessId, form.email, form.password, form.name, form.role as any)
-        setToast('Usuario creado. Se envió una contraseña temporal por correo.')
+        const result = await actionCreateUser(businessId, form.email, form.name, form.role as any)
+        if (result.success && result.plainPassword) {
+          setGeneratedPassword(result.plainPassword)
+          setShowPasswordModal(true)
+          setShowModal(false)
+          await loadUsers()
+        }
       }
-
-      setShowModal(false)
-      setForm({ name: '', email: '', role: 'vendedor', password: '' })
-      await loadUsers()
+      setForm({ name: '', email: '', role: 'vendedor' })
     } catch (error) {
       setErrors({ general: 'Error al guardar usuario' })
     }
@@ -102,14 +107,14 @@ export default function UsuariosPage() {
 
   const handleNewUser = () => {
     setEditingId(null)
-    setForm({ name: '', email: '', role: 'vendedor', password: '' })
+    setForm({ name: '', email: '', role: 'vendedor' })
     setErrors({})
     setShowModal(true)
   }
 
   const handleEdit = (user: User) => {
     setEditingId(user.id)
-    setForm({ name: user.name, email: user.email, role: user.role, password: '' })
+    setForm({ name: user.name, email: user.email, role: user.role })
     setErrors({})
     setShowModal(true)
   }
@@ -352,19 +357,42 @@ export default function UsuariosPage() {
                     <td style={{ padding: '14px', textAlign: 'center' }}>
                       <button
                         onClick={() => handleEdit(user)}
+                        title="Editar"
                         style={{
                           background: 'none',
                           border: 'none',
                           color: 'var(--accent-orange)',
                           cursor: 'pointer',
                           fontSize: '16px',
-                          marginRight: '12px'
+                          marginRight: '8px'
                         }}
                       >
                         ✎
                       </button>
                       <button
+                        onClick={async () => {
+                          const result = await actionResetUserPassword(user.id)
+                          if (result.success && result.plainPassword) {
+                            setGeneratedPassword(result.plainPassword)
+                            setShowPasswordModal(true)
+                            setToast(`Contraseña reseteada para ${user.name}`)
+                          }
+                        }}
+                        title="Resetear contraseña"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--text-secondary)',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          marginRight: '8px'
+                        }}
+                      >
+                        🔑
+                      </button>
+                      <button
                         onClick={() => handleToggleActive(user)}
+                        title={user.active ? 'Desactivar' : 'Activar'}
                         style={{
                           background: 'none',
                           border: 'none',
@@ -487,32 +515,15 @@ export default function UsuariosPage() {
               </div>
 
               {!editingId && (
-                <div>
-                  <label style={{
-                    display: 'block',
-                    fontSize: '12.5px',
-                    fontWeight: '600',
-                    color: 'var(--text-primary)',
-                    marginBottom: '0.5rem'
-                  }}>
-                    Contraseña
-                  </label>
-                  <input
-                    type="password"
-                    value={form.password}
-                    onChange={e => setForm({ ...form, password: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      background: 'var(--bg-secondary)',
-                      border: errors.password ? '1px solid #dc3532' : '1px solid var(--border-color)',
-                      borderRadius: '6px',
-                      color: 'var(--text-primary)',
-                      fontSize: '13px',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                  {errors.password && <div style={{ fontSize: '11px', color: '#ff6b66', marginTop: '4px' }}>{errors.password}</div>}
+                <div style={{
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '6px',
+                  padding: '10px',
+                  fontSize: '12px',
+                  color: 'var(--text-secondary)'
+                }}>
+                  🔐 La contraseña se genera automáticamente. Te la mostraremos después de crear el usuario.
                 </div>
               )}
 
@@ -585,6 +596,107 @@ export default function UsuariosPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Password Modal */}
+      {showPasswordModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }} onClick={() => setShowPasswordModal(false)}>
+          <div
+            style={{
+              background: 'var(--bg-primary)',
+              borderRadius: '12px',
+              padding: '2rem',
+              maxWidth: '450px',
+              width: '90%',
+              border: '1px solid var(--border-color)',
+              textAlign: 'center'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ fontSize: '48px', marginBottom: '1rem' }}>🔑</div>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: '800',
+              color: 'var(--text-primary)',
+              margin: '0 0 1rem 0'
+            }}>
+              Contraseña Generada
+            </h3>
+            <p style={{
+              fontSize: '13px',
+              color: 'var(--text-secondary)',
+              margin: '0 0 1.5rem 0'
+            }}>
+              Copia la contraseña y comparte con el usuario (por WhatsApp o email):
+            </p>
+
+            <div style={{
+              background: 'var(--bg-secondary)',
+              border: '2px solid var(--accent-orange)',
+              borderRadius: '8px',
+              padding: '14px',
+              marginBottom: '1.5rem',
+              fontFamily: 'monospace',
+              fontSize: '16px',
+              fontWeight: '700',
+              color: 'var(--accent-orange)',
+              wordBreak: 'break-all'
+            }}>
+              {generatedPassword}
+            </div>
+
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(generatedPassword)
+                setPasswordCopied(true)
+                setTimeout(() => setPasswordCopied(false), 2000)
+              }}
+              style={{
+                width: '100%',
+                padding: '10px',
+                background: passwordCopied ? 'var(--accent-orange)' : 'var(--bg-secondary)',
+                color: passwordCopied ? '#fff' : 'var(--accent-orange)',
+                border: `1px solid var(--accent-orange)`,
+                borderRadius: '6px',
+                fontWeight: '600',
+                fontSize: '13px',
+                cursor: 'pointer',
+                marginBottom: '1rem',
+                transition: 'all 0.2s'
+              }}
+            >
+              {passwordCopied ? '✓ Copiado' : '📋 Copiar Contraseña'}
+            </button>
+
+            <button
+              onClick={() => setShowPasswordModal(false)}
+              style={{
+                width: '100%',
+                padding: '10px',
+                background: 'var(--accent-orange)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: '600',
+                fontSize: '13px',
+                cursor: 'pointer'
+              }}
+            >
+              Listo
+            </button>
           </div>
         </div>
       )}

@@ -9,7 +9,8 @@
       "Read(//c/tmp/**)",
       "Bash(curl -s http://localhost:3001)",
       "PowerShell(\"V Servidor detenido\")",
-      "PowerShell(\"V Detenido\")"
+      "PowerShell(\"V Detenido\")",
+      "Bash(unzip -q \"Sistema de control de ferreterías \\(1\\).zip\" -d \"sistema_ferreterias_temp\")"
     ]
   }
 }

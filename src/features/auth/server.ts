@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma"
 import { hash, compare } from "bcryptjs"
 import { generateToken } from "@/lib/jwt"
+import { generateRandomPassword } from "@/lib/password"
 import type { LoginResponse } from "@/types/auth"
 
 export async function actionLogin(email: string, password: string): Promise<LoginResponse> {
@@ -67,7 +68,6 @@ export async function actionLogin(email: string, password: string): Promise<Logi
 export async function actionCreateUser(
   businessId: string,
   email: string,
-  password: string,
   name: string,
   role: "dueno" | "vendedor" | "cajero" | "bodeguero" | "chofer"
 ) {
@@ -81,8 +81,9 @@ export async function actionCreateUser(
       return { success: false, error: "El email ya está registrado" }
     }
 
-    // Hash password
-    const hashedPassword = await hash(password, 10)
+    // Generar contraseña aleatoria segura
+    const plainPassword = generateRandomPassword()
+    const hashedPassword = await hash(plainPassword, 10)
 
     const user = await prisma.user.create({
       data: {
@@ -105,7 +106,9 @@ export async function actionCreateUser(
         businessId: user.businessId,
         active: user.active,
         createdAt: user.createdAt
-      }
+      },
+      // Retornar contraseña en texto plano SOLO para mostrar al Dueño
+      plainPassword
     }
   } catch (error) {
     console.error("Create user error:", error)
@@ -154,6 +157,27 @@ export async function actionGetUsers(businessId: string) {
   } catch (error) {
     console.error("Get users error:", error)
     return []
+  }
+}
+
+export async function actionResetUserPassword(userId: string) {
+  try {
+    // Generar nueva contraseña
+    const plainPassword = generateRandomPassword()
+    const hashedPassword = await hash(plainPassword, 10)
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword }
+    })
+
+    return {
+      success: true,
+      plainPassword
+    }
+  } catch (error) {
+    console.error("Reset password error:", error)
+    return { success: false, error: "Error al resetear contraseña" }
   }
 }
 
