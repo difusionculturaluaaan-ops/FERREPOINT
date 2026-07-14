@@ -2,125 +2,80 @@
 
 import { prisma } from '@/lib/prisma'
 
-// Cuentas por Cobrar (CxC)
-export async function actionCreateAccountsReceivable(
-  businessId: string,
-  saleId: string,
-  clientName: string,
-  amount: number,
-  dueDate: Date
-) {
+export async function actionGetFinancialSummary(businessId: string, locationId: string, date?: Date) {
   try {
-    const cxc = await prisma.accountsReceivable.create({
-      data: {
+    const targetDate = date || new Date()
+    targetDate.setHours(0, 0, 0, 0)
+    const endOfDay = new Date(targetDate)
+    endOfDay.setHours(23, 59, 59, 999)
+
+    const sales = await prisma.sale.findMany({
+      where: {
         businessId,
-        saleId,
-        clientName,
-        amount,
-        amountPaid: 0,
-        dueDate,
-        status: 'pendiente'
+        locationId,
+        createdAt: { gte: targetDate, lte: endOfDay }
+      },
+      include: {
+        items: {
+          include: {
+            product: { select: { costPrice: true } }
+          }
+        }
       }
     })
 
-    return { success: true, cxc }
+    let grossIncome = 0
+    let totalCost = 0
+
+    sales.forEach(sale => {
+      grossIncome += sale.total
+      sale.items.forEach(item => {
+        totalCost += item.product.costPrice * item.qty
+      })
+    })
+
+    const grossProfit = grossIncome - totalCost
+    const marginPercent = grossIncome > 0 ? ((grossProfit / grossIncome) * 100).toFixed(2) : '0'
+
+    return {
+      date: targetDate.toISOString().split('T')[0],
+      totalSales: sales.length,
+      grossIncome,
+      totalCost,
+      grossProfit,
+      marginPercent: parseFloat(marginPercent),
+      operatingExpenses: 0,
+      netProfit: grossProfit
+    }
   } catch (error) {
-    console.error('Error creating CxC:', error)
-    return { error: 'Error al crear cuenta por cobrar' }
+    console.error('Error calculating financial summary:', error)
+    return null
   }
 }
 
-export async function actionGetAccountsReceivable(businessId: string, status?: string) {
+export async function actionGetAccountsReceivable(businessId: string, locationId?: string, status?: string) {
   try {
     const cxc = await prisma.accountsReceivable.findMany({
       where: {
         businessId,
+        ...(locationId && { sale: { locationId } }),
         ...(status && { status: status as any })
       },
       include: {
-        sale: {
-          select: {
-            folio: true,
-            createdAt: true
-          }
-        }
+        sale: { select: { folio: true, total: true, createdAt: true } },
+        payments: { select: { amount: true, paymentDate: true } }
       },
       orderBy: { dueDate: 'asc' }
     })
 
-    return cxc
+    return cxc.map(item => ({
+      ...item,
+      daysOverdue: item.dueDate < new Date() ? Math.floor((new Date().getTime() - item.dueDate.getTime()) / (1000 * 60 * 60 * 24)) : 0,
+      percentPaid: item.amount > 0 ? (item.amountPaid / item.amount) * 100 : 0
+    }))
   } catch (error) {
     console.error('Error fetching CxC:', error)
     return []
-  }
-}
-
-export async function actionRecordPaymentReceivable(
-  cxcId: string,
-  amount: number,
-  paymentMethod: string
-) {
-  try {
-    const cxc = await prisma.accountsReceivable.findUnique({
-      where: { id: cxcId }
-    })
-
-    if (!cxc) {
-      return { error: 'Cuenta no encontrada' }
-    }
-
-    const newAmountPaid = cxc.amountPaid + amount
-    const newStatus = newAmountPaid >= cxc.amount ? 'pagado' : 'parcial'
-
-    await prisma.accountsReceivable.update({
-      where: { id: cxcId },
-      data: {
-        amountPaid: newAmountPaid,
-        status: newStatus
-      }
-    })
-
-    await prisma.paymentReceivable.create({
-      data: {
-        cxcId,
-        amount,
-        paymentMethod,
-        paymentDate: new Date()
-      }
-    })
-
-    return { success: true }
-  } catch (error) {
-    console.error('Error recording payment:', error)
-    return { error: 'Error al registrar pago' }
-  }
-}
-
-// Cuentas por Pagar (CxP)
-export async function actionCreateAccountsPayable(
-  businessId: string,
-  poId: string,
-  supplierId: string,
-  amount: number,
-  dueDate: Date
-) {
-  try {
-    const cxp = await prisma.accountsPayable.create({
-      data: {
-        businessId,
-        poId,
-        supplierId,
-        amount,
-        amountPaid: 0,
-        dueDate,
-        status: 'pendiente'
-      }
-    })
-
-    return { success: true, cxp }
-  } catch (error) {
-    console.error('Error creating CxP:', error)
-    return { error: 'Error al crear cuenta por pagar' }
   }
 }
 
@@ -132,116 +87,68 @@ export async function actionGetAccountsPayable(businessId: string, status?: stri
         ...(status && { status: status as any })
       },
       include: {
-        supplier: {
-          select: {
-            name: true
-          }
-        }
+        po: { select: { poNumber: true, total: true, createdAt: true } },
+        supplier: { select: { name: true, contact: true } },
+        payments: { select: { amount: true, paymentDate: true } }
       },
       orderBy: { dueDate: 'asc' }
     })
 
-    return cxp
+    return cxp.map(item => ({
+      ...item,
+      daysUntilDue: Math.floor((item.dueDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)),
+      isOverdue: item.dueDate < new Date(),
+      percentPaid: item.amount > 0 ? (item.amountPaid / item.amount) * 100 : 0
+    }))
   } catch (error) {
     console.error('Error fetching CxP:', error)
     return []
   }
 }
 
-export async function actionRecordPaymentPayable(
-  cxpId: string,
-  amount: number,
-  paymentMethod: string
-) {
-  try {
-    const cxp = await prisma.accountsPayable.findUnique({
-      where: { id: cxpId }
-    })
-
-    if (!cxp) {
-      return { error: 'Cuenta no encontrada' }
-    }
-
-    const newAmountPaid = cxp.amountPaid + amount
-    const newStatus = newAmountPaid >= cxp.amount ? 'pagado' : 'parcial'
-
-    await prisma.accountsPayable.update({
-      where: { id: cxpId },
-      data: {
-        amountPaid: newAmountPaid,
-        status: newStatus
-      }
-    })
-
-    await prisma.paymentPayable.create({
-      data: {
-        cxpId,
-        amount,
-        paymentMethod,
-        paymentDate: new Date()
-      }
-    })
-
-    return { success: true }
-  } catch (error) {
-    console.error('Error recording payment:', error)
-    return { error: 'Error al registrar pago' }
-  }
-}
-
-// Corte de Caja
 export async function actionCreateCashClose(
   businessId: string,
   locationId: string,
-  date: Date,
   initialCash: number,
   finalCash: number,
   observations?: string
 ) {
   try {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const endOfDay = new Date(today)
+    endOfDay.setHours(23, 59, 59, 999)
+
     const sales = await prisma.sale.findMany({
       where: {
         businessId,
         locationId,
-        createdAt: {
-          gte: new Date(date.setHours(0, 0, 0, 0)),
-          lte: new Date(date.setHours(23, 59, 59, 999))
-        }
-      },
-      include: {
-        items: {
-          include: {
-            product: { select: { costPrice: true } }
-          }
-        }
+        paymentMethod: 'efectivo',
+        createdAt: { gte: today, lte: endOfDay }
       }
     })
 
-    const totalSales = sales.length
-    const totalIngresos = sales.reduce((sum, s) => sum + s.total, 0)
-    const totalCosto = sales.reduce((sum, s) => {
-      return sum + s.items.reduce((itemSum, item) => {
-        return itemSum + item.qty * item.product.costPrice
-      }, 0)
-    }, 0)
+    const totalSalesAmount = sales.reduce((sum, s) => sum + s.total, 0)
+    const difference = finalCash - (initialCash + totalSalesAmount)
 
-    const expectedCash = initialCash + totalIngresos
-    const difference = finalCash - expectedCash
+    let status: 'cuadrado' | 'faltante' | 'sobrante' = 'cuadrado'
+    if (difference < -1) status = 'faltante'
+    if (difference > 1) status = 'sobrante'
 
     const cashClose = await prisma.cashClose.create({
       data: {
         businessId,
         locationId,
-        date,
+        date: today,
         initialCash,
         finalCash,
-        totalSales,
-        totalIngresos,
-        totalCosto,
-        margin: totalIngresos - totalCosto,
-        difference,
-        observations,
-        status: difference === 0 ? 'cuadrado' : 'faltante'
+        totalSales: sales.length,
+        totalIngresos: totalSalesAmount,
+        totalCosto: 0,
+        margin: 0,
+        difference: Math.abs(difference),
+        status,
+        observations
       }
     })
 
@@ -252,163 +159,64 @@ export async function actionCreateCashClose(
   }
 }
 
-export async function actionGetCashCloses(businessId: string, locationId?: string) {
+export async function actionGetCashCloseHistory(businessId: string, locationId: string, days: number = 30) {
   try {
-    const closes = await prisma.cashClose.findMany({
-      where: {
-        businessId,
-        ...(locationId && { locationId })
-      },
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - days)
+    startDate.setHours(0, 0, 0, 0)
+
+    return await prisma.cashClose.findMany({
+      where: { businessId, locationId, date: { gte: startDate } },
       orderBy: { date: 'desc' }
     })
-
-    return closes
   } catch (error) {
-    console.error('Error fetching cash closes:', error)
+    console.error('Error fetching cash close history:', error)
     return []
   }
 }
 
-// Resumen Financiero
-export async function actionGetFinancialSummary(businessId: string, startDate?: Date, endDate?: Date) {
+export async function actionGetCxCSummary(businessId: string, locationId?: string) {
   try {
     const cxc = await prisma.accountsReceivable.findMany({
-      where: { businessId }
+      where: { businessId, ...(locationId && { sale: { locationId } }) }
     })
 
-    const cxp = await prisma.accountsPayable.findMany({
-      where: { businessId }
-    })
-
-    const sales = await prisma.sale.findMany({
-      where: {
-        businessId,
-        ...(startDate && { createdAt: { gte: startDate } }),
-        ...(endDate && { createdAt: { lte: endDate } })
-      },
-      include: {
-        items: {
-          include: {
-            product: { select: { costPrice: true } }
-          }
-        }
-      }
-    })
-
-    const totalIngresos = sales.reduce((sum, s) => sum + s.total, 0)
-    const totalCosto = sales.reduce((sum, s) => {
-      return sum + s.items.reduce((itemSum, item) => {
-        return itemSum + item.qty * item.product.costPrice
-      }, 0)
-    }, 0)
-
-    const totalMargin = totalIngresos - totalCosto
-
-    const cxcPending = cxc.reduce((sum, c) => sum + (c.amount - c.amountPaid), 0)
-    const cxpPending = cxp.reduce((sum, c) => sum + (c.amount - c.amountPaid), 0)
-
-    const cxcOverdue = cxc.filter(c => c.dueDate < new Date() && c.status !== 'pagado').length
-    const cxpOverdue = cxp.filter(c => c.dueDate < new Date() && c.status !== 'pagado').length
+    const totalAmount = cxc.reduce((sum, item) => sum + item.amount, 0)
+    const totalPaid = cxc.reduce((sum, item) => sum + item.amountPaid, 0)
+    const pending = cxc.filter(item => item.status !== 'pagado').reduce((sum, item) => sum + (item.amount - item.amountPaid), 0)
+    const overdue = cxc.filter(item => item.dueDate < new Date()).reduce((sum, item) => sum + (item.amount - item.amountPaid), 0)
 
     return {
-      period: { start: startDate, end: endDate },
-      sales: {
-        count: sales.length,
-        totalIngresos,
-        totalCosto,
-        margin: totalMargin,
-        marginPercent: totalIngresos > 0 ? (totalMargin / totalIngresos) * 100 : 0
-      },
-      cxc: {
-        total: cxc.reduce((sum, c) => sum + c.amount, 0),
-        pending: cxcPending,
-        overdue: cxcOverdue,
-        count: cxc.length
-      },
-      cxp: {
-        total: cxp.reduce((sum, c) => sum + c.amount, 0),
-        pending: cxpPending,
-        overdue: cxpOverdue,
-        count: cxp.length
-      },
-      netCash: totalIngresos - cxpPending + cxcPending
+      totalAmount,
+      totalPaid,
+      pending,
+      overdue,
+      collectionRate: totalAmount > 0 ? (totalPaid / totalAmount) * 100 : 0,
+      count: cxc.length
     }
   } catch (error) {
-    console.error('Error fetching financial summary:', error)
+    console.error('Error calculating CxC summary:', error)
     return null
   }
 }
 
-// Rentabilidad por Producto
-export async function actionGetProductProfitability(businessId: string, days: number = 30) {
+export async function actionGetCxPSummary(businessId: string) {
   try {
-    const startDate = new Date()
-    startDate.setDate(startDate.getDate() - days)
+    const cxp = await prisma.accountsPayable.findMany({ where: { businessId } })
 
-    const sales = await prisma.sale.findMany({
-      where: {
-        businessId,
-        createdAt: { gte: startDate }
-      },
-      include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                clave: true,
-                costPrice: true
-              }
-            }
-          }
-        }
-      }
-    })
+    const totalAmount = cxp.reduce((sum, item) => sum + item.amount, 0)
+    const totalPaid = cxp.reduce((sum, item) => sum + item.amountPaid, 0)
+    const pending = cxp.filter(item => item.status !== 'pagado').reduce((sum, item) => sum + (item.amount - item.amountPaid), 0)
 
-    const profitability: Record<string, {
-      name: string
-      clave: string
-      qty: number
-      revenue: number
-      cost: number
-      margin: number
-      marginPercent: number
-      count: number
-    }> = {}
-
-    sales.forEach(sale => {
-      sale.items.forEach(item => {
-        const prodId = item.product.id
-        if (!profitability[prodId]) {
-          profitability[prodId] = {
-            name: item.product.name,
-            clave: item.product.clave,
-            qty: 0,
-            revenue: 0,
-            cost: 0,
-            margin: 0,
-            marginPercent: 0,
-            count: 0
-          }
-        }
-        profitability[prodId].qty += item.qty
-        profitability[prodId].revenue += item.subtotal
-        profitability[prodId].cost += item.qty * item.product.costPrice
-        profitability[prodId].count += 1
-      })
-    })
-
-    return Object.entries(profitability)
-      .map(([id, data]) => ({
-        id,
-        ...data,
-        margin: data.revenue - data.cost,
-        marginPercent: data.revenue > 0 ? ((data.revenue - data.cost) / data.revenue) * 100 : 0
-      }))
-      .sort((a, b) => b.margin - a.margin)
+    return {
+      totalAmount,
+      totalPaid,
+      pending,
+      paymentRate: totalAmount > 0 ? (totalPaid / totalAmount) * 100 : 0,
+      count: cxp.length
+    }
   } catch (error) {
-    console.error('Error fetching product profitability:', error)
-    return []
+    console.error('Error calculating CxP summary:', error)
+    return null
   }
 }
