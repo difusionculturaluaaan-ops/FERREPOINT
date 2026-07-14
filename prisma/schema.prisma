@@ -116,6 +116,10 @@ model Product {
   stock      Int
   minStock   Int      @default(0)
   unit       String
+  aisle      String?  // P01, P02, etc.
+  level      String?  // N1, N2, N3
+  side       String?  // DER, IZQ
+  position   String?  // Pos 1, Pos 2, etc.
   active     Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now())

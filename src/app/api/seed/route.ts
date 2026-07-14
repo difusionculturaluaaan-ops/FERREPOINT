@@ -201,20 +201,20 @@ export async function POST() {
       })
     ])
 
-    // Create products with image references
+    // Create products with image references and physical locations
     const products = [
-      { clave: '40-09-0109-607', name: 'Estuco Premium 20 KG', imageName: 'Estuco Premium', category: 'Estuco y Yeso', price: 73.28, stock: 45, minStock: 10 },
-      { clave: '40-09-0110-001', name: 'Yeso Calcáreo 25 KG', imageName: 'Yeso Calcáreo', category: 'Estuco y Yeso', price: 55.17, stock: 32, minStock: 8 },
-      { clave: '10-01-0001-200', name: 'Cemento Gris 50 KG', imageName: 'Cemento Gris', category: 'Cemento', price: 108.62, stock: 120, minStock: 20 },
-      { clave: '10-01-0002-100', name: 'Cemento Blanco 25 KG', imageName: 'Cemento Blanco', category: 'Cemento', price: 189.66, stock: 18, minStock: 10 },
-      { clave: '20-05-0001-400', name: 'Block 15×20×40 cm', imageName: 'Block', category: 'Block', price: 8.62, stock: 850, minStock: 100 },
-      { clave: '20-05-0002-100', name: 'Tabique Rojo 6×12×24 cm', imageName: 'Tabique', category: 'Block', price: 3.45, stock: 1200, minStock: 200 },
-      { clave: '30-03-0001-600', name: 'Varilla #3 Corrugada 6m', imageName: 'Varilla', category: 'Acero', price: 95.69, stock: 7, minStock: 15 },
-      { clave: '30-03-0002-800', name: 'Malla Electrosoldada 6×6', imageName: 'Malla', category: 'Acero', price: 310.34, stock: 22, minStock: 5 },
-      { clave: '50-02-0001-300', name: 'Pintura Vinílica Blanca 19L', imageName: 'Pintura Vinílica', category: 'Pintura', price: 603.45, stock: 3, minStock: 5 },
-      { clave: '50-02-0003-200', name: 'Impermeabilizante 19L', imageName: 'Impermeabilizante', category: 'Pintura', price: 775.86, stock: 8, minStock: 4 },
-      { clave: '60-07-0001-100', name: 'Tubo PVC 4" × 6m', imageName: 'Tubo PVC', category: 'Plomería', price: 181.03, stock: 28, minStock: 6 },
-      { clave: '70-01-0001-500', name: 'Pala Cuadrada Truper', imageName: 'Pala', category: 'Herramientas', price: 224.14, stock: 11, minStock: 4 }
+      { clave: '40-09-0109-607', name: 'Estuco Premium 20 KG', imageName: 'Estuco Premium', category: 'Estuco y Yeso', price: 73.28, stock: 45, minStock: 10, aisle: 'P01', level: 'N2', side: 'DER', position: 'Pos 1' },
+      { clave: '40-09-0110-001', name: 'Yeso Calcáreo 25 KG', imageName: 'Yeso Calcáreo', category: 'Estuco y Yeso', price: 55.17, stock: 32, minStock: 8, aisle: 'P01', level: 'N2', side: 'DER', position: 'Pos 1' },
+      { clave: '10-01-0001-200', name: 'Cemento Gris 50 KG', imageName: 'Cemento Gris', category: 'Cemento', price: 108.62, stock: 120, minStock: 20, aisle: 'P02', level: 'N1', side: 'IZQ', position: 'Pos 1' },
+      { clave: '10-01-0002-100', name: 'Cemento Blanco 25 KG', imageName: 'Cemento Blanco', category: 'Cemento', price: 189.66, stock: 18, minStock: 10, aisle: 'P02', level: 'N1', side: 'DER', position: 'Pos 2' },
+      { clave: '20-05-0001-400', name: 'Block 15×20×40 cm', imageName: 'Block', category: 'Block', price: 8.62, stock: 850, minStock: 100, aisle: 'BOD', level: 'N1', side: 'CEN', position: 'Pos 1' },
+      { clave: '20-05-0002-100', name: 'Tabique Rojo 6×12×24 cm', imageName: 'Tabique', category: 'Block', price: 3.45, stock: 1200, minStock: 200, aisle: 'BOD', level: 'N1', side: 'CEN', position: 'Pos 2' },
+      { clave: '30-03-0001-600', name: 'Varilla #3 Corrugada 6m', imageName: 'Varilla', category: 'Acero', price: 95.69, stock: 7, minStock: 15, aisle: 'P03', level: 'N3', side: 'IZQ', position: 'Pos 4' },
+      { clave: '30-03-0002-800', name: 'Malla Electrosoldada 6×6', imageName: 'Malla', category: 'Acero', price: 310.34, stock: 22, minStock: 5, aisle: 'P03', level: 'N3', side: 'DER', position: 'Pos 2' },
+      { clave: '50-02-0001-300', name: 'Pintura Vinílica Blanca 19L', imageName: 'Pintura Vinílica', category: 'Pintura', price: 603.45, stock: 3, minStock: 5, aisle: 'P04', level: 'N2', side: 'IZQ', position: 'Pos 1' },
+      { clave: '50-02-0003-200', name: 'Impermeabilizante 19L', imageName: 'Impermeabilizante', category: 'Pintura', price: 775.86, stock: 8, minStock: 4, aisle: 'P04', level: 'N2', side: 'DER', position: 'Pos 3' },
+      { clave: '60-07-0001-100', name: 'Tubo PVC 4" × 6m', imageName: 'Tubo PVC', category: 'Plomería', price: 181.03, stock: 28, minStock: 6, aisle: 'P05', level: 'N3', side: 'IZQ', position: 'Pos 2' },
+      { clave: '70-01-0001-500', name: 'Pala Cuadrada Truper', imageName: 'Pala', category: 'Herramientas', price: 224.14, stock: 11, minStock: 4, aisle: 'P05', level: 'N1', side: 'DER', position: 'Pos 5' }
     ]
 
     for (const prod of products) {
@@ -229,7 +229,11 @@ export async function POST() {
           price: prod.price,
           stock: prod.stock,
           minStock: prod.minStock,
-          unit: 'PZA'
+          unit: 'PZA',
+          aisle: prod.aisle,
+          level: prod.level,
+          side: prod.side,
+          position: prod.position
         }
       })
     }

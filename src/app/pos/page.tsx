@@ -20,6 +20,10 @@ interface Product {
   price: number
   costPrice: number
   stock: number
+  aisle?: string | null
+  level?: string | null
+  side?: string | null
+  position?: string | null
   image?: ProductImage | null
 }
 
@@ -413,6 +417,18 @@ Comprobante: ${comprobante === 'completo' ? 'COMPLETO' : comprobante === 'resumi
                   }}>
                     {product.clave}
                   </div>
+                  {product.aisle && (
+                    <div style={{
+                      fontSize: '8px',
+                      color: 'var(--accent-orange)',
+                      fontWeight: '500',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {product.aisle} - {product.level} - {product.side} - {product.position}
+                    </div>
+                  )}
                   <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
