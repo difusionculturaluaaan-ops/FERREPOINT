@@ -52,6 +52,10 @@ export default function LoginPage() {
       if (result.success && result.token) {
         localStorage.setItem('token', result.token)
         if (result.user) localStorage.setItem('user', JSON.stringify(result.user))
+
+        // Set cookie for middleware
+        document.cookie = `token=${result.token}; path=/; max-age=${7 * 24 * 60 * 60}`
+
         setShowSuccess(true)
 
         setTimeout(() => {

@@ -12,7 +12,7 @@ const roleRoutes: Record<string, string[]> = {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const token = request.cookies.get('token')?.value || localStorage?.getItem?.('token')
+  const token = request.cookies.get('token')?.value
 
   // Rutas públicas — pasar sin verificación
   if (publicRoutes.some(route => pathname.startsWith(route))) {

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Stop-Process -Name node -Force -ErrorAction SilentlyContinue)",
+      "PowerShell(\"V Todos los procesos Node detenidos\")",
+      "Bash(curl -s http://localhost:3001/login)",
+      "PowerShell(\"V Procesos Node detenidos\")",
+      "Read(//tmp/**)",
+      "Read(//c/tmp/**)",
+      "Bash(curl -s http://localhost:3001)"
+    ]
+  }
+}
