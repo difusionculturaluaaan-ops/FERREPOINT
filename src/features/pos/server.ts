@@ -29,10 +29,7 @@ export async function actionCreateOrder(
     // Crear sale (orden)
     const sale = await prisma.sale.create({
       data: {
-        businessId,
-        locationId,
         folio,
-        vendorId,
         clientName: clientName || "Cliente",
         clientPhone,
         clientAddress,
@@ -43,6 +40,9 @@ export async function actionCreateOrder(
         iva,
         total,
         status: "pendiente",
+        business: { connect: { id: businessId } },
+        location: { connect: { id: locationId } },
+        vendor: { connect: { id: vendorId } },
         items: {
           create: items.map(item => ({
             productId: item.productId,
