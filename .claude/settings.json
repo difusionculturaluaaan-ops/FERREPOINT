@@ -11,7 +11,10 @@
       "PowerShell(\"V Servidor detenido\")",
       "PowerShell(\"V Detenido\")",
       "Bash(unzip -q \"Sistema de control de ferreterías \\(1\\).zip\" -d \"sistema_ferreterias_temp\")",
-      "Bash(node -e \"const fs = require\\('fs'\\); const content = fs.readFileSync\\('src/app/pos/page.tsx', 'utf8'\\); if\\(content.match\\(/pollPaidOrders|getTimeSinceCreation|paidOrdersBox|notificationMessage/g\\)\\) console.log\\('✓ All key additions found'\\); else console.log\\('✗ Missing key additions'\\);\")"
+      "Bash(node -e \"const fs = require\\('fs'\\); const content = fs.readFileSync\\('src/app/pos/page.tsx', 'utf8'\\); if\\(content.match\\(/pollPaidOrders|getTimeSinceCreation|paidOrdersBox|notificationMessage/g\\)\\) console.log\\('✓ All key additions found'\\); else console.log\\('✗ Missing key additions'\\);\")",
+      "Bash(node -e \"const fs = require\\('fs'\\); const content = fs.readFileSync\\('src/app/pos/page.tsx', 'utf8'\\); const open = \\(content.match\\(/\\\\{/g\\)||[]\\).length; const close = \\(content.match\\(/\\\\}/g\\)||[]\\).length; console.log\\('Braces: ' + open + ' open, ' + close + ' close - ' + \\(open === close ? '✓ Balanced' : '✗ Unbalanced'\\)\\);\")",
+      "Bash(curl -s -X POST http://localhost:3000/api/seed)",
+      "Bash(tail -100 /tmp/server.log | grep -A 5 \"order\\\\|error\" -i)"
     ]
   }
 }

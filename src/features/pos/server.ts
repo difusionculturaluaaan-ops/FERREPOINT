@@ -57,8 +57,9 @@ export async function actionCreateOrder(
 
     return { success: true, sale, message: `Orden #${folio} creada` }
   } catch (error) {
-    console.error("Create order error:", error)
-    return { success: false, error: "Error al crear orden" }
+    const errorMsg = error instanceof Error ? error.message : String(error)
+    console.error("Create order error:", errorMsg, { businessId, locationId, vendorId, itemsCount: items.length })
+    return { success: false, error: `Error: ${errorMsg}` }
   }
 }
 
