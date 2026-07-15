@@ -4,6 +4,7 @@
   name: string
   role: "dueno" | "vendedor" | "cajero" | "bodeguero" | "chofer"
   businessId: string
+  locationId?: string
   active: boolean
   createdAt: Date
 }

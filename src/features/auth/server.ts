@@ -15,7 +15,7 @@ export async function actionLogin(email: string, password: string): Promise<Logi
     // Buscar usuario por email
     const user = await prisma.user.findFirst({
       where: { email: email.toLowerCase() },
-      include: { business: true }
+      include: { business: { include: { locations: { take: 1 } } } }
     })
 
     if (!user) {
@@ -46,6 +46,9 @@ export async function actionLogin(email: string, password: string): Promise<Logi
       data: { lastLogin: new Date() }
     })
 
+    // Obtener primera location (default)
+    const defaultLocation = user.business.locations?.[0]?.id || ""
+
     return {
       success: true,
       user: {
@@ -54,6 +57,7 @@ export async function actionLogin(email: string, password: string): Promise<Logi
         name: user.name,
         role: user.role as any,
         businessId: user.businessId,
+        locationId: defaultLocation,
         active: user.active,
         createdAt: user.createdAt
       },
