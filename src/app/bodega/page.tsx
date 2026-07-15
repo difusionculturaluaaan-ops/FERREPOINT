@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { actionGetSurtidoOrders, actionUpdateSurtidoItem, actionCompleteSurtidoOrder, actionGetBodegaStats } from '@/features/bodega/server'
+import { actionGetOrdersForWarehouse, actionMarkOrderAsReady } from '@/features/pos/server'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
-interface SurtidoItem {
-  id: string
+interface OrderItem {
+  productId: string
   qty: number
-  qtyPicked: number
+  price: number
+  subtotal: number
   product: {
     id: string
     name: string
@@ -15,77 +16,114 @@ interface SurtidoItem {
   }
 }
 
-interface SurtidoOrder {
+interface Order {
   id: string
-  saleId?: string
-  status: 'pendiente' | 'en_proceso' | 'completado'
-  items: SurtidoItem[]
-  sale?: {
-    folio: string
-    total: number
+  folio: string
+  status: string
+  clientName: string
+  clientPhone?: string
+  clientAddress?: string
+  deliveryType: string
+  items: any[]
+  vendor: {
+    id: string
+    name: string
   }
-  createdAt: string
+  paymentProcessedAt?: Date | string
+  total: number
+}
+
+interface Toast {
+  id: string
+  message: string
+  type: 'success' | 'error'
 }
 
 export default function BodegaPage() {
-  const [orders, setOrders] = useState<SurtidoOrder[]>([])
-  const [stats, setStats] = useState({ pending: 0, inProgress: 0, completed: 0, total: 0 })
-  const [activeTab, setActiveTab] = useState<'pendiente' | 'en_proceso' | 'completado'>('pendiente')
+  const [ordersToPrep, setOrdersToPrep] = useState<Order[]>([])
+  const [ordersPrepared, setOrdersPrepared] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [businessId, setBusinessId] = useState<string | null>(null)
-  const [locationId, setLocationId] = useState<string | null>(null)
+  const [toasts, setToasts] = useState<Toast[]>([])
+  const [isPolling, setIsPolling] = useState(true)
 
+  // Load businessId from localStorage
   useEffect(() => {
-    loadContext()
-  }, [])
-
-  const loadContext = async () => {
     try {
-      const res = await fetch('/api/pos/context')
-      const data = await res.json()
-      if (!data.error) {
-        setBusinessId(data.businessId)
-        setLocationId(data.locationId)
+      const stored = localStorage.getItem('user')
+      if (stored) {
+        const user = JSON.parse(stored)
+        setBusinessId(user.businessId)
       }
     } catch (error) {
-      console.error('Error loading context:', error)
+      console.error('Error loading businessId from localStorage:', error)
     }
-  }
+  }, [])
 
+  // Initial load
   useEffect(() => {
-    if (businessId && locationId) {
+    if (businessId) {
       loadOrders()
-      loadStats()
     }
-  }, [businessId, locationId, activeTab])
+  }, [businessId])
+
+  // Auto-refresh polling every 3 seconds
+  useEffect(() => {
+    if (!businessId || !isPolling) return
+
+    const interval = setInterval(() => {
+      loadOrders()
+    }, 3000)
+
+    return () => clearInterval(interval)
+  }, [businessId, isPolling])
 
   const loadOrders = async () => {
-    setIsLoading(true)
-    const result = await actionGetSurtidoOrders(businessId!, locationId!, activeTab)
-    setOrders(result as any)
-    setIsLoading(false)
-  }
+    if (!businessId) return
 
-  const loadStats = async () => {
-    const result = await actionGetBodegaStats(businessId!, locationId!)
-    setStats(result)
-  }
+    try {
+      setIsLoading(true)
+      const allOrders = await actionGetOrdersForWarehouse(businessId)
 
-  const handleQtyChange = async (itemId: string, newQty: number) => {
-    await actionUpdateSurtidoItem(itemId, newQty)
-    await loadOrders()
-  }
+      // Separate into pending and prepared
+      const pending = allOrders.filter((o: any) => o.status === 'pagada')
+      const prepared = allOrders.filter((o: any) => o.status === 'preparada')
 
-  const handleCompleteOrder = async (orderId: string) => {
-    const result = await actionCompleteSurtidoOrder(orderId)
-    if (result.success) {
-      alert('Orden completada exitosamente')
-      await loadOrders()
-      await loadStats()
+      setOrdersToPrep(pending)
+      setOrdersPrepared(prepared)
+    } catch (error) {
+      console.error('Error loading orders:', error)
+      showToast('Error al cargar órdenes', 'error')
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  if (!businessId || !locationId) {
+  const handleMarkAsReady = async (saleId: string, folio: string) => {
+    try {
+      const result = await actionMarkOrderAsReady(saleId)
+      if (result.success) {
+        showToast(`✓ Orden #${folio} lista para entrega`, 'success')
+        await loadOrders()
+      } else {
+        showToast(result.error || 'Error al actualizar orden', 'error')
+      }
+    } catch (error) {
+      console.error('Error marking order as ready:', error)
+      showToast('Error al actualizar orden', 'error')
+    }
+  }
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    const id = Math.random().toString(36).substr(2, 9)
+    setToasts(prev => [...prev, { id, message, type }])
+
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id))
+    }, 3000)
+  }
+
+  if (!businessId) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -95,7 +133,7 @@ export default function BodegaPage() {
         background: 'var(--bg-secondary)'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <h1 style={{ fontSize: '24px', color: 'var(--text-primary)' }}>Cargando contexto...</h1>
+          <h1 style={{ fontSize: '24px', color: 'var(--text-primary)' }}>Cargando...</h1>
           <a href="/" style={{ color: 'var(--accent-orange)', textDecoration: 'none' }}>
             Volver al inicio
           </a>
@@ -103,8 +141,6 @@ export default function BodegaPage() {
       </div>
     )
   }
-
-  const filteredOrders = orders.filter(o => o.status === activeTab)
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-secondary)' }}>
@@ -141,37 +177,36 @@ export default function BodegaPage() {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats Header */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '1.5rem',
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gap: '2rem',
         padding: '2rem',
         maxWidth: '1400px',
-        margin: '0 auto'
+        margin: '0 auto',
+        marginBottom: '2rem'
       }}>
         <div style={{
           background: 'var(--bg-primary)',
           border: '1px solid var(--border-color)',
           borderRadius: '4px',
           padding: '1.5rem',
-          textAlign: 'center'
         }}>
           <div style={{
-            fontSize: '28px',
+            fontSize: '18px',
+            fontWeight: '600',
+            color: 'var(--text-primary)',
+            marginBottom: '0.5rem'
+          }}>
+            Órdenes por Preparar
+          </div>
+          <div style={{
+            fontSize: '32px',
             fontWeight: '600',
             color: 'var(--error)'
           }}>
-            {stats.pending}
-          </div>
-          <div style={{
-            fontSize: '12px',
-            color: 'var(--text-secondary)',
-            marginTop: '0.5rem',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px'
-          }}>
-            Pendientes
+            {ordersToPrep.length}
           </div>
         </div>
         <div style={{
@@ -179,369 +214,377 @@ export default function BodegaPage() {
           border: '1px solid var(--border-color)',
           borderRadius: '4px',
           padding: '1.5rem',
-          textAlign: 'center'
         }}>
           <div style={{
-            fontSize: '28px',
+            fontSize: '18px',
             fontWeight: '600',
-            color: 'var(--warning)'
+            color: 'var(--text-primary)',
+            marginBottom: '0.5rem'
           }}>
-            {stats.inProgress}
+            Órdenes Preparadas
           </div>
           <div style={{
-            fontSize: '12px',
-            color: 'var(--text-secondary)',
-            marginTop: '0.5rem',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px'
-          }}>
-            En Proceso
-          </div>
-        </div>
-        <div style={{
-          background: 'var(--bg-primary)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '4px',
-          padding: '1.5rem',
-          textAlign: 'center'
-        }}>
-          <div style={{
-            fontSize: '28px',
+            fontSize: '32px',
             fontWeight: '600',
             color: 'var(--success)'
           }}>
-            {stats.completed}
-          </div>
-          <div style={{
-            fontSize: '12px',
-            color: 'var(--text-secondary)',
-            marginTop: '0.5rem',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px'
-          }}>
-            Completadas
+            {ordersPrepared.length}
           </div>
         </div>
-        <div style={{
-          background: 'var(--bg-primary)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '4px',
-          padding: '1.5rem',
-          textAlign: 'center'
-        }}>
-          <div style={{
-            fontSize: '28px',
+      </div>
+
+      {/* Two Sections Layout */}
+      <div style={{
+        padding: '0 2rem',
+        maxWidth: '1400px',
+        margin: '0 auto',
+        marginBottom: '2rem',
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '2rem'
+      }}>
+        {/* Section 1: Órdenes por Preparar */}
+        <div>
+          <h2 style={{
+            fontSize: '18px',
             fontWeight: '600',
-            color: 'var(--accent-orange)'
+            color: 'var(--text-primary)',
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
           }}>
-            {stats.total}
-          </div>
-          <div style={{
-            fontSize: '12px',
-            color: 'var(--text-secondary)',
-            marginTop: '0.5rem',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px'
-          }}>
-            Total
-          </div>
-        </div>
-      </div>
+            <span style={{ color: 'var(--error)', fontSize: '20px' }}>🔴</span>
+            Órdenes por Preparar ({ordersToPrep.length})
+          </h2>
 
-      {/* Tabs */}
-      <div style={{
-        display: 'flex',
-        gap: '1rem',
-        padding: '0 2rem',
-        maxWidth: '1400px',
-        margin: '0 auto',
-        marginBottom: '2rem'
-      }}>
-        {(['pendiente', 'en_proceso', 'completado'] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              padding: '10px 16px',
-              background: activeTab === tab ? 'var(--accent-orange)' : 'var(--bg-primary)',
-              color: activeTab === tab ? 'var(--bg-primary)' : 'var(--text-secondary)',
-              border: `1px solid ${activeTab === tab ? 'var(--accent-orange)' : 'var(--border-color)'}`,
+          {isLoading ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '2rem',
+              color: 'var(--text-secondary)',
+              background: 'var(--bg-primary)',
               borderRadius: '4px',
-              cursor: 'pointer',
-              fontWeight: '500',
-              fontSize: '14px',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={e => {
-              if (activeTab !== tab) {
-                e.currentTarget.style.background = 'var(--bg-secondary)'
-              }
-            }}
-            onMouseLeave={e => {
-              if (activeTab !== tab) {
-                e.currentTarget.style.background = 'var(--bg-primary)'
-              }
-            }}
-          >
-            {tab === 'pendiente' && 'Pendientes'}
-            {tab === 'en_proceso' && 'En Proceso'}
-            {tab === 'completado' && 'Completadas'}
-          </button>
-        ))}
-      </div>
+              border: '1px solid var(--border-color)'
+            }}>
+              Cargando...
+            </div>
+          ) : ordersToPrep.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '2rem',
+              color: 'var(--text-secondary)',
+              background: 'var(--bg-primary)',
+              borderRadius: '4px',
+              border: '1px solid var(--border-color)'
+            }}>
+              No hay órdenes por preparar
+            </div>
+          ) : (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem'
+            }}>
+              {ordersToPrep.map(order => (
+                <div
+                  key={order.id}
+                  style={{
+                    background: 'var(--bg-primary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '4px',
+                    padding: '1.5rem'
+                  }}
+                >
+                  {/* Folio - Large & Prominent */}
+                  <div style={{
+                    fontSize: '28px',
+                    fontWeight: '700',
+                    color: 'var(--accent-orange)',
+                    marginBottom: '1rem'
+                  }}>
+                    #{order.folio}
+                  </div>
 
-      {/* Orders List */}
-      <div style={{
-        padding: '0 2rem',
-        maxWidth: '1400px',
-        margin: '0 auto',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1.5rem',
-        marginBottom: '2rem'
-      }}>
-        {isLoading ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '3rem',
-            color: 'var(--text-secondary)'
+                  {/* Client Info */}
+                  <div style={{
+                    marginBottom: '1rem',
+                    paddingBottom: '1rem',
+                    borderBottom: '1px solid var(--border-color)'
+                  }}>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: 'var(--text-primary)'
+                    }}>
+                      {order.clientName}
+                    </div>
+                    {order.clientPhone && (
+                      <div style={{
+                        fontSize: '13px',
+                        color: 'var(--text-secondary)',
+                        marginTop: '0.25rem'
+                      }}>
+                        📱 {order.clientPhone}
+                      </div>
+                    )}
+                    {order.clientAddress && (
+                      <div style={{
+                        fontSize: '13px',
+                        color: 'var(--text-secondary)',
+                        marginTop: '0.25rem',
+                        fontStyle: 'italic'
+                      }}>
+                        📍 {order.clientAddress}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Items List */}
+                  <div style={{
+                    marginBottom: '1rem',
+                    paddingBottom: '1rem',
+                    borderBottom: '1px solid var(--border-color)'
+                  }}>
+                    {order.items.map((item, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          fontSize: '13px',
+                          color: 'var(--text-primary)',
+                          marginBottom: '0.5rem',
+                          display: 'flex',
+                          justifyContent: 'space-between'
+                        }}
+                      >
+                        <span>{item.qty}x {item.product.name}</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>
+                          ${item.subtotal.toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Total & Button */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '1rem'
+                  }}>
+                    <div style={{
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      color: 'var(--accent-orange)'
+                    }}>
+                      Total: ${order.total.toFixed(2)}
+                    </div>
+                    <button
+                      onClick={() => handleMarkAsReady(order.id, order.folio)}
+                      style={{
+                        background: 'var(--success)',
+                        color: 'var(--bg-primary)',
+                        border: 'none',
+                        padding: '10px 16px',
+                        borderRadius: '4px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        whiteSpace: 'nowrap'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = '#2D7A3A'
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = 'var(--success)'
+                      }}
+                    >
+                      ✓ MARCAR COMO LISTA
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Section 2: Órdenes Preparadas */}
+        <div>
+          <h2 style={{
+            fontSize: '18px',
+            fontWeight: '600',
+            color: 'var(--text-primary)',
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
           }}>
-            Cargando órdenes...
-          </div>
-        ) : filteredOrders.length === 0 ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '3rem',
-            color: 'var(--text-secondary)'
-          }}>
-            No hay órdenes para mostrar
-          </div>
-        ) : (
-          filteredOrders.map(order => (
-            <div
-              key={order.id}
-              style={{
-                background: 'var(--bg-primary)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '4px',
-                padding: '1.5rem'
-              }}
-            >
-              {/* Order Header */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                marginBottom: '1.5rem',
-                paddingBottom: '1rem',
-                borderBottom: '1px solid var(--border-color)'
-              }}>
-                <div>
+            <span style={{ color: 'var(--success)', fontSize: '20px' }}>🟢</span>
+            Órdenes Preparadas ({ordersPrepared.length})
+          </h2>
+
+          {isLoading ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '2rem',
+              color: 'var(--text-secondary)',
+              background: 'var(--bg-primary)',
+              borderRadius: '4px',
+              border: '1px solid var(--border-color)'
+            }}>
+              Cargando...
+            </div>
+          ) : ordersPrepared.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '2rem',
+              color: 'var(--text-secondary)',
+              background: 'var(--bg-primary)',
+              borderRadius: '4px',
+              border: '1px solid var(--border-color)'
+            }}>
+              No hay órdenes preparadas
+            </div>
+          ) : (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem'
+            }}>
+              {ordersPrepared.map(order => (
+                <div
+                  key={order.id}
+                  style={{
+                    background: 'var(--bg-primary)',
+                    border: '2px solid var(--success)',
+                    borderRadius: '4px',
+                    padding: '1.5rem'
+                  }}
+                >
+                  {/* Folio - Large & Prominent */}
+                  <div style={{
+                    fontSize: '28px',
+                    fontWeight: '700',
+                    color: 'var(--success)',
+                    marginBottom: '1rem'
+                  }}>
+                    #{order.folio}
+                  </div>
+
+                  {/* Client Info */}
+                  <div style={{
+                    marginBottom: '1rem',
+                    paddingBottom: '1rem',
+                    borderBottom: '1px solid var(--border-color)'
+                  }}>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: 'var(--text-primary)'
+                    }}>
+                      {order.clientName}
+                    </div>
+                    {order.clientPhone && (
+                      <div style={{
+                        fontSize: '13px',
+                        color: 'var(--text-secondary)',
+                        marginTop: '0.25rem'
+                      }}>
+                        📱 {order.clientPhone}
+                      </div>
+                    )}
+                    {order.clientAddress && (
+                      <div style={{
+                        fontSize: '13px',
+                        color: 'var(--text-secondary)',
+                        marginTop: '0.25rem',
+                        fontStyle: 'italic'
+                      }}>
+                        📍 {order.clientAddress}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Items List */}
+                  <div style={{
+                    marginBottom: '1rem',
+                    paddingBottom: '1rem',
+                    borderBottom: '1px solid var(--border-color)'
+                  }}>
+                    {order.items.map((item, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          fontSize: '13px',
+                          color: 'var(--text-primary)',
+                          marginBottom: '0.5rem',
+                          display: 'flex',
+                          justifyContent: 'space-between'
+                        }}
+                      >
+                        <span>{item.qty}x {item.product.name}</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>
+                          ${item.subtotal.toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Total */}
                   <div style={{
                     fontSize: '16px',
                     fontWeight: '600',
-                    color: 'var(--text-primary)'
+                    color: 'var(--success)'
                   }}>
-                    Orden {order.sale?.folio || order.id.substring(0, 8)}
-                  </div>
-                  <div style={{
-                    fontSize: '12px',
-                    color: 'var(--text-secondary)',
-                    marginTop: '0.25rem'
-                  }}>
-                    {new Date(order.createdAt).toLocaleString('es-MX')}
+                    Total: ${order.total.toFixed(2)}
                   </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: 'var(--accent-orange)'
-                  }}>
-                    ${order.sale?.total.toFixed(2) || '0.00'}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '12px',
-                      padding: '4px 8px',
-                      borderRadius: '3px',
-                      marginTop: '0.5rem',
-                      fontWeight: '500',
-                      display: 'inline-block',
-                      background:
-                        order.status === 'pendiente'
-                          ? '#FCEAA3'
-                          : order.status === 'en_proceso'
-                          ? '#E3F2FD'
-                          : '#E8F5E9',
-                      color:
-                        order.status === 'pendiente'
-                          ? '#9D6C1D'
-                          : order.status === 'en_proceso'
-                          ? '#1565C0'
-                          : '#2E7D32'
-                    }}
-                  >
-                    {order.status === 'pendiente' && 'Pendiente'}
-                    {order.status === 'en_proceso' && 'En Proceso'}
-                    {order.status === 'completado' && 'Completado'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Items */}
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.75rem',
-                marginBottom: '1.5rem'
-              }}>
-                {order.items.map(item => {
-                  const isComplete = item.qtyPicked >= item.qty
-                  return (
-                    <div
-                      key={item.id}
-                      style={{
-                        background: 'var(--bg-secondary)',
-                        padding: '1rem',
-                        borderRadius: '4px',
-                        border: `1px solid ${isComplete ? 'var(--success)' : 'var(--warning)'}`,
-                        display: 'grid',
-                        gridTemplateColumns: 'auto 1fr auto auto',
-                        gap: '1rem',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: '20px',
-                          fontWeight: '600',
-                          color: isComplete ? 'var(--success)' : 'var(--warning)',
-                          textAlign: 'center'
-                        }}
-                      >
-                        {isComplete ? '✓' : '○'}
-                      </div>
-
-                      <div>
-                        <div style={{
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          color: 'var(--text-primary)'
-                        }}>
-                          {item.product.name}
-                        </div>
-                        <div style={{
-                          fontSize: '12px',
-                          color: 'var(--text-secondary)'
-                        }}>
-                          {item.product.clave}
-                        </div>
-                      </div>
-
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{
-                          fontSize: '12px',
-                          color: 'var(--text-secondary)'
-                        }}>
-                          Necesarios
-                        </div>
-                        <div style={{
-                          fontSize: '18px',
-                          fontWeight: '600',
-                          color: 'var(--text-primary)'
-                        }}>
-                          {item.qty}
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                        <button
-                          onClick={() => handleQtyChange(item.id, Math.max(0, item.qtyPicked - 1))}
-                          style={{
-                            background: 'var(--accent-orange)',
-                            color: 'var(--bg-primary)',
-                            border: 'none',
-                            padding: '4px 8px',
-                            borderRadius: '3px',
-                            cursor: 'pointer',
-                            fontWeight: '600'
-                          }}
-                        >
-                          −
-                        </button>
-                        <input
-                          type="number"
-                          value={item.qtyPicked}
-                          onChange={e => handleQtyChange(item.id, parseInt(e.target.value) || 0)}
-                          style={{
-                            width: '50px',
-                            padding: '4px',
-                            textAlign: 'center',
-                            border: `2px solid ${isComplete ? 'var(--success)' : 'var(--warning)'}`,
-                            borderRadius: '3px',
-                            fontSize: '14px',
-                            fontWeight: '600'
-                          }}
-                        />
-                        <button
-                          onClick={() => handleQtyChange(item.id, item.qtyPicked + 1)}
-                          style={{
-                            background: 'var(--accent-orange)',
-                            color: 'var(--bg-primary)',
-                            border: 'none',
-                            padding: '4px 8px',
-                            borderRadius: '3px',
-                            cursor: 'pointer',
-                            fontWeight: '600'
-                          }}
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-
-              {/* Complete Button */}
-              {order.status !== 'completado' && (
-                <button
-                  onClick={() => handleCompleteOrder(order.id)}
-                  disabled={!order.items.every(i => i.qtyPicked >= i.qty)}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: order.items.every(i => i.qtyPicked >= i.qty)
-                      ? 'var(--success)'
-                      : 'var(--border-color)',
-                    color: 'var(--bg-primary)',
-                    border: 'none',
-                    borderRadius: '4px',
-                    fontWeight: '600',
-                    cursor: order.items.every(i => i.qtyPicked >= i.qty)
-                      ? 'pointer'
-                      : 'not-allowed',
-                    fontSize: '14px'
-                  }}
-                  onMouseEnter={e => {
-                    if (order.items.every(i => i.qtyPicked >= i.qty)) {
-                      e.currentTarget.style.background = '#2D7A3A'
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    if (order.items.every(i => i.qtyPicked >= i.qty)) {
-                      e.currentTarget.style.background = 'var(--success)'
-                    }
-                  }}
-                >
-                  Completar Orden
-                </button>
-              )}
+              ))}
             </div>
-          ))
-        )}
+          )}
+        </div>
       </div>
+
+      {/* Toast Notifications */}
+      <div style={{
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        zIndex: 9999
+      }}>
+        {toasts.map(toast => (
+          <div
+            key={toast.id}
+            style={{
+              background: toast.type === 'success' ? 'var(--success)' : 'var(--error)',
+              color: 'white',
+              padding: '12px 16px',
+              borderRadius: '4px',
+              fontSize: '14px',
+              fontWeight: '500',
+              animation: 'slideIn 0.3s ease-out'
+            }}
+          >
+            {toast.message}
+          </div>
+        ))}
+      </div>
+
+      <style>{`
+        @keyframes slideIn {
+          from {
+            transform: translateX(400px);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   )
 }

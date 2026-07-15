@@ -7,9 +7,9 @@ const secret = new TextEncoder().encode(
 
 const publicRoutes = ['/login', '/api/auth/login', '/_next', '/static']
 const roleRoutes: Record<string, string[]> = {
-  dueno: ['/', '/admin', '/inventario', '/bodega', '/pos', '/entregas', '/contabilidad', '/reportes'],
+  dueno: ['/', '/admin', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes'],
   vendedor: ['/pos', '/reportes'],
-  cajero: ['/pos', '/reportes'],
+  cajero: ['/caja', '/pos', '/reportes'],
   bodeguero: ['/bodega', '/reportes'],
   chofer: ['/entregas']
 }

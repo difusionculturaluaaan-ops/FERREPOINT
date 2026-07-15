@@ -10,7 +10,8 @@
       "Bash(curl -s http://localhost:3001)",
       "PowerShell(\"V Servidor detenido\")",
       "PowerShell(\"V Detenido\")",
-      "Bash(unzip -q \"Sistema de control de ferreterías \\(1\\).zip\" -d \"sistema_ferreterias_temp\")"
+      "Bash(unzip -q \"Sistema de control de ferreterías \\(1\\).zip\" -d \"sistema_ferreterias_temp\")",
+      "Bash(node -e \"const fs = require\\('fs'\\); const content = fs.readFileSync\\('src/app/pos/page.tsx', 'utf8'\\); if\\(content.match\\(/pollPaidOrders|getTimeSinceCreation|paidOrdersBox|notificationMessage/g\\)\\) console.log\\('✓ All key additions found'\\); else console.log\\('✗ Missing key additions'\\);\")"
     ]
   }
 }

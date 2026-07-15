@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { actionGetProducts, actionCreateOrder } from '@/features/pos/server';
+import React, { useState, useEffect, useRef } from 'react';
+import { actionGetProducts, actionCreateOrder, actionGetPaidOrders } from '@/features/pos/server';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LogoutButton } from '@/components/LogoutButton';
 
@@ -47,6 +47,16 @@ interface UserData {
   email: string;
 }
 
+interface Sale {
+  id: string;
+  folio: string;
+  clientName?: string;
+  total: number;
+  status: string;
+  paymentProcessedAt?: Date;
+  createdAt: Date;
+}
+
 export default function POSPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -64,6 +74,38 @@ export default function POSPage() {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [successFolio, setSuccessFolio] = useState('');
+  const [paidOrders, setPaidOrders] = useState<Sale[]>([]);
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastOrderCountRef = useRef(0);
+
+  const getTimeSinceCreation = (date: Date): string => {
+    const now = new Date();
+    const secondsAgo = Math.floor((now.getTime() - new Date(date).getTime()) / 1000);
+
+    if (secondsAgo < 60) return `hace ${secondsAgo}s`;
+    if (secondsAgo < 3600) return `hace ${Math.floor(secondsAgo / 60)}m`;
+    return `hace ${Math.floor(secondsAgo / 3600)}h`;
+  };
+
+  const pollPaidOrders = async () => {
+    if (!userData) return;
+
+    try {
+      const orders = await actionGetPaidOrders(userData.businessId, userData.vendorId);
+      setPaidOrders(orders);
+
+      // Check if new order became paid
+      if (orders.length > lastOrderCountRef.current && lastOrderCountRef.current > 0) {
+        setNotificationMessage(`¡Nueva orden pagada! ${orders[0]?.folio || ''}`);
+        setTimeout(() => setNotificationMessage(''), 4000);
+      }
+
+      lastOrderCountRef.current = orders.length;
+    } catch (err) {
+      console.error('Error polling paid orders:', err);
+    }
+  };
 
   useEffect(() => {
     const initializePage = async () => {
@@ -81,6 +123,12 @@ export default function POSPage() {
         const productsData = await actionGetProducts(user.businessId, user.locationId);
         setProducts(productsData);
         setFilteredProducts(productsData);
+
+        // Initial load of paid orders
+        const initialOrders = await actionGetPaidOrders(user.businessId, user.vendorId);
+        setPaidOrders(initialOrders);
+        lastOrderCountRef.current = initialOrders.length;
+
         setLoading(false);
       } catch (err) {
         console.error('Error initializing POS:', err);
@@ -91,6 +139,26 @@ export default function POSPage() {
 
     initializePage();
   }, []);
+
+  // Polling effect for paid orders
+  useEffect(() => {
+    if (!userData) return;
+
+    // Initial poll
+    pollPaidOrders();
+
+    // Set up interval polling (3 seconds)
+    pollingIntervalRef.current = setInterval(() => {
+      pollPaidOrders();
+    }, 3000);
+
+    // Cleanup interval on unmount
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, [userData]);
 
   useEffect(() => {
     const lowercaseSearch = searchTerm.toLowerCase();
@@ -290,6 +358,13 @@ export default function POSPage() {
         </div>
       )}
 
+      {notificationMessage && (
+        <div style={styles.notificationAlert}>
+          <span style={styles.notificationIcon}>✓</span>
+          <p>{notificationMessage}</p>
+        </div>
+      )}
+
       {error && (
         <div style={styles.errorAlert}>
           <span style={styles.errorIcon}>⚠</span>
@@ -360,7 +435,7 @@ export default function POSPage() {
         </div>
 
         <div style={styles.sidebarSection}>
-          <div style={styles.cartBox}>
+          <div style={{ ...styles.cartBox, maxHeight: '35%' }}>
             <h2 style={styles.cartTitle}>Carrito ({cart.length})</h2>
 
             {cart.length > 0 ? (
@@ -439,7 +514,7 @@ export default function POSPage() {
             )}
           </div>
 
-          <form onSubmit={handleCreateOrder} style={styles.formBox}>
+          <form onSubmit={handleCreateOrder} style={{ ...styles.formBox, maxHeight: '33%' }}>
             <h2 style={styles.formTitle}>Datos del Cliente</h2>
 
             <div style={styles.formGroup}>
@@ -508,6 +583,36 @@ export default function POSPage() {
               {submitting ? 'Procesando...' : '✓ GENERAR ORDEN'}
             </button>
           </form>
+
+          <div style={{ ...styles.cartBox, maxHeight: '32%' }}>
+            <h2 style={styles.cartTitle}>✓ Órdenes Pagadas ({paidOrders.length})</h2>
+
+            {paidOrders.length > 0 ? (
+              <div style={styles.paidOrdersList}>
+                {paidOrders.map((order) => (
+                  <div key={order.id} style={styles.paidOrderItem}>
+                    <div style={styles.paidOrderHeader}>
+                      <span style={styles.paidOrderFolio}>{order.folio}</span>
+                      <span style={styles.paidOrderBadge}>✓ Pagada</span>
+                    </div>
+                    <p style={styles.paidOrderClient}>
+                      {order.clientName || 'Cliente'}
+                    </p>
+                    <div style={styles.paidOrderFooter}>
+                      <span style={styles.paidOrderTotal}>
+                        ${order.total.toFixed(2)}
+                      </span>
+                      <span style={styles.paidOrderTime}>
+                        {getTimeSinceCreation(order.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={styles.emptyCart}>Sin órdenes pagadas</p>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -883,5 +988,78 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: 'center',
     alignItems: 'center',
     height: '100%',
+  },
+  notificationAlert: {
+    backgroundColor: 'var(--bg-success)',
+    borderLeft: '4px solid var(--text-success)',
+    color: 'var(--text-success)',
+    padding: '1rem',
+    margin: '1rem',
+    borderRadius: '0.5rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    animation: 'slideIn 0.3s ease-out',
+  },
+  notificationIcon: {
+    fontSize: '1.25rem',
+    fontWeight: 'bold',
+  },
+  paidOrdersList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem',
+    overflow: 'auto',
+    flex: 1,
+    paddingRight: '0.5rem',
+  },
+  paidOrderItem: {
+    backgroundColor: 'var(--bg-primary)',
+    padding: '0.75rem',
+    borderRadius: '0.4rem',
+    border: '1px solid var(--border-color)',
+    borderLeft: '3px solid var(--text-success)',
+    fontSize: '0.85rem',
+  },
+  paidOrderHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '0.35rem',
+  },
+  paidOrderFolio: {
+    fontWeight: '700',
+    color: 'var(--text-primary)',
+    fontSize: '0.9rem',
+  },
+  paidOrderBadge: {
+    backgroundColor: 'var(--bg-success)',
+    color: 'var(--text-success)',
+    padding: '0.25rem 0.5rem',
+    borderRadius: '0.25rem',
+    fontSize: '0.7rem',
+    fontWeight: '600',
+  },
+  paidOrderClient: {
+    margin: '0.25rem 0',
+    color: 'var(--text-secondary)',
+    fontSize: '0.8rem',
+  },
+  paidOrderFooter: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: '0.35rem',
+    paddingTop: '0.35rem',
+    borderTop: '1px solid var(--border-color)',
+  },
+  paidOrderTotal: {
+    fontWeight: '600',
+    color: 'var(--accent-orange)',
+    fontSize: '0.9rem',
+  },
+  paidOrderTime: {
+    fontSize: '0.75rem',
+    color: 'var(--text-secondary)',
   },
 };
