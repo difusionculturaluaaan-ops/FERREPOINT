@@ -195,3 +195,17 @@ export async function actionLogout() {
   // Client-side lo maneja: eliminar token + redirect
   return { success: true }
 }
+
+// Obtener plan del business
+export async function actionGetBusinessPlan(businessId: string) {
+  try {
+    const business = await prisma.business.findUnique({
+      where: { id: businessId },
+      select: { plan: true }
+    })
+    return { success: true, plan: business?.plan || 'free' }
+  } catch (error) {
+    console.error('Get business plan error:', error)
+    return { success: false, plan: 'free' }
+  }
+}

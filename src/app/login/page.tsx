@@ -53,12 +53,13 @@ export default function LoginPage() {
         localStorage.setItem('token', result.token)
         if (result.user) localStorage.setItem('user', JSON.stringify(result.user))
 
-        // Extract businessId from JWT and save separately (JWT always has it)
+        // Extract businessId and plan from JWT and save separately
         try {
           const parts = result.token.split('.')
           if (parts.length === 3) {
             const payload = JSON.parse(atob(parts[1]))
             localStorage.setItem('businessId', payload.businessId || '')
+            // Plan will be fetched from business record after login
             console.log('businessId saved:', payload.businessId)
           }
         } catch (err) {

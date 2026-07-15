@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { actionGetProducts, actionCreateOrder, actionGetPaidOrders } from '@/features/pos/server';
+import { actionGetBusinessPlan } from '@/features/auth/server';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LogoutButton } from '@/components/LogoutButton';
 
@@ -126,6 +127,13 @@ export default function POSPage() {
         }
 
         setUserData(user);
+
+        // Get business plan
+        const planResult = await actionGetBusinessPlan(user.businessId);
+        if (planResult.success) {
+          localStorage.setItem('plan', planResult.plan);
+          console.log('Plan saved:', planResult.plan);
+        }
 
         const productsData = await actionGetProducts(user.businessId, user.locationId);
         setProducts(productsData);
