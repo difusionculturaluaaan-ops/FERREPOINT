@@ -15,7 +15,9 @@
       "Bash(node -e \"const fs = require\\('fs'\\); const content = fs.readFileSync\\('src/app/pos/page.tsx', 'utf8'\\); const open = \\(content.match\\(/\\\\{/g\\)||[]\\).length; const close = \\(content.match\\(/\\\\}/g\\)||[]\\).length; console.log\\('Braces: ' + open + ' open, ' + close + ' close - ' + \\(open === close ? '✓ Balanced' : '✗ Unbalanced'\\)\\);\")",
       "Bash(curl -s -X POST http://localhost:3000/api/seed)",
       "Bash(tail -100 /tmp/server.log | grep -A 5 \"order\\\\|error\" -i)",
-      "Bash(pkill -f \"node\")"
+      "Bash(pkill -f \"node\")",
+      "Bash(cat /c/Users/image/.claude/projects/c--Users-image-Developer-software-FERREPOINT/memory/MEMORY.md)",
+      "Read(//c/Users/image/.claude/projects/c--Users-image-Developer-software-FERREPOINT/memory/**)"
     ]
   }
 }
