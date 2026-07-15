@@ -1,10 +1,17 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useTransition, useState, useEffect } from 'react'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { LogoutButton } from '@/components/LogoutButton'
 
 export default function Home() {
   const [isPending, startTransition] = useTransition()
+  const [userRole, setUserRole] = useState<string | null>(null)
+
+  useEffect(() => {
+    const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {}
+    setUserRole(user.role || null)
+  }, [])
 
   const handleSeed = async () => {
     startTransition(async () => {
@@ -33,12 +40,41 @@ export default function Home() {
       alignItems: 'center',
       justifyContent: 'center'
     }}>
+      {/* Header */}
       <div style={{
         position: 'absolute',
-        top: '2rem',
-        right: '2rem'
+        top: 0,
+        left: 0,
+        right: 0,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '1.5rem 2rem',
+        borderBottom: '1px solid var(--border-color)'
       }}>
-        <ThemeToggle />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{
+            width: '30px',
+            height: '30px',
+            background: 'var(--accent-orange)',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            color: '#fff'
+          }}>
+            🏪
+          </div>
+          <span style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>
+            FERREPOINT
+          </span>
+        </div>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <ThemeToggle />
+          <LogoutButton />
+        </div>
       </div>
 
       <div style={{ maxWidth: '600px', width: '100%' }}>
@@ -385,6 +421,54 @@ export default function Home() {
             Entregas
           </a>
         </div>
+
+        {/* Admin Section - Solo para Dueño */}
+        {userRole === 'dueno' && (
+          <div style={{
+            marginBottom: '2rem',
+            padding: '1.5rem',
+            background: 'var(--bg-primary)',
+            border: `2px solid var(--accent-orange)`,
+            borderRadius: '8px'
+          }}>
+            <h3 style={{
+              fontSize: '14px',
+              fontWeight: '700',
+              color: 'var(--accent-orange)',
+              margin: '0 0 1rem 0',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
+            }}>
+              ⚙️ Administración
+            </h3>
+            <a
+              href="/admin/usuarios"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'var(--accent-orange)',
+                color: '#fff',
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '4px',
+                textDecoration: 'none',
+                fontSize: '15px',
+                fontWeight: '600',
+                transition: 'all 0.2s',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.opacity = '0.9'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.opacity = '1'
+              }}
+            >
+              👥 Gestionar Usuarios
+            </a>
+          </div>
+        )}
 
         {/* Credentials */}
         <div style={{
