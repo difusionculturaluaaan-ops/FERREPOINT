@@ -48,20 +48,25 @@ export async function actionLogin(email: string, password: string): Promise<Logi
 
     // Obtener primera location (default)
     const defaultLocation = user.business.locations?.[0]?.id || ""
+    console.log('[actionLogin] defaultLocation:', defaultLocation)
+    console.log('[actionLogin] locations:', user.business.locations)
+
+    const responseUser = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role as any,
+      businessId: user.businessId,
+      locationId: defaultLocation,
+      vendorId: user.id,
+      active: user.active,
+      createdAt: user.createdAt
+    }
+    console.log('[actionLogin] response user:', responseUser)
 
     return {
       success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role as any,
-        businessId: user.businessId,
-        locationId: defaultLocation,
-        vendorId: user.id,
-        active: user.active,
-        createdAt: user.createdAt
-      },
+      user: responseUser,
       token
     }
   } catch (error) {

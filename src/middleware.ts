@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
         vendedor: '/pos',
         bodeguero: '/bodega',
         chofer: '/entregas',
-        cajero: '/pos'
+        cajero: '/caja'
       }
       return NextResponse.redirect(new URL(dashboardMap[payload.role as string] || '/login', request.url))
     }

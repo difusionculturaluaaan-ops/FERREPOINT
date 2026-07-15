@@ -69,7 +69,7 @@ export default function LoginPage() {
               vendedor: '/pos',
               bodeguero: '/bodega',
               chofer: '/entregas',
-              cajero: '/pos'
+              cajero: '/caja'
             }
             const target = dashboardMap[result.user.role] || '/'
             console.log('Redirecting to:', target)
