@@ -107,7 +107,8 @@ const { chromium } = require('@playwright/test');
       let foundOrders = false;
       for (let i = 0; i < 10; i++) {
         await page.waitForTimeout(1000);
-        const orderCards = await page.locator('text=Folio').all();
+        // Look for order buttons (clickable order cards)
+        const orderCards = await page.locator('button:has-text("Cliente")').all();
         if (orderCards.length > 0) {
           foundOrders = true;
           console.log(`✅ Found ${orderCards.length} pending order(s) on attempt ${i + 1}\n`);
@@ -116,8 +117,8 @@ const { chromium } = require('@playwright/test');
       }
 
       if (foundOrders) {
-        // Get first order
-        const orderCards = await page.locator('text=Folio').all();
+        // Get first order button
+        const orderCards = await page.locator('button').filter({ hasText: 'Cliente' }).all();
 
         // Click first order
         console.log('📍 Clicking first pending order...');
