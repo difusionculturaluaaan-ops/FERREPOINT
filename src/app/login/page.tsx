@@ -53,6 +53,18 @@ export default function LoginPage() {
         localStorage.setItem('token', result.token)
         if (result.user) localStorage.setItem('user', JSON.stringify(result.user))
 
+        // Extract businessId from JWT and save separately (JWT always has it)
+        try {
+          const parts = result.token.split('.')
+          if (parts.length === 3) {
+            const payload = JSON.parse(atob(parts[1]))
+            localStorage.setItem('businessId', payload.businessId || '')
+            console.log('businessId saved:', payload.businessId)
+          }
+        } catch (err) {
+          console.warn('Could not extract businessId from token')
+        }
+
         // Set cookie for middleware
         const cookieString = `token=${result.token}; path=/; max-age=${7 * 24 * 60 * 60}`
         document.cookie = cookieString

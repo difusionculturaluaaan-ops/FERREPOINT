@@ -27,6 +27,15 @@ export async function actionCreateOrder(
     const folio = folioNumber.toString()
 
     // Crear sale (orden)
+    console.log("[actionCreateOrder] Creating order:", {
+      folio,
+      businessId,
+      locationId,
+      vendorId,
+      status: "pendiente",
+      itemsCount: items.length
+    })
+
     const sale = await prisma.sale.create({
       data: {
         folio,
@@ -55,6 +64,14 @@ export async function actionCreateOrder(
       include: { items: true }
     })
 
+    console.log("[actionCreateOrder] Order created successfully:", {
+      saleId: sale.id,
+      folio: sale.folio,
+      status: sale.status,
+      businessId: sale.businessId,
+      locationId: sale.locationId
+    })
+
     return { success: true, sale, message: `Orden #${folio} creada` }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error)
@@ -66,6 +83,8 @@ export async function actionCreateOrder(
 // Obtener órdenes pendientes de pago - CAJERO
 export async function actionGetPendingOrders(businessId: string) {
   try {
+    console.log("[actionGetPendingOrders] Searching for businessId:", businessId)
+
     const orders = await prisma.sale.findMany({
       where: { businessId, status: "pendiente" },
       include: {
@@ -74,6 +93,16 @@ export async function actionGetPendingOrders(businessId: string) {
       },
       orderBy: { createdAt: "desc" }
     })
+
+    console.log("[actionGetPendingOrders] Found orders:", orders.length)
+    if (orders.length > 0) {
+      console.log("[actionGetPendingOrders] First order:", {
+        id: orders[0].id,
+        folio: orders[0].folio,
+        status: orders[0].status,
+        businessId: orders[0].businessId
+      })
+    }
 
     return orders
   } catch (error) {

@@ -117,7 +117,14 @@ export default function POSPage() {
           return;
         }
 
-        const user: UserData = JSON.parse(userJSON);
+        const user = JSON.parse(userJSON) as UserData;
+
+        // Get businessId from localStorage (saved by login page from JWT)
+        const businessId = localStorage.getItem('businessId');
+        if (businessId) {
+          user.businessId = businessId;
+        }
+
         setUserData(user);
 
         const productsData = await actionGetProducts(user.businessId, user.locationId);

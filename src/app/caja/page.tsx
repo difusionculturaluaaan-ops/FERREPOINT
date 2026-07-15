@@ -65,27 +65,38 @@ export default function CajaPage() {
     if (userStr) {
       try {
         const user = JSON.parse(userStr);
-        setBusinessId(user.businessId || '');
         setCajeroId(user.id || '');
       } catch (e) {
         console.error('Error parsing user data', e);
       }
+    }
+
+    // Get businessId from localStorage (saved by login page from JWT)
+    const biz = localStorage.getItem('businessId');
+    if (biz) {
+      setBusinessId(biz);
     }
   }, []);
 
   // Load orders when businessId is available
   useEffect(() => {
     if (businessId) {
+      console.log('[Caja] Loading orders for businessId:', businessId);
       loadOrders();
     }
   }, [businessId]);
 
   // Load pending orders
   const loadOrders = async () => {
-    if (!businessId) return;
+    if (!businessId) {
+      console.log('[Caja] businessId is empty, skipping loadOrders');
+      return;
+    }
     try {
       setLoading(true);
+      console.log('[Caja] Calling actionGetPendingOrders...');
       const result = await actionGetPendingOrders(businessId);
+      console.log('[Caja] Got result:', result);
       setOrders(Array.isArray(result) ? (result as PendingOrder[]) : []);
     } catch (error) {
       console.error('Error loading orders:', error);
