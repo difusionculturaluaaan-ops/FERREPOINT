@@ -168,11 +168,17 @@ model Sale {
   vendorId       String
   clientName     String?
   clientRfc      String?
-  paymentMethod  String
+  paymentMethod  String?
   comprobante    String
   subtotal       Float
   iva            Float
   total          Float
+  status         String   @default("pendiente") // pendiente, pagada, preparada, entregada
+  deliveryType   String   @default("mostrador") // mostrador, domicilio
+  paymentProcessedAt DateTime?
+  paidBy         String? // ID del cajero que procesó el pago
+  clientPhone    String?
+  clientAddress  String?
   createdAt      DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)

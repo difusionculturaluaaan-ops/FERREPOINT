@@ -1,193 +1,199 @@
-'use server'
+"use server"
 
-import { prisma } from '@/lib/prisma'
+import { prisma } from "@/lib/prisma"
 
-export async function actionGetProducts(businessId: string, search?: string) {
-  try {
-    const products = await prisma.product.findMany({
-      where: {
-        businessId,
-        active: true
-      },
-      include: {
-        image: true
-      },
-      orderBy: { name: 'asc' },
-      take: 100
-    })
-
-    if (!search) return products
-
-    const searchLower = search.toLowerCase()
-    return products.filter(p =>
-      p.name.toLowerCase().includes(searchLower) ||
-      p.clave.toLowerCase().includes(searchLower)
-    )
-  } catch (error) {
-    console.error('Error fetching products:', error)
-    return []
-  }
-}
-
-export async function actionCreateSale(
+// Crear orden (sin pagar) - VENDEDOR
+export async function actionCreateOrder(
   businessId: string,
   locationId: string,
   vendorId: string,
-  items: Array<{ productId: string; qty: number }>,
+  items: { productId: string; qty: number; price: number; subtotal: number }[],
   clientName?: string,
-  clientRfc?: string,
-  paymentMethod: string = 'Efectivo',
-  comprobante: string = 'completo'
+  clientPhone?: string,
+  clientAddress?: string,
+  deliveryType: "mostrador" | "domicilio" = "mostrador"
 ) {
   try {
-    // Get products for calculation
-    const products = await prisma.product.findMany({
-      where: { id: { in: items.map(i => i.productId) } }
-    })
-
-    // Calculate totals
-    let subtotal = 0
-    const saleItems = []
-
-    for (const item of items) {
-      const product = products.find(p => p.id === item.productId)
-      if (!product) continue
-
-      const itemTotal = product.price * item.qty
-      subtotal += itemTotal
-
-      saleItems.push({
-        productId: product.id,
-        qty: item.qty,
-        price: product.price,
-        subtotal: itemTotal
-      })
-    }
-
+    const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0)
     const iva = subtotal * 0.16
     const total = subtotal + iva
 
-    // Generate folio
+    // Generar folio único
     const lastSale = await prisma.sale.findFirst({
       where: { businessId },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: "desc" }
     })
+    const folioNumber = lastSale ? parseInt(lastSale.folio) + 1 : 1
+    const folio = folioNumber.toString()
 
-    let nextFolio = 'V50741'
-    if (lastSale) {
-      const lastNum = parseInt(lastSale.folio.substring(1))
-      nextFolio = `V${lastNum + 1}`
-    }
-
-    // Create sale with items
+    // Crear sale (orden)
     const sale = await prisma.sale.create({
       data: {
         businessId,
         locationId,
-        folio: nextFolio,
+        folio,
         vendorId,
-        clientName: clientName || 'Público General',
-        clientRfc: clientRfc || 'XAXX010101000',
-        paymentMethod,
-        comprobante,
+        clientName: clientName || "Cliente",
+        clientPhone,
+        clientAddress,
+        deliveryType,
+        paymentMethod: null,
+        comprobante: "",
         subtotal,
         iva,
         total,
+        status: "pendiente",
         items: {
-          create: saleItems
+          create: items.map(item => ({
+            productId: item.productId,
+            qty: item.qty,
+            price: item.price,
+            subtotal: item.subtotal
+          }))
         }
       },
       include: { items: true }
     })
 
-    // Decrement product stock
-    for (const item of items) {
-      await prisma.product.update({
-        where: { id: item.productId },
-        data: { stock: { decrement: item.qty } }
-      })
-    }
-
-    // Create surtido order (automatically)
-    await prisma.surtidoOrder.create({
-      data: {
-        businessId,
-        locationId,
-        saleId: sale.id,
-        status: 'pendiente',
-        items: {
-          create: saleItems.map(si => ({
-            productId: si.productId,
-            qty: si.qty
-          }))
-        }
-      }
-    })
-
-    return {
-      success: true,
-      sale: {
-        ...sale,
-        message: `Venta ${nextFolio} completada - Total: $${total.toFixed(2)}`
-      }
-    }
+    return { success: true, sale, message: `Orden #${folio} creada` }
   } catch (error) {
-    console.error('Error creating sale:', error)
-    return { error: 'Error al crear venta' }
+    console.error("Create order error:", error)
+    return { success: false, error: "Error al crear orden" }
   }
 }
 
-export async function actionGetSalesReports(businessId: string) {
+// Obtener órdenes pendientes de pago - CAJERO
+export async function actionGetPendingOrders(businessId: string) {
   try {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const orders = await prisma.sale.findMany({
+      where: { businessId, status: "pendiente" },
+      include: {
+        items: { include: { product: true } },
+        vendor: true
+      },
+      orderBy: { createdAt: "desc" }
+    })
 
-    const todaySales = await prisma.sale.findMany({
+    return orders
+  } catch (error) {
+    console.error("Get pending orders error:", error)
+    return []
+  }
+}
+
+// Procesar pago - CAJERO
+export async function actionProcessPayment(
+  saleId: string,
+  paymentMethod: "efectivo" | "transferencia" | "tarjeta",
+  cajeroId: string
+) {
+  try {
+    const sale = await prisma.sale.update({
+      where: { id: saleId },
+      data: {
+        status: "pagada",
+        paymentMethod,
+        paymentProcessedAt: new Date(),
+        paidBy: cajeroId,
+        comprobante: `CPD-${saleId.slice(0, 8).toUpperCase()}`
+      },
+      include: { items: true, vendor: true }
+    })
+
+    return { success: true, sale, message: `Orden #${sale.folio} pagada ✓` }
+  } catch (error) {
+    console.error("Process payment error:", error)
+    return { success: false, error: "Error al procesar pago" }
+  }
+}
+
+// Obtener órdenes pagadas (para Vendedor) - NOTIFICACIÓN
+export async function actionGetPaidOrders(businessId: string, vendorId: string) {
+  try {
+    const orders = await prisma.sale.findMany({
+      where: { businessId, vendorId, status: { in: ["pagada", "preparada"] } },
+      include: { items: true },
+      orderBy: { paymentProcessedAt: "desc" }
+    })
+
+    return orders
+  } catch (error) {
+    console.error("Get paid orders error:", error)
+    return []
+  }
+}
+
+// Obtener órdenes para preparar en bodega (si es domicilio)
+export async function actionGetOrdersForWarehouse(businessId: string) {
+  try {
+    const orders = await prisma.sale.findMany({
       where: {
         businessId,
-        createdAt: { gte: today }
+        status: "pagada",
+        deliveryType: "domicilio"
       },
-      include: { vendor: true, items: true }
+      include: {
+        items: { include: { product: true } },
+        vendor: true
+      },
+      orderBy: { paymentProcessedAt: "asc" }
     })
 
-    const salesCount = todaySales.length
-    const totalIngresos = todaySales.reduce((sum, s) => sum + s.subtotal, 0)
-    const avgTicket = salesCount > 0 ? totalIngresos / salesCount : 0
-
-    // By vendor
-    const byVendor: Record<string, { name: string; total: number; count: number }> = {}
-    todaySales.forEach(sale => {
-      const vendorName = sale.vendor.name
-      if (!byVendor[vendorName]) {
-        byVendor[vendorName] = { name: vendorName, total: 0, count: 0 }
-      }
-      byVendor[vendorName].total += sale.total
-      byVendor[vendorName].count++
-    })
-
-    return {
-      salesCount,
-      totalIngresos: parseFloat(totalIngresos.toFixed(2)),
-      avgTicket: parseFloat(avgTicket.toFixed(2)),
-      byVendor: Object.values(byVendor).sort((a, b) => b.total - a.total),
-      recentSales: todaySales
-        .slice(-5)
-        .reverse()
-        .map(s => ({
-          folio: s.folio,
-          vendor: s.vendor.name,
-          total: s.total,
-          time: s.createdAt.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
-        }))
-    }
+    return orders
   } catch (error) {
-    console.error('Error fetching reports:', error)
-    return {
-      salesCount: 0,
-      totalIngresos: 0,
-      avgTicket: 0,
-      byVendor: [],
-      recentSales: []
-    }
+    console.error("Get warehouse orders error:", error)
+    return []
   }
+}
+
+// Marcar orden como preparada - BODEGUERO
+export async function actionMarkOrderAsReady(saleId: string) {
+  try {
+    const sale = await prisma.sale.update({
+      where: { id: saleId },
+      data: { status: "preparada" }
+    })
+
+    return { success: true, message: `Orden #${sale.folio} lista para entrega` }
+  } catch (error) {
+    console.error("Mark order as ready error:", error)
+    return { success: false, error: "Error al actualizar orden" }
+  }
+}
+
+// Obtener productos - VENDEDOR
+export async function actionGetProducts(businessId: string, locationId?: string) {
+  try {
+    const products = await prisma.product.findMany({
+      where: { businessId, active: true },
+      include: { image: true }
+    })
+    return products
+  } catch (error) {
+    console.error("Get products error:", error)
+    return []
+  }
+}
+
+// Alias para compatibilidad con código existente
+export async function actionCreateSale(
+  businessId: string,
+  locationId: string,
+  vendorId: string,
+  items: { productId: string; qty: number; price: number; subtotal: number }[],
+  clientName?: string,
+  clientPhone?: string,
+  clientAddress?: string,
+  deliveryType: "mostrador" | "domicilio" = "mostrador"
+) {
+  return actionCreateOrder(
+    businessId,
+    locationId,
+    vendorId,
+    items,
+    clientName,
+    clientPhone,
+    clientAddress,
+    deliveryType
+  )
 }
