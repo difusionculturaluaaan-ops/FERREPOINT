@@ -58,6 +58,7 @@ export async function actionLogin(email: string, password: string): Promise<Logi
         role: user.role as any,
         businessId: user.businessId,
         locationId: defaultLocation,
+        vendorId: user.id,
         active: user.active,
         createdAt: user.createdAt
       },
