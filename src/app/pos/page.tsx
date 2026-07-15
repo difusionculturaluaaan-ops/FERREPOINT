@@ -551,8 +551,7 @@ export default function POSPage() {
                 style={styles.select}
               >
                 <option value="mostrador">En Mostrador</option>
-                <option value="entrega">Entrega a Domicilio</option>
-                <option value="retiro">Retiro Posterior</option>
+                <option value="domicilio">Entrega a Domicilio</option>
               </select>
             </div>
 
