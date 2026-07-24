@@ -39,6 +39,7 @@ interface FormData {
   clientPhone: string;
   deliveryType: 'mostrador' | 'domicilio';
   clientAddress: string;
+  paymentMethod: 'efectivo' | 'tarjeta' | 'transferencia';
 }
 
 interface UserData {
@@ -68,6 +69,7 @@ export default function POSPage() {
     clientPhone: '',
     deliveryType: 'mostrador',
     clientAddress: '',
+    paymentMethod: 'efectivo',
   });
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -622,6 +624,45 @@ export default function POSPage() {
                         />
                       </div>
                     )}
+
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>Forma de Pago *</label>
+                      <div style={styles.paymentMethodsContainer}>
+                        <label style={styles.paymentMethodLabel}>
+                          <input
+                            type="radio"
+                            name="paymentMethod"
+                            value="efectivo"
+                            checked={formData.paymentMethod === 'efectivo'}
+                            onChange={handleInputChange}
+                            style={styles.radioInput}
+                          />
+                          <span style={styles.paymentMethodText}>💵 Efectivo</span>
+                        </label>
+                        <label style={styles.paymentMethodLabel}>
+                          <input
+                            type="radio"
+                            name="paymentMethod"
+                            value="tarjeta"
+                            checked={formData.paymentMethod === 'tarjeta'}
+                            onChange={handleInputChange}
+                            style={styles.radioInput}
+                          />
+                          <span style={styles.paymentMethodText}>💳 Tarjeta</span>
+                        </label>
+                        <label style={styles.paymentMethodLabel}>
+                          <input
+                            type="radio"
+                            name="paymentMethod"
+                            value="transferencia"
+                            checked={formData.paymentMethod === 'transferencia'}
+                            onChange={handleInputChange}
+                            style={styles.radioInput}
+                          />
+                          <span style={styles.paymentMethodText}>🏦 Transferencia</span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
 
                   <div style={styles.modalFooter}>
@@ -1223,5 +1264,31 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '0.95rem',
     cursor: 'pointer',
     transition: 'all 0.2s',
+  },
+  paymentMethodsContainer: {
+    display: 'flex',
+    gap: '1rem',
+    flexDirection: 'column' as const,
+  },
+  paymentMethodLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '0.75rem',
+    background: 'var(--bg-secondary)',
+    border: '1px solid var(--border-color)',
+    borderRadius: '0.5rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
+  radioInput: {
+    cursor: 'pointer',
+    width: '18px',
+    height: '18px',
+  },
+  paymentMethodText: {
+    fontSize: '0.95rem',
+    fontWeight: '500',
+    color: 'var(--text-primary)',
   },
 };
