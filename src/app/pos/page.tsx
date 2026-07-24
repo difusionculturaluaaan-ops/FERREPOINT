@@ -80,7 +80,11 @@ export default function POSPage() {
   const [paidOrders, setPaidOrders] = useState<Sale[]>([]);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showOrdersModal, setShowOrdersModal] = useState(false);
+  const [ordersSearchTerm, setOrdersSearchTerm] = useState('');
+  const [ordersPage, setOrdersPage] = useState(0);
   const [requiresCajero, setRequiresCajero] = useState(false);
+  const ordersPerPage = 5;
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastOrderCountRef = useRef(0);
   const cartItemsRef = useRef<HTMLDivElement>(null);
@@ -100,6 +104,20 @@ export default function POSPage() {
     const cartQty = cart.find((item) => item.productId === productId)?.qty || 0;
     return product.stock - cartQty;
   };
+
+  const filteredOrders = paidOrders.filter((order) => {
+    const searchLower = ordersSearchTerm.toLowerCase();
+    return (
+      order.folio.toLowerCase().includes(searchLower) ||
+      (order.clientName && order.clientName.toLowerCase().includes(searchLower))
+    );
+  });
+
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+  const paginatedOrders = filteredOrders.slice(
+    ordersPage * ordersPerPage,
+    (ordersPage + 1) * ordersPerPage
+  );
 
   const pollPaidOrders = async () => {
     if (!userData) return;
@@ -408,6 +426,15 @@ export default function POSPage() {
           <h1 style={styles.title}>🛒 PUNTO DE VENTA</h1>
         </div>
         <div style={styles.headerRight}>
+          <button
+            onClick={() => {
+              setShowOrdersModal(true);
+              setOrdersPage(0);
+            }}
+            style={styles.ordersButton}
+          >
+            📋 Órdenes ({paidOrders.length})
+          </button>
           <ThemeToggle />
           <LogoutButton />
         </div>
@@ -720,37 +747,118 @@ export default function POSPage() {
             </div>
           )}
 
-          <div style={{ ...styles.cartBox, maxHeight: '32%' }}>
-            <h2 style={styles.cartTitle}>✓ Órdenes Pagadas ({paidOrders.length})</h2>
-
-            {paidOrders.length > 0 ? (
-              <div style={styles.paidOrdersList}>
-                {paidOrders.map((order) => (
-                  <div key={order.id} style={styles.paidOrderItem}>
-                    <div style={styles.paidOrderHeader}>
-                      <span style={styles.paidOrderFolio}>{order.folio}</span>
-                      <span style={styles.paidOrderBadge}>✓ Pagada</span>
-                    </div>
-                    <p style={styles.paidOrderClient}>
-                      {order.clientName || 'Cliente'}
-                    </p>
-                    <div style={styles.paidOrderFooter}>
-                      <span style={styles.paidOrderTotal}>
-                        ${order.total.toFixed(2)}
-                      </span>
-                      <span style={styles.paidOrderTime}>
-                        {getTimeSinceCreation(order.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p style={styles.emptyCart}>Sin órdenes pagadas</p>
-            )}
-          </div>
         </div>
       </div>
+
+      {/* Orders Modal */}
+      {showOrdersModal && (
+        <div style={styles.modalOverlay}>
+          <div style={{ ...styles.modalContent, maxWidth: '600px' }}>
+            <div style={styles.modalHeader}>
+              <h2 style={styles.modalTitle}>📋 Órdenes Pagadas ({paidOrders.length})</h2>
+              <button
+                type="button"
+                onClick={() => setShowOrdersModal(false)}
+                style={styles.closeButton}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={styles.modalBody}>
+              <div style={styles.ordersSearchContainer}>
+                <input
+                  type="text"
+                  placeholder="Buscar por folio o cliente..."
+                  value={ordersSearchTerm}
+                  onChange={(e) => {
+                    setOrdersSearchTerm(e.target.value);
+                    setOrdersPage(0);
+                  }}
+                  style={styles.ordersSearchInput}
+                />
+              </div>
+
+              {filteredOrders.length > 0 ? (
+                <>
+                  <div style={styles.ordersListContainer}>
+                    {paginatedOrders.map((order) => (
+                      <div key={order.id} style={styles.orderCard}>
+                        <div style={styles.orderCardHeader}>
+                          <div>
+                            <p style={styles.orderFolio}>Folio #{order.folio}</p>
+                            <p style={styles.orderClient}>{order.clientName || 'Cliente'}</p>
+                          </div>
+                          <span style={styles.orderBadge}>✓ Pagada</span>
+                        </div>
+                        <div style={styles.orderCardBody}>
+                          <p style={styles.orderDetail}>
+                            <strong>Total:</strong> ${order.total.toFixed(2)}
+                          </p>
+                          <p style={styles.orderDetail}>
+                            <strong>Entrega:</strong>{' '}
+                            {order.deliveryType === 'mostrador' ? 'En Mostrador' : 'Domicilio'}
+                          </p>
+                          <p style={styles.orderTime}>
+                            {getTimeSinceCreation(order.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {totalPages > 1 && (
+                    <div style={styles.paginationContainer}>
+                      <button
+                        onClick={() => setOrdersPage(Math.max(0, ordersPage - 1))}
+                        disabled={ordersPage === 0}
+                        style={{
+                          ...styles.paginationButton,
+                          opacity: ordersPage === 0 ? 0.5 : 1,
+                          cursor: ordersPage === 0 ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        ← Anterior
+                      </button>
+                      <span style={styles.paginationInfo}>
+                        Página {ordersPage + 1} de {totalPages}
+                      </span>
+                      <button
+                        onClick={() => setOrdersPage(Math.min(totalPages - 1, ordersPage + 1))}
+                        disabled={ordersPage === totalPages - 1}
+                        style={{
+                          ...styles.paginationButton,
+                          opacity: ordersPage === totalPages - 1 ? 0.5 : 1,
+                          cursor: ordersPage === totalPages - 1 ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        Siguiente →
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p style={styles.emptyOrdersMessage}>
+                  {ordersSearchTerm ? 'No hay órdenes que coincidan con la búsqueda' : 'Sin órdenes pagadas'}
+                </p>
+              )}
+            </div>
+
+            <div style={styles.modalFooter}>
+              <button
+                type="button"
+                onClick={() => setShowOrdersModal(false)}
+                style={{
+                  ...styles.cancelButton,
+                  flex: 1,
+                }}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1320,5 +1428,115 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '0.95rem',
     fontWeight: '500',
     color: 'var(--text-primary)',
+  },
+  ordersButton: {
+    padding: '0.5rem 1rem',
+    background: 'var(--accent-orange)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '0.5rem',
+    fontWeight: '600',
+    fontSize: '0.9rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    marginRight: '1rem',
+  },
+  ordersSearchContainer: {
+    marginBottom: '1rem',
+  },
+  ordersSearchInput: {
+    width: '100%',
+    padding: '0.75rem',
+    border: '1px solid var(--border-color)',
+    borderRadius: '0.5rem',
+    backgroundColor: 'var(--bg-secondary)',
+    color: 'var(--text-primary)',
+    fontSize: '0.9rem',
+    boxSizing: 'border-box' as const,
+  },
+  ordersListContainer: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.75rem',
+    maxHeight: '400px',
+    overflowY: 'auto' as const,
+  },
+  orderCard: {
+    border: '1px solid var(--border-color)',
+    borderRadius: '0.5rem',
+    padding: '1rem',
+    backgroundColor: 'var(--bg-secondary)',
+  },
+  orderCardHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '0.75rem',
+  },
+  orderFolio: {
+    fontSize: '0.95rem',
+    fontWeight: '700',
+    color: 'var(--accent-orange)',
+    margin: '0 0 0.25rem 0',
+  },
+  orderClient: {
+    fontSize: '0.85rem',
+    color: 'var(--text-secondary)',
+    margin: '0',
+  },
+  orderBadge: {
+    fontSize: '0.75rem',
+    background: 'rgba(76, 175, 80, 0.2)',
+    color: 'var(--text-success)',
+    padding: '0.25rem 0.5rem',
+    borderRadius: '0.25rem',
+    fontWeight: '600',
+  },
+  orderCardBody: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.5rem',
+  },
+  orderDetail: {
+    fontSize: '0.85rem',
+    color: 'var(--text-primary)',
+    margin: '0',
+  },
+  orderTime: {
+    fontSize: '0.75rem',
+    color: 'var(--text-secondary)',
+    margin: '0',
+    marginTop: '0.25rem',
+  },
+  paginationContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: '1rem',
+    marginTop: '1rem',
+    paddingTop: '1rem',
+    borderTop: '1px solid var(--border-color)',
+  },
+  paginationButton: {
+    padding: '0.5rem 1rem',
+    background: 'var(--bg-secondary)',
+    color: 'var(--text-primary)',
+    border: '1px solid var(--border-color)',
+    borderRadius: '0.5rem',
+    fontWeight: '600',
+    fontSize: '0.85rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
+  paginationInfo: {
+    fontSize: '0.85rem',
+    color: 'var(--text-secondary)',
+  },
+  emptyOrdersMessage: {
+    textAlign: 'center' as const,
+    color: 'var(--text-secondary)',
+    padding: '2rem 1rem',
+    fontSize: '0.9rem',
+    margin: '0',
   },
 };
