@@ -77,8 +77,10 @@ export default function POSPage() {
   const [successFolio, setSuccessFolio] = useState('');
   const [paidOrders, setPaidOrders] = useState<Sale[]>([]);
   const [notificationMessage, setNotificationMessage] = useState('');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastOrderCountRef = useRef(0);
+  const cartItemsRef = useRef<HTMLDivElement>(null);
 
   const getTimeSinceCreation = (date: Date): string => {
     const now = new Date();
@@ -87,6 +89,13 @@ export default function POSPage() {
     if (secondsAgo < 60) return `hace ${secondsAgo}s`;
     if (secondsAgo < 3600) return `hace ${Math.floor(secondsAgo / 60)}m`;
     return `hace ${Math.floor(secondsAgo / 3600)}h`;
+  };
+
+  const getAvailableStock = (productId: string): number => {
+    const product = products.find((p) => p.id === productId);
+    if (!product) return 0;
+    const cartQty = cart.find((item) => item.productId === productId)?.qty || 0;
+    return product.stock - cartQty;
   };
 
   const pollPaidOrders = async () => {
@@ -174,6 +183,17 @@ export default function POSPage() {
       }
     };
   }, [userData]);
+
+  // Auto-scroll cart when items added
+  useEffect(() => {
+    if (cartItemsRef.current && cart.length > 0) {
+      setTimeout(() => {
+        if (cartItemsRef.current) {
+          cartItemsRef.current.scrollTop = cartItemsRef.current.scrollHeight;
+        }
+      }, 0);
+    }
+  }, [cart]);
 
   useEffect(() => {
     const lowercaseSearch = searchTerm.toLowerCase();
@@ -422,10 +442,10 @@ export default function POSPage() {
                     <p
                       style={{
                         ...styles.productStock,
-                        color: product.stock > 5 ? 'var(--text-success)' : 'var(--text-warning)',
+                        color: getAvailableStock(product.id) > 5 ? 'var(--text-success)' : 'var(--text-warning)',
                       }}
                     >
-                      Stock: {product.stock}
+                      Disponible: {getAvailableStock(product.id)}
                     </p>
                   </div>
                   <button
@@ -455,46 +475,43 @@ export default function POSPage() {
 
             {cart.length > 0 ? (
               <>
-                <div style={styles.cartItems}>
+                <div ref={cartItemsRef} style={styles.cartItems}>
                   {cart.map((item) => (
                     <div key={item.productId} style={styles.cartItem}>
                       <div style={styles.cartItemDetails}>
-                        <p style={styles.cartItemName}>{item.name}</p>
+                        <p style={styles.cartItemName}>{item.qty}x {item.name}</p>
                         <p style={styles.cartItemClave}>{item.clave}</p>
-                        <div style={styles.qtyControls}>
-                          <button
-                            onClick={() =>
-                              handleQuantityChange(item.productId, item.qty - 1)
-                            }
-                            style={styles.qtyButton}
-                          >
-                            −
-                          </button>
-                          <input
-                            type="number"
-                            value={item.qty}
-                            onChange={(e) =>
-                              handleQuantityChange(
-                                item.productId,
-                                parseInt(e.target.value) || 1
-                              )
-                            }
-                            style={styles.qtyInput}
-                          />
-                          <button
-                            onClick={() =>
-                              handleQuantityChange(item.productId, item.qty + 1)
-                            }
-                            style={styles.qtyButton}
-                          >
-                            +
-                          </button>
-                        </div>
+                      </div>
+                      <div style={styles.qtyControls}>
+                        <button
+                          onClick={() =>
+                            handleQuantityChange(item.productId, item.qty - 1)
+                          }
+                          style={styles.qtyButton}
+                        >
+                          −
+                        </button>
+                        <input
+                          type="number"
+                          value={item.qty}
+                          onChange={(e) =>
+                            handleQuantityChange(
+                              item.productId,
+                              parseInt(e.target.value) || 1
+                            )
+                          }
+                          style={styles.qtyInput}
+                        />
+                        <button
+                          onClick={() =>
+                            handleQuantityChange(item.productId, item.qty + 1)
+                          }
+                          style={styles.qtyButton}
+                        >
+                          +
+                        </button>
                       </div>
                       <div style={styles.cartItemPrice}>
-                        <p style={styles.itemPrice}>
-                          ${item.price.toFixed(2)}
-                        </p>
                         <p style={styles.itemSubtotal}>
                           ${item.subtotal.toFixed(2)}
                         </p>
@@ -523,80 +540,114 @@ export default function POSPage() {
                     <span>${total.toFixed(2)}</span>
                   </div>
                 </div>
+
+                <button
+                  onClick={() => setShowPaymentModal(true)}
+                  style={styles.cobrButton}
+                >
+                  💳 COBRAR
+                </button>
               </>
             ) : (
               <p style={styles.emptyCart}>El carrito está vacío</p>
             )}
           </div>
 
-          <form onSubmit={handleCreateOrder} style={{ ...styles.formBox, maxHeight: '33%' }}>
-            <h2 style={styles.formTitle}>Datos del Cliente</h2>
+          {/* Payment Modal */}
+          {showPaymentModal && (
+            <div style={styles.modalOverlay}>
+              <div style={styles.modalContent}>
+                <form onSubmit={handleCreateOrder} style={{ width: '100%' }}>
+                  <div style={styles.modalHeader}>
+                    <h2 style={styles.modalTitle}>Pago y Datos del Cliente</h2>
+                    <button
+                      type="button"
+                      onClick={() => setShowPaymentModal(false)}
+                      style={styles.closeButton}
+                    >
+                      ✕
+                    </button>
+                  </div>
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Nombre del Cliente *</label>
-              <input
-                type="text"
-                name="clientName"
-                value={formData.clientName}
-                onChange={handleInputChange}
-                placeholder="Ej: Juan García"
-                style={styles.input}
-                required
-              />
-            </div>
+                  <div style={styles.modalBody}>
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>Nombre del Cliente *</label>
+                      <input
+                        type="text"
+                        name="clientName"
+                        value={formData.clientName}
+                        onChange={handleInputChange}
+                        placeholder="Ej: Juan García"
+                        style={styles.input}
+                        required
+                      />
+                    </div>
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Teléfono</label>
-              <input
-                type="tel"
-                name="clientPhone"
-                value={formData.clientPhone}
-                onChange={handleInputChange}
-                placeholder="Ej: 5551234567"
-                style={styles.input}
-              />
-            </div>
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>Teléfono</label>
+                      <input
+                        type="tel"
+                        name="clientPhone"
+                        value={formData.clientPhone}
+                        onChange={handleInputChange}
+                        placeholder="Ej: 5551234567"
+                        style={styles.input}
+                      />
+                    </div>
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Tipo de Entrega *</label>
-              <select
-                name="deliveryType"
-                value={formData.deliveryType}
-                onChange={handleInputChange}
-                style={styles.select}
-              >
-                <option value="mostrador">En Mostrador</option>
-                <option value="domicilio">Entrega a Domicilio</option>
-              </select>
-            </div>
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>Tipo de Entrega *</label>
+                      <select
+                        name="deliveryType"
+                        value={formData.deliveryType}
+                        onChange={handleInputChange}
+                        style={styles.select}
+                      >
+                        <option value="mostrador">En Mostrador</option>
+                        <option value="domicilio">Entrega a Domicilio</option>
+                      </select>
+                    </div>
 
-            {formData.deliveryType !== 'mostrador' && (
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Dirección de Entrega *</label>
-                <input
-                  type="text"
-                  name="clientAddress"
-                  value={formData.clientAddress}
-                  onChange={handleInputChange}
-                  placeholder="Ej: Calle Principal 123, Apto 4"
-                  style={styles.input}
-                  required={formData.deliveryType === 'domicilio'}
-                />
+                    {formData.deliveryType !== 'mostrador' && (
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Dirección de Entrega *</label>
+                        <input
+                          type="text"
+                          name="clientAddress"
+                          value={formData.clientAddress}
+                          onChange={handleInputChange}
+                          placeholder="Ej: Calle Principal 123, Apto 4"
+                          style={styles.input}
+                          required={formData.deliveryType === 'domicilio'}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={styles.modalFooter}>
+                    <button
+                      type="button"
+                      onClick={() => setShowPaymentModal(false)}
+                      style={styles.cancelButton}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={cart.length === 0 || submitting}
+                      style={{
+                        ...styles.submitButton,
+                        opacity: cart.length === 0 || submitting ? 0.5 : 1,
+                        cursor: cart.length === 0 || submitting ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {submitting ? 'Procesando...' : '✓ GENERAR ORDEN'}
+                    </button>
+                  </div>
+                </form>
               </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={cart.length === 0 || submitting}
-              style={{
-                ...styles.submitButton,
-                opacity: cart.length === 0 || submitting ? 0.5 : 1,
-                cursor: cart.length === 0 || submitting ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {submitting ? 'Procesando...' : '✓ GENERAR ORDEN'}
-            </button>
-          </form>
+            </div>
+          )}
 
           <div style={{ ...styles.cartBox, maxHeight: '32%' }}>
             <h2 style={styles.cartTitle}>✓ Órdenes Pagadas ({paidOrders.length})</h2>
@@ -836,83 +887,90 @@ const styles: { [key: string]: React.CSSProperties } = {
     paddingRight: '0.5rem',
   },
   cartItem: {
-    backgroundColor: 'var(--bg-primary)',
-    padding: '0.75rem',
-    borderRadius: '0.4rem',
-    border: '1px solid var(--border-color)',
-    display: 'grid',
-    gridTemplateColumns: '1fr auto',
-    gap: '0.5rem',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0.5rem 0',
+    borderBottom: '1px solid var(--border-color)',
     fontSize: '0.85rem',
+    gap: '0.5rem',
   },
   cartItemDetails: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '0.5rem',
+    gap: '0.2rem',
+    flex: 1,
+    minWidth: 0,
   },
   cartItemName: {
     fontWeight: '600',
     margin: 0,
-    fontSize: '0.9rem',
+    fontSize: '0.85rem',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
   cartItemClave: {
     color: 'var(--text-secondary)',
     margin: 0,
-    fontSize: '0.75rem',
+    fontSize: '0.7rem',
   },
   qtyControls: {
     display: 'flex',
-    gap: '0.25rem',
+    gap: '0.2rem',
     alignItems: 'center',
-    marginTop: '0.25rem',
+    flexShrink: 0,
   },
   qtyButton: {
-    width: '24px',
-    height: '24px',
+    width: '20px',
+    height: '20px',
     padding: 0,
     border: '1px solid var(--border-color)',
     backgroundColor: 'var(--bg-secondary)',
     color: 'var(--text-primary)',
-    borderRadius: '0.3rem',
+    borderRadius: '0.2rem',
     cursor: 'pointer',
-    fontSize: '0.8rem',
+    fontSize: '0.75rem',
     fontWeight: 'bold',
   },
   qtyInput: {
-    width: '40px',
-    padding: '0.25rem',
+    width: 'auto',
+    minWidth: '24px',
+    maxWidth: '40px',
+    padding: '0.15rem 0.25rem',
     textAlign: 'center',
     border: '1px solid var(--border-color)',
     backgroundColor: 'var(--bg-secondary)',
     color: 'var(--text-primary)',
-    borderRadius: '0.3rem',
-    fontSize: '0.8rem',
+    borderRadius: '0.2rem',
+    fontSize: '0.75rem',
+    fontWeight: '600',
   },
   cartItemPrice: {
     display: 'flex',
-    flexDirection: 'column',
     alignItems: 'flex-end',
-    gap: '0.25rem',
-    justifyContent: 'center',
+    gap: '0.3rem',
+    flexShrink: 0,
   },
   itemPrice: {
     margin: 0,
-    fontSize: '0.8rem',
+    fontSize: '0.7rem',
     color: 'var(--text-secondary)',
+    display: 'none',
   },
   itemSubtotal: {
     margin: 0,
-    fontWeight: '600',
-    fontSize: '0.9rem',
+    fontWeight: '700',
+    fontSize: '0.8rem',
     color: 'var(--accent-orange)',
   },
   removeButton: {
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    fontSize: '1rem',
-    padding: 0,
-    marginTop: '0.25rem',
+    fontSize: '0.9rem',
+    padding: '0 0.25rem',
+    flexShrink: 0,
   },
   emptyCart: {
     textAlign: 'center',
@@ -1075,5 +1133,95 @@ const styles: { [key: string]: React.CSSProperties } = {
   paidOrderTime: {
     fontSize: '0.75rem',
     color: 'var(--text-secondary)',
+  },
+  cobrButton: {
+    width: '100%',
+    padding: '0.75rem',
+    marginTop: '0.75rem',
+    background: 'var(--accent-orange)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '0.5rem',
+    fontWeight: '600',
+    fontSize: '1rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
+  modalOverlay: {
+    position: 'fixed' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+  },
+  modalContent: {
+    backgroundColor: 'var(--bg-primary)',
+    borderRadius: '0.75rem',
+    boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+    maxWidth: '500px',
+    width: '90%',
+    maxHeight: '90vh',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    border: '1px solid var(--border-color)',
+  },
+  modalHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '1.5rem',
+    borderBottom: '1px solid var(--border-color)',
+  },
+  modalTitle: {
+    fontSize: '1.25rem',
+    fontWeight: '700',
+    color: 'var(--text-primary)',
+    margin: 0,
+  },
+  closeButton: {
+    background: 'none',
+    border: 'none',
+    fontSize: '1.5rem',
+    color: 'var(--text-secondary)',
+    cursor: 'pointer',
+    padding: '0',
+    width: '32px',
+    height: '32px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '0.25rem',
+    transition: 'all 0.2s',
+  },
+  modalBody: {
+    flex: 1,
+    overflow: 'auto',
+    padding: '1.5rem',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '1rem',
+  },
+  modalFooter: {
+    display: 'flex',
+    gap: '0.75rem',
+    padding: '1.5rem',
+    borderTop: '1px solid var(--border-color)',
+  },
+  cancelButton: {
+    flex: 1,
+    padding: '0.75rem',
+    background: 'var(--bg-secondary)',
+    color: 'var(--text-primary)',
+    border: '1px solid var(--border-color)',
+    borderRadius: '0.5rem',
+    fontWeight: '600',
+    fontSize: '0.95rem',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
   },
 };

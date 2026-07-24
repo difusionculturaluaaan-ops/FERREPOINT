@@ -143,7 +143,7 @@ export async function actionGetPaidOrders(businessId: string, vendorId: string) 
     const orders = await prisma.sale.findMany({
       where: { businessId, vendorId, status: { in: ["pagada", "preparada"] } },
       include: { items: true },
-      orderBy: { paymentProcessedAt: "desc" }
+      orderBy: { createdAt: "desc" }
     })
 
     return orders
@@ -166,7 +166,7 @@ export async function actionGetOrdersForWarehouse(businessId: string) {
         items: { include: { product: true } },
         vendor: true
       },
-      orderBy: { paymentProcessedAt: "asc" }
+      orderBy: { createdAt: "asc" }
     })
 
     return orders
