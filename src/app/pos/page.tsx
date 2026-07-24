@@ -628,6 +628,26 @@ export default function POSPage() {
                     </button>
                   </div>
 
+                  {/* Order Summary */}
+                  <div style={styles.orderSummary}>
+                    <div style={styles.orderSummaryRow}>
+                      <span>Items:</span>
+                      <span style={styles.orderSummaryValue}>{cart.length}</span>
+                    </div>
+                    <div style={styles.orderSummaryRow}>
+                      <span>Subtotal:</span>
+                      <span style={styles.orderSummaryValue}>${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div style={styles.orderSummaryRow}>
+                      <span>IVA (16%):</span>
+                      <span style={styles.orderSummaryValue}>${tax.toFixed(2)}</span>
+                    </div>
+                    <div style={styles.orderSummaryTotal}>
+                      <span style={{ fontWeight: '700' }}>TOTAL A PAGAR:</span>
+                      <span style={styles.totalAmountDisplay}>${total.toFixed(2)}</span>
+                    </div>
+                  </div>
+
                   <div style={styles.modalBody}>
                     <div style={styles.formGroup}>
                       <label style={styles.label}>Nombre del Cliente *</label>
@@ -1538,5 +1558,36 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '2rem 1rem',
     fontSize: '0.9rem',
     margin: '0',
+  },
+  orderSummary: {
+    background: 'linear-gradient(135deg, var(--accent-orange), rgba(232, 99, 44, 0.8))',
+    color: '#fff',
+    padding: '1rem 1.5rem',
+    borderRadius: '0 0 0.5rem 0.5rem',
+    borderTop: '2px solid rgba(255, 255, 255, 0.2)',
+  },
+  orderSummaryRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '0.5rem',
+    fontSize: '0.95rem',
+  },
+  orderSummaryValue: {
+    fontWeight: '600',
+  },
+  orderSummaryTotal: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: '1rem',
+    paddingTop: '1rem',
+    borderTop: '2px solid rgba(255, 255, 255, 0.3)',
+    fontSize: '1.1rem',
+  },
+  totalAmountDisplay: {
+    fontSize: '1.5rem',
+    fontWeight: '800',
+    letterSpacing: '0.05em',
   },
 };
