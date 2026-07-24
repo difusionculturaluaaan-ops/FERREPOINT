@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { actionGetProducts, actionCreateOrder, actionGetPaidOrders } from '@/features/pos/server';
+import { actionGetProducts, actionCreateOrder, actionGetPaidOrders, actionGetBusinessConfig, actionProcessPayment } from '@/features/pos/server';
 import { actionGetBusinessPlan } from '@/features/auth/server';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LogoutButton } from '@/components/LogoutButton';
@@ -80,6 +80,7 @@ export default function POSPage() {
   const [paidOrders, setPaidOrders] = useState<Sale[]>([]);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [requiresCajero, setRequiresCajero] = useState(false);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastOrderCountRef = useRef(0);
   const cartItemsRef = useRef<HTMLDivElement>(null);
@@ -144,6 +145,12 @@ export default function POSPage() {
         if (planResult.success) {
           localStorage.setItem('plan', planResult.plan);
           console.log('Plan saved:', planResult.plan);
+        }
+
+        // Get business config (requiresCajero)
+        const configResult = await actionGetBusinessConfig(user.businessId);
+        if (configResult.success) {
+          setRequiresCajero(configResult.requiresCajero);
         }
 
         const productsData = await actionGetProducts(user.businessId, user.locationId);
@@ -336,8 +343,24 @@ export default function POSPage() {
       );
 
       if (response.success) {
-        setSuccessFolio(response.sale?.folio || 'N/A');
-        setSuccessMessage(`Orden creada exitosamente. Folio: ${response.sale?.folio || 'N/A'}`);
+        // Si no requiere cajero, procesar pago inmediatamente
+        if (!requiresCajero && response.sale?.id) {
+          const paymentResult = await actionProcessPayment(
+            response.sale.id,
+            formData.paymentMethod as "efectivo" | "transferencia" | "tarjeta",
+            userData.vendorId
+          );
+
+          if (paymentResult.success) {
+            setSuccessFolio(response.sale?.folio || 'N/A');
+            setSuccessMessage(`✓ Orden pagada. Folio: ${response.sale?.folio || 'N/A'}`);
+          } else {
+            setError('Orden creada pero error al procesar pago');
+          }
+        } else {
+          setSuccessFolio(response.sale?.folio || 'N/A');
+          setSuccessMessage(`Orden creada. Folio: ${response.sale?.folio || 'N/A'}`);
+        }
 
         setTimeout(() => {
           setCart([]);
@@ -346,9 +369,16 @@ export default function POSPage() {
             clientPhone: '',
             deliveryType: 'mostrador',
             clientAddress: '',
+            paymentMethod: 'efectivo',
           });
           setSuccessMessage('');
           setSuccessFolio('');
+          setShowPaymentModal(false);
+
+          // Recargar órdenes pagadas
+          if (userData) {
+            actionGetPaidOrders(userData.businessId, userData.vendorId).then(setPaidOrders);
+          }
         }, 3000);
       } else {
         setError((response as any).error || 'Error al crear la orden');

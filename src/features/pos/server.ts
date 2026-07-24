@@ -205,6 +205,20 @@ export async function actionGetProducts(businessId: string, locationId?: string)
   }
 }
 
+// Obtener configuración del business (si requiere Cajero)
+export async function actionGetBusinessConfig(businessId: string) {
+  try {
+    const business = await prisma.business.findUnique({
+      where: { id: businessId },
+      select: { requiresCajero: true }
+    })
+    return { success: true, requiresCajero: business?.requiresCajero || false }
+  } catch (error) {
+    console.error("Get business config error:", error)
+    return { success: false, requiresCajero: false }
+  }
+}
+
 // Alias para compatibilidad con código existente
 export async function actionCreateSale(
   businessId: string,

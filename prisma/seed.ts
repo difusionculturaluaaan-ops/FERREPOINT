@@ -31,7 +31,8 @@ async function main() {
     data: {
       name: 'Ferretería Centro',
       rfc: 'FCE200101ABC',
-      plan: 'professional'
+      plan: 'professional',
+      requiresCajero: false
     }
   })
 

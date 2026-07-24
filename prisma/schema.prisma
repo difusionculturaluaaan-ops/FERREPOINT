@@ -8,11 +8,12 @@ datasource db {
 }
 
 model Business {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  rfc       String   @unique
-  plan      String   @default("starter")
-  createdAt DateTime @default(now())
+  id            String   @id @default(cuid())
+  name          String   @unique
+  rfc           String   @unique
+  plan          String   @default("starter")
+  requiresCajero Boolean @default(false)
+  createdAt     DateTime @default(now())
 
   locations         Location[]
   users             User[]
