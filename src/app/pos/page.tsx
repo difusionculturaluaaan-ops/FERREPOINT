@@ -98,6 +98,16 @@ export default function POSPage() {
     return `hace ${Math.floor(secondsAgo / 3600)}h`;
   };
 
+  const getFormattedDate = (date: Date): string => {
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+  };
+
   const getAvailableStock = (productId: string): number => {
     const product = products.find((p) => p.id === productId);
     if (!product) return 0;
@@ -819,6 +829,15 @@ export default function POSPage() {
                             <strong>Entrega:</strong>{' '}
                             {order.deliveryType === 'mostrador' ? 'En Mostrador' : 'Domicilio'}
                           </p>
+                          <p style={styles.orderDetail}>
+                            <strong>Pago:</strong>{' '}
+                            {order.paymentMethod === 'efectivo' ? '💵 Efectivo' :
+                             order.paymentMethod === 'tarjeta' ? '💳 Tarjeta' :
+                             order.paymentMethod === 'transferencia' ? '🏦 Transferencia' : 'N/A'}
+                          </p>
+                          <p style={styles.orderDate}>
+                            📅 {getFormattedDate(order.createdAt)}
+                          </p>
                           <p style={styles.orderTime}>
                             {getTimeSinceCreation(order.createdAt)}
                           </p>
@@ -1522,11 +1541,16 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: 'var(--text-primary)',
     margin: '0',
   },
+  orderDate: {
+    fontSize: '0.8rem',
+    fontWeight: '600',
+    color: 'var(--accent-orange)',
+    margin: '0.5rem 0 0 0',
+  },
   orderTime: {
     fontSize: '0.75rem',
     color: 'var(--text-secondary)',
-    margin: '0',
-    marginTop: '0.25rem',
+    margin: '0.25rem 0 0 0',
   },
   paginationContainer: {
     display: 'flex',
