@@ -6,7 +6,7 @@ const secret = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-secret-key-change-in-production'
 )
 
-const publicRoutes = ['/login', '/api/auth/login', '/upgrade', '/_next', '/static']
+const publicRoutes = ['/login', '/api/auth/login', '/upgrade', '/demo', '/demo.html', '/_next', '/static', '/favicon']
 const roleRoutes: Record<string, string[]> = {
   dueno: ['/', '/admin', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes'],
   vendedor: ['/pos', '/reportes'],
