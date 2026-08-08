@@ -355,49 +355,6 @@ export default function LoginPage() {
                 {isLoading ? 'Verificando...' : 'Iniciar Sesión'}
               </button>
             </form>
-
-            {/* Demo Credentials */}
-            <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid var(--border-color)' }}>
-              <p style={{
-                fontSize: '11px',
-                fontWeight: '700',
-                color: 'var(--text-secondary)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                marginBottom: '0.75rem'
-              }}>
-                Credenciales de Demostración
-              </p>
-              {demoCredentials.map(cred => (
-                <button
-                  key={cred.email}
-                  onClick={() => handleDemoLogin(cred.email)}
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '6px',
-                    color: 'var(--text-primary)',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    marginBottom: '6px',
-                    textAlign: 'left',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = 'var(--accent-orange)'
-                    e.currentTarget.style.color = '#fff'
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background = 'var(--bg-secondary)'
-                    e.currentTarget.style.color = 'var(--text-primary)'
-                  }}
-                >
-                  {cred.role}: {cred.email}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       </div>
