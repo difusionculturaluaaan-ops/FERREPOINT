@@ -1,34 +1,16 @@
 'use client'
 
-import { useTransition, useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { LogoutButton } from '@/components/LogoutButton'
 
 export default function Home() {
-  const [isPending, startTransition] = useTransition()
   const [userRole, setUserRole] = useState<string | null>(null)
 
   useEffect(() => {
     const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {}
     setUserRole(user.role || null)
   }, [])
-
-  const handleSeed = async () => {
-    startTransition(async () => {
-      try {
-        const res = await fetch('/api/seed', { method: 'POST' })
-        const data = await res.json()
-        if (data.success) {
-          alert('Base de datos poblada con datos de demo\n\n' +
-            `Dueño: ${data.credentials.dueno}\n` +
-            `Vendedor: ${data.credentials.vendedor}`)
-          window.location.href = '/pos'
-        }
-      } catch (error) {
-        alert('Error al popular la base de datos')
-      }
-    })
-  }
 
   return (
     <main style={{
