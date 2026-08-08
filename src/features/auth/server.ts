@@ -1,4 +1,4 @@
-﻿"use server"
+"use server"
 
 import { prisma } from "@/lib/prisma"
 import { hash, compare } from "bcryptjs"
@@ -196,16 +196,136 @@ export async function actionLogout() {
   return { success: true }
 }
 
-// Obtener plan del business
+// Obtener plan y módulos del business
 export async function actionGetBusinessPlan(businessId: string) {
   try {
     const business = await prisma.business.findUnique({
       where: { id: businessId },
-      select: { plan: true }
+      select: { plan: true, enabledModules: true }
     })
-    return { success: true, plan: business?.plan || 'free' }
+    return {
+      success: true,
+      plan: business?.plan || 'free',
+      enabledModules: business?.enabledModules || ["pos", "inventario", "caja", "bodega", "entregas", "compras", "contabilidad", "facturacion"]
+    }
   } catch (error) {
     console.error('Get business plan error:', error)
-    return { success: false, plan: 'free' }
+    return {
+      success: false,
+      plan: 'free',
+      enabledModules: ["pos", "inventario"]
+    }
+  }
+}
+
+// ⚡ SERVER ACTIONS DE SUPER ADMIN (GESTOR DE TENANTS)
+export async function actionGetTenants() {
+  try {
+    const businesses = await prisma.business.findMany({
+      include: {
+        _count: {
+          select: { locations: true, users: true }
+        }
+      },
+      orderBy: { createdAt: "desc" }
+    })
+
+    return businesses.map(b => ({
+      id: b.id,
+      name: b.name,
+      rfc: b.rfc,
+      plan: b.plan,
+      requiresCajero: b.requiresCajero,
+      enabledModules: b.enabledModules,
+      locationsCount: b._count.locations,
+      usersCount: b._count.users,
+      createdAt: b.createdAt.toISOString().split('T')[0]
+    }))
+  } catch (error) {
+    console.error("Get tenants error:", error)
+    return []
+  }
+}
+
+export async function actionCreateTenant(
+  name: string,
+  rfc: string,
+  plan: string,
+  enabledModules: string[],
+  adminEmail: string
+) {
+  try {
+    const existing = await prisma.business.findFirst({
+      where: { OR: [{ name }, { rfc: rfc.toUpperCase() }] }
+    })
+
+    if (existing) {
+      return { success: false, error: "Ya existe una empresa registrada con ese Nombre o RFC" }
+    }
+
+    const business = await prisma.business.create({
+      data: {
+        name,
+        rfc: rfc.toUpperCase(),
+        plan,
+        enabledModules: enabledModules.length > 0 ? enabledModules : ["pos", "inventario"]
+      }
+    })
+
+    // Crear sucursal matriz por defecto
+    const location = await prisma.location.create({
+      data: {
+        businessId: business.id,
+        name: "Sucursal Matriz",
+        clave: "MATRIZ"
+      }
+    })
+
+    // Crear usuario Business Admin inicial
+    const plainPassword = generateRandomPassword()
+    const hashedPassword = await hash(plainPassword, 10)
+
+    const adminUser = await prisma.user.create({
+      data: {
+        businessId: business.id,
+        locationId: location.id,
+        email: adminEmail.toLowerCase(),
+        password: hashedPassword,
+        name: `Admin ${name}`,
+        role: "admin",
+        active: true
+      }
+    })
+
+    return {
+      success: true,
+      tenantId: business.id,
+      adminEmail: adminUser.email,
+      plainPassword
+    }
+  } catch (error) {
+    console.error("Create tenant error:", error)
+    return { success: false, error: "Error al crear la empresa tenant" }
+  }
+}
+
+export async function actionUpdateTenantModules(
+  businessId: string,
+  enabledModules: string[],
+  plan?: string
+) {
+  try {
+    const updated = await prisma.business.update({
+      where: { id: businessId },
+      data: {
+        enabledModules,
+        ...(plan && { plan })
+      }
+    })
+
+    return { success: true, enabledModules: updated.enabledModules }
+  } catch (error) {
+    console.error("Update tenant modules error:", error)
+    return { success: false, error: "Error al actualizar módulos de la empresa" }
   }
 }

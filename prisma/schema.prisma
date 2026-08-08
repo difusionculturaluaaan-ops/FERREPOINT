@@ -14,6 +14,7 @@ model Business {
   rfc           String   @unique
   plan          String   @default("starter")
   requiresCajero Boolean @default(false)
+  enabledModules String[] @default(["pos", "inventario", "caja", "bodega", "entregas", "compras", "contabilidad", "facturacion"])
   createdAt     DateTime @default(now())
 
   locations         Location[]
