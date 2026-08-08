@@ -154,14 +154,14 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Admin Section - Solo para Dueño */}
-        {userRole === 'dueno' && (
+        {/* Admin Section - Para Admins y Encargados */}
+        {(userRole === 'admin' || userRole === 'dueno' || userRole === 'super_admin' || userRole === 'encargado') && (
           <div style={{
             marginBottom: '2rem',
             padding: '1.5rem',
             background: 'var(--bg-primary)',
             border: `2px solid var(--accent-orange)`,
-            borderRadius: '8px'
+            borderRadius: '12px'
           }}>
             <h3 style={{
               fontSize: '14px',
@@ -171,7 +171,7 @@ export default function Home() {
               textTransform: 'uppercase',
               letterSpacing: '0.5px'
             }}>
-              ⚙️ Administración
+              ⚙️ Administración de Personal
             </h3>
             <a
               href="/admin/usuarios"
@@ -182,11 +182,11 @@ export default function Home() {
                 background: 'var(--accent-orange)',
                 color: '#fff',
                 border: 'none',
-                padding: '12px 24px',
-                borderRadius: '4px',
+                padding: '14px 24px',
+                borderRadius: '8px',
                 textDecoration: 'none',
                 fontSize: '15px',
-                fontWeight: '600',
+                fontWeight: '700',
                 transition: 'all 0.2s',
                 cursor: 'pointer'
               }}
@@ -197,7 +197,7 @@ export default function Home() {
                 e.currentTarget.style.opacity = '1'
               }}
             >
-              👥 Gestionar Usuarios
+              👥 Gestionar Usuarios y Permisos de Empleados
             </a>
           </div>
         )}
