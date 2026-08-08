@@ -1,52 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LogoutButton } from '@/components/LogoutButton';
+import { DashboardButton } from '@/components/DashboardButton';
 import { actionGetPendingOrders, actionProcessPayment } from '@/features/pos/server';
-
-interface PendingOrder {
-  id: string;
-  businessId: string;
-  locationId: string;
-  folio: string;
-  vendorId: string;
-  clientName: string;
-  clientPhone?: string;
-  clientAddress?: string;
-  deliveryType: string;
-  paymentMethod?: string;
-  comprobante: string;
-  subtotal: number;
-  iva: number;
-  total: number;
-  status: string;
-  createdAt: Date;
-  items: {
-    id: string;
-    saleId: string;
-    productId: string;
-    qty: number;
-    price: number;
-    subtotal: number;
-    product: {
-      id: string;
-      name: string;
-      clave: string;
-    };
-  }[];
-  vendor: {
-    id: string;
-    name: string;
-    email: string;
-  };
-}
-
-interface Receipt {
-  saleId: string;
-  paymentMethod: string;
-  timestamp: string;
-}
+import { PendingOrder, Receipt } from '@/types';
+import { useRealtimeEvents } from '@/hooks/useRealtimeEvents';
 
 export default function CajaPage() {
   const [orders, setOrders] = useState<PendingOrder[]>([]);
@@ -58,6 +18,20 @@ export default function CajaPage() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [businessId, setBusinessId] = useState('');
   const [cajeroId, setCajeroId] = useState('');
+
+  // Show toast notification
+  const showToast = useCallback((message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  }, []);
+
+  // Listen to real-time events
+  useRealtimeEvents(businessId, useCallback((event) => {
+    if (event.type === 'ORDER_CREATED') {
+      showToast(`🔔 Nueva orden enviada a caja: Folio #${event.data.folio}`, 'success');
+      loadOrders();
+    }
+  }, [businessId, showToast]));
 
   // Load user data on mount
   useEffect(() => {
@@ -106,11 +80,7 @@ export default function CajaPage() {
     }
   };
 
-  // Show toast notification
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
-  };
+
 
   // Handle payment processing
   const handleProcessPayment = async (e: React.FormEvent) => {
@@ -190,6 +160,7 @@ export default function CajaPage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <DashboardButton />
           <ThemeToggle />
           <LogoutButton />
         </div>

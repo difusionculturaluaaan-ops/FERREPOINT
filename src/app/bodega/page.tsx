@@ -1,8 +1,9 @@
-﻿'use client';
+'use client';
 
 import { FeatureGate } from '@/components/FeatureGate';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LogoutButton } from '@/components/LogoutButton';
+import { DashboardButton } from '@/components/DashboardButton';
 
 export default function BodegaPage() {
   return (
@@ -21,7 +22,8 @@ export default function BodegaPage() {
           <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '700' }}>
             📦 Bodega
           </h1>
-          <div style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <DashboardButton />
             <ThemeToggle />
             <LogoutButton />
           </div>

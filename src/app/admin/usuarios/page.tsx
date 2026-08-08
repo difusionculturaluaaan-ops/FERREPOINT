@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { actionGetUsers, actionCreateUser, actionUpdateUser, actionResetUserPassword } from '@/features/auth/server'
 import { LogoutButton } from '@/components/LogoutButton'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { DashboardButton } from '@/components/DashboardButton'
 
 interface User {
   id: string
@@ -160,6 +161,7 @@ export default function UsuariosPage() {
           </span>
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <DashboardButton />
           <ThemeToggle />
           <LogoutButton />
         </div>

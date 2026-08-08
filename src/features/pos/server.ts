@@ -1,6 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/prisma"
+import { broadcastAppEvent } from "@/lib/eventEmitter"
 
 // Crear orden (sin pagar) - VENDEDOR
 export async function actionCreateOrder(
@@ -72,6 +73,14 @@ export async function actionCreateOrder(
       locationId: sale.locationId
     })
 
+    broadcastAppEvent({
+      type: 'ORDER_CREATED',
+      businessId,
+      locationId,
+      data: { saleId: sale.id, folio: sale.folio, total: sale.total, clientName: sale.clientName },
+      timestamp: new Date().toISOString()
+    })
+
     return { success: true, sale, message: `Orden #${folio} creada` }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error)
@@ -130,6 +139,14 @@ export async function actionProcessPayment(
       include: { items: true, vendor: true }
     })
 
+    broadcastAppEvent({
+      type: 'ORDER_PAID',
+      businessId: sale.businessId,
+      locationId: sale.locationId,
+      data: { saleId: sale.id, folio: sale.folio, total: sale.total, clientName: sale.clientName },
+      timestamp: new Date().toISOString()
+    })
+
     return { success: true, sale, message: `Orden #${sale.folio} pagada ✓` }
   } catch (error) {
     console.error("Process payment error:", error)
@@ -182,6 +199,14 @@ export async function actionMarkOrderAsReady(saleId: string) {
     const sale = await prisma.sale.update({
       where: { id: saleId },
       data: { status: "preparada" }
+    })
+
+    broadcastAppEvent({
+      type: 'SURTIDO_UPDATED',
+      businessId: sale.businessId,
+      locationId: sale.locationId,
+      data: { saleId: sale.id, folio: sale.folio, status: sale.status },
+      timestamp: new Date().toISOString()
     })
 
     return { success: true, message: `Orden #${sale.folio} lista para entrega` }

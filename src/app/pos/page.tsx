@@ -5,58 +5,14 @@ import { actionGetProducts, actionCreateOrder, actionGetPaidOrders, actionGetBus
 import { actionGetBusinessPlan } from '@/features/auth/server';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LogoutButton } from '@/components/LogoutButton';
-
-interface Product {
-  id: string;
-  businessId: string;
-  locationId?: string;
-  clave: string;
-  name: string;
-  category: string;
-  price: number;
-  costPrice: number;
-  stock: number;
-  active: boolean;
-  image?: {
-    id: string;
-    name: string;
-    category: string;
-    imageUrl: string;
-  };
-}
-
-interface CartItem {
-  productId: string;
-  clave: string;
-  name: string;
-  price: number;
-  qty: number;
-  subtotal: number;
-}
-
-interface FormData {
-  clientName: string;
-  clientPhone: string;
-  deliveryType: 'mostrador' | 'domicilio';
-  clientAddress: string;
-  paymentMethod: 'efectivo' | 'tarjeta' | 'transferencia';
-}
+import { DashboardButton } from '@/components/DashboardButton';
+import { Product, CartItem, POSFormData as FormData, Sale } from '@/types';
 
 interface UserData {
   businessId: string;
   locationId: string;
   vendorId: string;
   email: string;
-}
-
-interface Sale {
-  id: string;
-  folio: string;
-  clientName?: string;
-  total: number;
-  status: string;
-  paymentProcessedAt?: Date;
-  createdAt: Date;
 }
 
 export default function POSPage() {
@@ -81,6 +37,8 @@ export default function POSPage() {
   const [notificationMessage, setNotificationMessage] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showOrdersModal, setShowOrdersModal] = useState(false);
+  const [showFullCartModal, setShowFullCartModal] = useState(false);
+  const [cartSearchTerm, setCartSearchTerm] = useState('');
   const [ordersSearchTerm, setOrdersSearchTerm] = useState('');
   const [ordersPage, setOrdersPage] = useState(0);
   const [requiresCajero, setRequiresCajero] = useState(false);
@@ -445,6 +403,7 @@ export default function POSPage() {
           >
             📋 Órdenes ({paidOrders.length})
           </button>
+          <DashboardButton />
           <ThemeToggle />
           <LogoutButton />
         </div>
@@ -539,8 +498,31 @@ export default function POSPage() {
         </div>
 
         <div style={styles.sidebarSection}>
-          <div style={{ ...styles.cartBox, maxHeight: '35%' }}>
-            <h2 style={styles.cartTitle}>Carrito ({cart.length})</h2>
+          <div style={styles.cartBox}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={styles.cartTitle}>Carrito ({cart.length})</h2>
+              {cart.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowFullCartModal(true)}
+                  style={{
+                    background: 'var(--bg-primary)',
+                    border: '1px solid var(--accent-orange)',
+                    color: 'var(--accent-orange)',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.8rem',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  🔍 Ver Detallado
+                </button>
+              )}
+            </div>
 
             {cart.length > 0 ? (
               <>
@@ -610,12 +592,29 @@ export default function POSPage() {
                   </div>
                 </div>
 
-                <button
-                  onClick={() => setShowPaymentModal(true)}
-                  style={styles.cobrButton}
-                >
-                  💳 COBRAR
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    onClick={() => setShowFullCartModal(true)}
+                    style={{
+                      ...styles.cobrButton,
+                      backgroundColor: 'var(--bg-primary)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--border-color)',
+                      flex: '0 0 auto',
+                      width: 'auto',
+                      padding: '0.75rem 1rem'
+                    }}
+                    title="Ver pantalla completa del carrito"
+                  >
+                    🔍
+                  </button>
+                  <button
+                    onClick={() => setShowPaymentModal(true)}
+                    style={{ ...styles.cobrButton, flex: 1, marginTop: '0.75rem' }}
+                  >
+                    💳 COBRAR (${total.toFixed(2)})
+                  </button>
+                </div>
               </>
             ) : (
               <p style={styles.emptyCart}>El carrito está vacío</p>
@@ -898,6 +897,154 @@ export default function POSPage() {
           </div>
         </div>
       )}
+
+      {/* Floating Full Cart Modal */}
+      {showFullCartModal && (
+        <div style={styles.modalOverlay}>
+          <div style={{ ...styles.modalContent, maxWidth: '850px', width: '95%' }}>
+            <div style={styles.modalHeader}>
+              <h2 style={{ ...styles.modalTitle, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🛒 Carrito de Compras Detallado ({cart.length} productos)
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowFullCartModal(false)}
+                style={styles.closeButton}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={styles.modalBody}>
+              {/* Search input within cart */}
+              <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  placeholder="Filtrar productos en el carrito..."
+                  value={cartSearchTerm}
+                  onChange={(e) => setCartSearchTerm(e.target.value)}
+                  style={{ ...styles.searchInput, flex: 1 }}
+                />
+                {cart.length > 0 && (
+                  <button
+                    onClick={() => {
+                      if (confirm('¿Vaciar todo el carrito?')) {
+                        setCart([]);
+                        setShowFullCartModal(false);
+                      }
+                    }}
+                    style={{
+                      backgroundColor: 'var(--accent-red, #dc2626)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      fontWeight: '600'
+                    }}
+                  >
+                    🗑 Vaciar Carrito
+                  </button>
+                )}
+              </div>
+
+              {/* Cart items table */}
+              <div style={{ overflowX: 'auto', maxHeight: '48vh', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
+                      <th style={{ padding: '10px 12px' }}>#</th>
+                      <th style={{ padding: '10px 12px' }}>Clave</th>
+                      <th style={{ padding: '10px 12px' }}>Producto</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'right' }}>Precio Unit.</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'center' }}>Cantidad</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'right' }}>Subtotal</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'center' }}>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cart
+                      .filter(item =>
+                        item.name.toLowerCase().includes(cartSearchTerm.toLowerCase()) ||
+                        item.clave.toLowerCase().includes(cartSearchTerm.toLowerCase())
+                      )
+                      .map((item, idx) => (
+                        <tr key={item.productId} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                          <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>{idx + 1}</td>
+                          <td style={{ padding: '10px 12px', fontWeight: '600', color: 'var(--text-secondary)' }}>{item.clave}</td>
+                          <td style={{ padding: '10px 12px', fontWeight: '600' }}>{item.name}</td>
+                          <td style={{ padding: '10px 12px', textAlign: 'right' }}>${item.price.toFixed(2)}</td>
+                          <td style={{ padding: '10px 12px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', alignItems: 'center' }}>
+                              <button
+                                onClick={() => handleQuantityChange(item.productId, item.qty - 1)}
+                                style={styles.qtyButton}
+                              >−</button>
+                              <input
+                                type="number"
+                                value={item.qty}
+                                onChange={(e) => handleQuantityChange(item.productId, parseInt(e.target.value) || 1)}
+                                style={{ ...styles.qtyInput, width: '45px' }}
+                              />
+                              <button
+                                onClick={() => handleQuantityChange(item.productId, item.qty + 1)}
+                                style={styles.qtyButton}
+                              >+</button>
+                            </div>
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '700', color: 'var(--accent-orange)' }}>
+                            ${item.subtotal.toFixed(2)}
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                            <button
+                              onClick={() => handleRemoveFromCart(item.productId)}
+                              style={styles.removeButton}
+                              title="Eliminar producto"
+                            >🗑</button>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Totals Summary */}
+              <div style={{ marginTop: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Total de artículos: <strong>{cart.reduce((sum, i) => sum + i.qty, 0)} unidades</strong></span>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Subtotal: <strong>${subtotal.toFixed(2)}</strong> | IVA (16%): <strong>${tax.toFixed(2)}</strong></div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--accent-orange)', marginTop: '4px' }}>
+                    TOTAL: ${total.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.modalFooter}>
+              <button
+                type="button"
+                onClick={() => setShowFullCartModal(false)}
+                style={styles.cancelButton}
+              >
+                Seguir Agregando Productos
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowFullCartModal(false);
+                  setShowPaymentModal(true);
+                }}
+                style={{ ...styles.submitButton, marginTop: 0 }}
+              >
+                💳 IR A COBRAR (${total.toFixed(2)})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1087,7 +1234,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     flexDirection: 'column',
     gap: '0.75rem',
-    maxHeight: '50%',
+    flex: '1 1 auto',
+    maxHeight: '55vh',
+    minHeight: '220px',
     overflow: 'hidden',
   },
   cartTitle: {
@@ -1124,9 +1273,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: '600',
     margin: 0,
     fontSize: '0.85rem',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
+    whiteSpace: 'normal',
+    wordBreak: 'break-word',
+    lineHeight: '1.2',
   },
   cartItemClave: {
     color: 'var(--text-secondary)',

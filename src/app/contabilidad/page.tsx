@@ -1,8 +1,10 @@
-﻿"use client"
+"use client"
 
 import { useState, useEffect } from "react"
 import { actionGetFinancialSummary, actionGetAccountsReceivable, actionGetAccountsPayable, actionGetCxCSummary, actionGetCxPSummary, actionGetCashCloseHistory, actionCreateCashClose } from "@/features/contabilidad/server"
 import { ThemeToggle } from "@/components/ThemeToggle"
+import { LogoutButton } from "@/components/LogoutButton"
+import { DashboardButton } from "@/components/DashboardButton"
 
 interface FinancialSummary {
   date: string
@@ -98,8 +100,9 @@ export default function ContabilidadPage() {
       <div style={{ background: "var(--bg-primary)", borderBottom: "1px solid var(--border-color)", padding: "1.5rem 2rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h1 style={{ fontSize: "28px", fontWeight: "600", color: "var(--text-primary)", margin: "0" }}>Contabilidad</h1>
         <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+          <DashboardButton />
           <ThemeToggle />
-          <a href="/" style={{ color: "var(--accent-orange)", textDecoration: "none", fontWeight: "500", fontSize: "14px" }}>Volver</a>
+          <LogoutButton />
         </div>
       </div>
 

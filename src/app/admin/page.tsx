@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LogoutButton } from '@/components/LogoutButton';
+import { DashboardButton } from '@/components/DashboardButton';
 import { PLANS, type PlanType } from '@/lib/plans';
 
 interface BusinessInfo {
@@ -107,7 +108,8 @@ export default function AdminPage() {
             Gestiona tu ferretería
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <DashboardButton />
           <ThemeToggle />
           <LogoutButton />
         </div>

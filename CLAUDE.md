@@ -281,5 +281,7 @@ Deploy automático a Vercel.
 
 ---
 
-**Last Updated:** Julio 2026  
+**Last Updated:** Agosto 2026  
+**Memoria de Contexto:** `.claude/memory/CONTEXTO_MEJORAS_2026.md`  
 **Stack:** Next.js 16, React 19, Prisma 5, Neon PostgreSQL, Tailwind 3.4
+

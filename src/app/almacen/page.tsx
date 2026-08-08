@@ -8,6 +8,8 @@ import {
   actionGetProductsForMovement
 } from '@/features/almacen/server'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { LogoutButton } from '@/components/LogoutButton'
+import { DashboardButton } from '@/components/DashboardButton'
 
 interface Movement {
   id: string
@@ -232,18 +234,9 @@ export default function AlmacenPage() {
           Almacén
         </h1>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <DashboardButton />
           <ThemeToggle />
-          <a
-            href="/"
-            style={{
-              color: 'var(--accent-orange)',
-              textDecoration: 'none',
-              fontWeight: '500',
-              fontSize: '14px'
-            }}
-          >
-            Volver al inicio
-          </a>
+          <LogoutButton />
         </div>
       </div>
 
