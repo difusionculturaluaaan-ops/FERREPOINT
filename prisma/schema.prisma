@@ -41,6 +41,7 @@ model Location {
   createdAt  DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  users     User[]
   products  Product[]
   sales     Sale[]
   surtidoOrders SurtidoOrder[]
@@ -54,21 +55,23 @@ model Location {
 
 model User {
   id         String   @id @default(cuid())
-  businessId String
-  email      String
+  businessId String?
+  locationId String?
+  email      String   @unique
   password   String
   name       String
-  role       String   @default("vendedor")
+  role       String   @default("vendedor") // 'super_admin' | 'admin' | 'encargado' | 'vendedor' | 'cajero' | 'bodeguero' | 'chofer'
   active     Boolean  @default(true)
   lastLogin  DateTime?
   createdAt  DateTime @default(now())
 
-  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  business Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  location Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
   sales    Sale[]
   deliveries Delivery[]
 
-  @@unique([email, businessId])
   @@index([businessId])
+  @@index([locationId])
   @@map("users")
 }
 

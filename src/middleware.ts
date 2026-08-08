@@ -8,7 +8,10 @@ const secret = new TextEncoder().encode(
 
 const publicRoutes = ['/login', '/api/auth/login', '/upgrade', '/demo', '/demo.html', '/_next', '/static', '/favicon']
 const roleRoutes: Record<string, string[]> = {
+  super_admin: ['/', '/superadmin', '/admin', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes'],
+  admin: ['/', '/admin', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes'],
   dueno: ['/', '/admin', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes'],
+  encargado: ['/', '/admin/usuarios', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes'],
   vendedor: ['/pos', '/reportes'],
   cajero: ['/caja', '/pos', '/reportes'],
   bodeguero: ['/bodega', '/reportes'],
@@ -53,7 +56,10 @@ export async function middleware(request: NextRequest) {
     if (!hasAccess) {
       // Redirigir al dashboard del rol
       const dashboardMap: Record<string, string> = {
+        super_admin: '/superadmin',
+        admin: '/',
         dueno: '/',
+        encargado: '/',
         vendedor: '/pos',
         bodeguero: '/bodega',
         chofer: '/entregas',

@@ -17,7 +17,8 @@ interface User {
 }
 
 const ROLES = [
-  { key: 'dueno', label: '👑 Dueño', color: '#e8632c' },
+  { key: 'admin', label: '👑 Admin Empresa', color: '#e8632c' },
+  { key: 'encargado', label: '🏬 Encargado Sucursal', color: '#2563eb' },
   { key: 'bodeguero', label: '📦 Bodeguero', color: '#b088d1' },
   { key: 'vendedor', label: '🛒 Vendedor', color: '#5b9bd9' },
   { key: 'cajero', label: '💳 Cajero', color: '#4fae82' },

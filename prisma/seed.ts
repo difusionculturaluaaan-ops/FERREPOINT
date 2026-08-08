@@ -64,14 +64,48 @@ async function main() {
   // Hash passwords
   const hashedPassword = await bcrypt.hash('password123', 10)
 
-  // Crear usuarios
+  // Crear usuario Super Admin Global (SaaS Master)
+  const superAdmin = await prisma.user.create({
+    data: {
+      email: 'superadmin@ferrepoint.com',
+      password: hashedPassword,
+      name: 'Super Admin FERREPOINT',
+      role: 'super_admin',
+      active: true
+    }
+  })
+
+  // Crear usuarios de la Empresa
+  const businessAdmin = await prisma.user.create({
+    data: {
+      businessId: business.id,
+      email: 'admin@ferreteria.com',
+      password: hashedPassword,
+      name: 'Admin Ferretería Centro',
+      role: 'admin',
+      active: true
+    }
+  })
+
   const dueno = await prisma.user.create({
     data: {
       businessId: business.id,
       email: 'dueno@ferreteria.com',
       password: hashedPassword,
       name: 'Dueño Ferretería',
-      role: 'dueno',
+      role: 'admin',
+      active: true
+    }
+  })
+
+  const encargadoCentro = await prisma.user.create({
+    data: {
+      businessId: business.id,
+      locationId: locationCentro.id,
+      email: 'encargado.centro@ferreteria.com',
+      password: hashedPassword,
+      name: 'Gerente Sucursal Centro',
+      role: 'encargado',
       active: true
     }
   })
