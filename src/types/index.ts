@@ -97,7 +97,8 @@ export interface POSFormData {
   clientPhone: string
   deliveryType: 'mostrador' | 'domicilio'
   clientAddress: string
-  paymentMethod: 'efectivo' | 'tarjeta' | 'transferencia'
+  paymentMethod: 'efectivo' | 'tarjeta' | 'transferencia' | 'credito'
+  comprobante: 'completo' | 'resumido' | 'whatsapp' | 'sin_papel'
 }
 
 // Sales

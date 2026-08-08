@@ -26,7 +26,9 @@ export default function POSPage() {
     deliveryType: 'mostrador',
     clientAddress: '',
     paymentMethod: 'efectivo',
+    comprobante: 'whatsapp',
   });
+  const [lastWhatsAppUrl, setLastWhatsAppUrl] = useState<string>('');
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -283,6 +285,20 @@ export default function POSPage() {
   const tax = subtotal * 0.16;
   const total = subtotal + tax;
 
+  const buildWhatsAppUrl = (folio: string, clientName: string, phone: string, totalAmt: number, itemsList: CartItem[], method: string) => {
+    const cleanPhone = (phone || '').replace(/\D/g, '');
+    const formattedItems = itemsList.map(i => `• ${i.qty}x ${i.name} ($${i.subtotal.toFixed(2)})`).join('\n');
+    const msg = `*FERREPOINT* — Comprobante de Venta 🧾\n\n` +
+      `*Folio:* #${folio}\n` +
+      `*Cliente:* ${clientName || 'Cliente Mostrador'}\n` +
+      `*Forma de Pago:* ${method.toUpperCase()}\n\n` +
+      `*Productos:*\n${formattedItems}\n\n` +
+      `*Total:* $${totalAmt.toFixed(2)}\n\n` +
+      `¡Gracias por tu preferencia en Ferretería Centro! 🏗️`;
+    const encoded = encodeURIComponent(msg);
+    return cleanPhone ? `https://wa.me/52${cleanPhone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
+  };
+
   const handleCreateOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -293,11 +309,6 @@ export default function POSPage() {
 
     if (cart.length === 0) {
       setError('El carrito está vacío');
-      return;
-    }
-
-    if (!formData.clientName.trim()) {
-      setError('Por favor ingresa el nombre del cliente');
       return;
     }
 
@@ -322,30 +333,49 @@ export default function POSPage() {
         userData.locationId,
         userData.vendorId,
         items,
-        formData.clientName || undefined,
+        formData.clientName || 'Cliente Mostrador',
         formData.clientPhone || undefined,
         formData.clientAddress || undefined,
-        formData.deliveryType
+        formData.deliveryType,
+        formData.paymentMethod,
+        formData.comprobante
       );
 
-      if (response.success) {
+      if (response.success && response.sale) {
+        const folioStr = response.sale.folio || 'N/A';
+        const waUrl = buildWhatsAppUrl(
+          folioStr,
+          formData.clientName || 'Cliente Mostrador',
+          formData.clientPhone || '',
+          total,
+          cart,
+          formData.paymentMethod
+        );
+        setLastWhatsAppUrl(waUrl);
+
         // Si no requiere cajero, procesar pago inmediatamente
         if (!requiresCajero && response.sale?.id) {
           const paymentResult = await actionProcessPayment(
             response.sale.id,
-            formData.paymentMethod as "efectivo" | "transferencia" | "tarjeta",
-            userData.vendorId
+            formData.paymentMethod,
+            userData.vendorId,
+            formData.comprobante
           );
 
           if (paymentResult.success) {
-            setSuccessFolio(response.sale?.folio || 'N/A');
-            setSuccessMessage(`✓ Orden pagada. Folio: ${response.sale?.folio || 'N/A'}`);
+            setSuccessFolio(folioStr);
+            setSuccessMessage(`✓ Venta completada. Folio: #${folioStr}`);
           } else {
             setError('Orden creada pero error al procesar pago');
           }
         } else {
-          setSuccessFolio(response.sale?.folio || 'N/A');
-          setSuccessMessage(`Orden creada. Folio: ${response.sale?.folio || 'N/A'}`);
+          setSuccessFolio(folioStr);
+          setSuccessMessage(`Orden creada. Folio: #${folioStr}`);
+        }
+
+        // Si eligió comprobante por WhatsApp, abrirlo automáticamente
+        if (formData.comprobante === 'whatsapp' || formData.clientPhone) {
+          window.open(waUrl, '_blank');
         }
 
         setTimeout(() => {
@@ -356,16 +386,17 @@ export default function POSPage() {
             deliveryType: 'mostrador',
             clientAddress: '',
             paymentMethod: 'efectivo',
+            comprobante: 'whatsapp',
           });
           setSuccessMessage('');
           setSuccessFolio('');
+          setLastWhatsAppUrl('');
           setShowPaymentModal(false);
 
-          // Recargar órdenes pagadas
           if (userData) {
             actionGetPaidOrders(userData.businessId, userData.vendorId).then(setPaidOrders);
           }
-        }, 3000);
+        }, 5000);
       } else {
         setError((response as any).error || 'Error al crear la orden');
       }
@@ -414,9 +445,32 @@ export default function POSPage() {
           <div style={styles.successContent}>
             <span style={styles.successIcon}>✓</span>
             <div>
-              <p style={styles.successTitle}>Orden creada exitosamente</p>
-              <p style={styles.successFolio}>Folio: {successFolio}</p>
+              <p style={styles.successTitle}>{successMessage}</p>
+              <p style={styles.successFolio}>Folio: #{successFolio}</p>
             </div>
+            {lastWhatsAppUrl && (
+              <a
+                href={lastWhatsAppUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  marginLeft: 'auto',
+                  background: '#25D366',
+                  color: '#fff',
+                  padding: '8px 14px',
+                  borderRadius: '6px',
+                  fontWeight: '600',
+                  fontSize: '13px',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 2px 8px rgba(37,211,102,0.3)'
+                }}
+              >
+                💬 Enviar por WhatsApp
+              </a>
+            )}
           </div>
         </div>
       )}
@@ -711,43 +765,172 @@ export default function POSPage() {
                       </div>
                     )}
 
+                    {/* FORMA DE PAGO */}
                     <div style={styles.formGroup}>
-                      <label style={styles.label}>Forma de Pago *</label>
-                      <div style={styles.paymentMethodsContainer}>
-                        <label style={styles.paymentMethodLabel}>
-                          <input
-                            type="radio"
-                            name="paymentMethod"
-                            value="efectivo"
-                            checked={formData.paymentMethod === 'efectivo'}
-                            onChange={handleInputChange}
-                            style={styles.radioInput}
-                          />
-                          <span style={styles.paymentMethodText}>💵 Efectivo</span>
-                        </label>
-                        <label style={styles.paymentMethodLabel}>
-                          <input
-                            type="radio"
-                            name="paymentMethod"
-                            value="tarjeta"
-                            checked={formData.paymentMethod === 'tarjeta'}
-                            onChange={handleInputChange}
-                            style={styles.radioInput}
-                          />
-                          <span style={styles.paymentMethodText}>💳 Tarjeta</span>
-                        </label>
-                        <label style={styles.paymentMethodLabel}>
-                          <input
-                            type="radio"
-                            name="paymentMethod"
-                            value="transferencia"
-                            checked={formData.paymentMethod === 'transferencia'}
-                            onChange={handleInputChange}
-                            style={styles.radioInput}
-                          />
-                          <span style={styles.paymentMethodText}>🏦 Transferencia</span>
-                        </label>
+                      <label style={styles.label}>FORMA DE PAGO *</label>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, paymentMethod: 'efectivo' }))}
+                          style={{
+                            padding: '10px 8px',
+                            borderRadius: '8px',
+                            border: formData.paymentMethod === 'efectivo' ? '2px solid var(--accent-orange)' : '1px solid var(--border-color)',
+                            background: formData.paymentMethod === 'efectivo' ? 'var(--nal, #FFF0E6)' : 'var(--bg-primary)',
+                            color: formData.paymentMethod === 'efectivo' ? 'var(--accent-orange)' : 'var(--text-primary)',
+                            fontWeight: '700',
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          💵 Efectivo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, paymentMethod: 'transferencia' }))}
+                          style={{
+                            padding: '10px 8px',
+                            borderRadius: '8px',
+                            border: formData.paymentMethod === 'transferencia' ? '2px solid var(--accent-orange)' : '1px solid var(--border-color)',
+                            background: formData.paymentMethod === 'transferencia' ? 'var(--nal, #FFF0E6)' : 'var(--bg-primary)',
+                            color: formData.paymentMethod === 'transferencia' ? 'var(--accent-orange)' : 'var(--text-primary)',
+                            fontWeight: '700',
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          🏦 Transfer.
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, paymentMethod: 'credito' }))}
+                          style={{
+                            padding: '10px 8px',
+                            borderRadius: '8px',
+                            border: formData.paymentMethod === 'credito' ? '2px solid var(--accent-orange)' : '1px solid var(--border-color)',
+                            background: formData.paymentMethod === 'credito' ? 'var(--nal, #FFF0E6)' : 'var(--bg-primary)',
+                            color: formData.paymentMethod === 'credito' ? 'var(--accent-orange)' : 'var(--text-primary)',
+                            fontWeight: '700',
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          💳 Crédito
+                        </button>
                       </div>
+                    </div>
+
+                    {/* COMPROBANTE */}
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>COMPROBANTE *</label>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, comprobante: 'completo' }))}
+                          style={{
+                            padding: '9px 4px',
+                            borderRadius: '8px',
+                            border: formData.comprobante === 'completo' ? '2px solid var(--accent-orange)' : '1px solid var(--border-color)',
+                            background: formData.comprobante === 'completo' ? 'var(--nal, #FFF0E6)' : 'var(--bg-primary)',
+                            color: formData.comprobante === 'completo' ? 'var(--accent-orange)' : 'var(--text-primary)',
+                            fontWeight: '600',
+                            fontSize: '12px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          📄 Completo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, comprobante: 'resumido' }))}
+                          style={{
+                            padding: '9px 4px',
+                            borderRadius: '8px',
+                            border: formData.comprobante === 'resumido' ? '2px solid var(--accent-orange)' : '1px solid var(--border-color)',
+                            background: formData.comprobante === 'resumido' ? 'var(--nal, #FFF0E6)' : 'var(--bg-primary)',
+                            color: formData.comprobante === 'resumido' ? 'var(--accent-orange)' : 'var(--text-primary)',
+                            fontWeight: '600',
+                            fontSize: '12px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          📋 Resumido
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, comprobante: 'whatsapp' }))}
+                          style={{
+                            padding: '9px 4px',
+                            borderRadius: '8px',
+                            border: '2px solid #25D366',
+                            background: formData.comprobante === 'whatsapp' ? 'rgba(37,211,102,0.15)' : 'var(--bg-primary)',
+                            color: formData.comprobante === 'whatsapp' ? '#128C7E' : 'var(--text-primary)',
+                            fontWeight: '700',
+                            fontSize: '12px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          💬 WhatsApp
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, comprobante: 'sin_papel' }))}
+                          style={{
+                            padding: '9px 4px',
+                            borderRadius: '8px',
+                            border: formData.comprobante === 'sin_papel' ? '2px solid var(--accent-orange)' : '1px solid var(--border-color)',
+                            background: formData.comprobante === 'sin_papel' ? 'var(--nal, #FFF0E6)' : 'var(--bg-primary)',
+                            color: formData.comprobante === 'sin_papel' ? 'var(--accent-orange)' : 'var(--text-primary)',
+                            fontWeight: '600',
+                            fontSize: '12px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          🚫 Sin papel
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* ENTREGA A DOMICILIO */}
+                    <div style={{
+                      padding: '12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setFormData(prev => ({
+                      ...prev,
+                      deliveryType: prev.deliveryType === 'domicilio' ? 'mostrador' : 'domicilio'
+                    }))}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.deliveryType === 'domicilio'}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          deliveryType: e.target.checked ? 'domicilio' : 'mostrador'
+                        }))}
+                        style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                      />
+                      <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                        🚚 ¿Entrega a domicilio?
+                      </span>
                     </div>
                   </div>
 

@@ -12,7 +12,9 @@ export async function actionCreateOrder(
   clientName?: string,
   clientPhone?: string,
   clientAddress?: string,
-  deliveryType: "mostrador" | "domicilio" = "mostrador"
+  deliveryType: "mostrador" | "domicilio" = "mostrador",
+  paymentMethod?: string,
+  comprobante?: string
 ) {
   try {
     const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0)
@@ -28,24 +30,15 @@ export async function actionCreateOrder(
     const folio = folioNumber.toString()
 
     // Crear sale (orden)
-    console.log("[actionCreateOrder] Creating order:", {
-      folio,
-      businessId,
-      locationId,
-      vendorId,
-      status: "pendiente",
-      itemsCount: items.length
-    })
-
     const sale = await prisma.sale.create({
       data: {
         folio,
-        clientName: clientName || "Cliente",
+        clientName: clientName || "Cliente Mostrador",
         clientPhone,
         clientAddress,
         deliveryType,
-        paymentMethod: null,
-        comprobante: "",
+        paymentMethod: paymentMethod || null,
+        comprobante: comprobante || "completo",
         subtotal,
         iva,
         total,
@@ -65,14 +58,6 @@ export async function actionCreateOrder(
       include: { items: true }
     })
 
-    console.log("[actionCreateOrder] Order created successfully:", {
-      saleId: sale.id,
-      folio: sale.folio,
-      status: sale.status,
-      businessId: sale.businessId,
-      locationId: sale.locationId
-    })
-
     broadcastAppEvent({
       type: 'ORDER_CREATED',
       businessId,
@@ -84,47 +69,17 @@ export async function actionCreateOrder(
     return { success: true, sale, message: `Orden #${folio} creada` }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error)
-    console.error("Create order error:", errorMsg, { businessId, locationId, vendorId, itemsCount: items.length })
+    console.error("Create order error:", errorMsg)
     return { success: false, error: `Error: ${errorMsg}` }
   }
 }
 
-// Obtener órdenes pendientes de pago - CAJERO
-export async function actionGetPendingOrders(businessId: string) {
-  try {
-    console.log("[actionGetPendingOrders] Searching for businessId:", businessId)
-
-    const orders = await prisma.sale.findMany({
-      where: { businessId, status: "pendiente" },
-      include: {
-        items: { include: { product: true } },
-        vendor: true
-      },
-      orderBy: { createdAt: "desc" }
-    })
-
-    console.log("[actionGetPendingOrders] Found orders:", orders.length)
-    if (orders.length > 0) {
-      console.log("[actionGetPendingOrders] First order:", {
-        id: orders[0].id,
-        folio: orders[0].folio,
-        status: orders[0].status,
-        businessId: orders[0].businessId
-      })
-    }
-
-    return orders
-  } catch (error) {
-    console.error("Get pending orders error:", error)
-    return []
-  }
-}
-
-// Procesar pago - CAJERO
+// Procesar pago - CAJERO / VENDEDOR
 export async function actionProcessPayment(
   saleId: string,
-  paymentMethod: "efectivo" | "transferencia" | "tarjeta",
-  cajeroId: string
+  paymentMethod: "efectivo" | "transferencia" | "tarjeta" | "credito" | string,
+  cajeroId: string,
+  comprobante?: string
 ) {
   try {
     const sale = await prisma.sale.update({
@@ -134,7 +89,7 @@ export async function actionProcessPayment(
         paymentMethod,
         paymentProcessedAt: new Date(),
         paidBy: cajeroId,
-        comprobante: `CPD-${saleId.slice(0, 8).toUpperCase()}`
+        comprobante: comprobante || `CPD-${saleId.slice(0, 8).toUpperCase()}`
       },
       include: { items: true, vendor: true }
     })
@@ -151,6 +106,24 @@ export async function actionProcessPayment(
   } catch (error) {
     console.error("Process payment error:", error)
     return { success: false, error: "Error al procesar pago" }
+  }
+}
+
+// Obtener órdenes pendientes de pago - CAJERO
+export async function actionGetPendingOrders(businessId: string) {
+  try {
+    const orders = await prisma.sale.findMany({
+      where: { businessId, status: "pendiente" },
+      include: {
+        items: { include: { product: true } },
+        vendor: true
+      },
+      orderBy: { createdAt: "desc" }
+    })
+    return orders
+  } catch (error) {
+    console.error("Get pending orders error:", error)
+    return []
   }
 }
 
