@@ -768,43 +768,63 @@ export default function POSPage() {
                     {/* FORMA DE PAGO */}
                     <div style={styles.formGroup}>
                       <label style={styles.label}>FORMA DE PAGO *</label>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
                         <button
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, paymentMethod: 'efectivo' }))}
                           style={{
-                            padding: '10px 8px',
+                            padding: '10px 4px',
                             borderRadius: '8px',
                             border: formData.paymentMethod === 'efectivo' ? '2px solid var(--accent-orange)' : '1px solid var(--border-color)',
                             background: formData.paymentMethod === 'efectivo' ? 'var(--nal, #FFF0E6)' : 'var(--bg-primary)',
                             color: formData.paymentMethod === 'efectivo' ? 'var(--accent-orange)' : 'var(--text-primary)',
                             fontWeight: '700',
-                            fontSize: '13px',
+                            fontSize: '12px',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '6px'
+                            gap: '4px'
                           }}
                         >
                           💵 Efectivo
                         </button>
                         <button
                           type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, paymentMethod: 'tarjeta' }))}
+                          style={{
+                            padding: '10px 4px',
+                            borderRadius: '8px',
+                            border: formData.paymentMethod === 'tarjeta' ? '2px solid var(--accent-orange)' : '1px solid var(--border-color)',
+                            background: formData.paymentMethod === 'tarjeta' ? 'var(--nal, #FFF0E6)' : 'var(--bg-primary)',
+                            color: formData.paymentMethod === 'tarjeta' ? 'var(--accent-orange)' : 'var(--text-primary)',
+                            fontWeight: '700',
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          💳 Tarjeta
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => setFormData(prev => ({ ...prev, paymentMethod: 'transferencia' }))}
                           style={{
-                            padding: '10px 8px',
+                            padding: '10px 4px',
                             borderRadius: '8px',
                             border: formData.paymentMethod === 'transferencia' ? '2px solid var(--accent-orange)' : '1px solid var(--border-color)',
                             background: formData.paymentMethod === 'transferencia' ? 'var(--nal, #FFF0E6)' : 'var(--bg-primary)',
                             color: formData.paymentMethod === 'transferencia' ? 'var(--accent-orange)' : 'var(--text-primary)',
                             fontWeight: '700',
-                            fontSize: '13px',
+                            fontSize: '12px',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '6px'
+                            gap: '4px'
                           }}
                         >
                           🏦 Transfer.
@@ -813,18 +833,18 @@ export default function POSPage() {
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, paymentMethod: 'credito' }))}
                           style={{
-                            padding: '10px 8px',
+                            padding: '10px 4px',
                             borderRadius: '8px',
                             border: formData.paymentMethod === 'credito' ? '2px solid var(--accent-orange)' : '1px solid var(--border-color)',
                             background: formData.paymentMethod === 'credito' ? 'var(--nal, #FFF0E6)' : 'var(--bg-primary)',
                             color: formData.paymentMethod === 'credito' ? 'var(--accent-orange)' : 'var(--text-primary)',
                             fontWeight: '700',
-                            fontSize: '13px',
+                            fontSize: '12px',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '6px'
+                            gap: '4px'
                           }}
                         >
                           💳 Crédito
