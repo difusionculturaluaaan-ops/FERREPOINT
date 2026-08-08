@@ -37,7 +37,8 @@ export async function actionLogin(email: string, password: string): Promise<Logi
       userId: user.id,
       email: user.email,
       role: user.role,
-      businessId: user.businessId
+      businessId: user.businessId,
+      enabledModules: user.business?.enabledModules || ["pos", "inventario", "caja", "bodega", "entregas", "compras", "contabilidad", "facturacion"]
     })
 
     // Actualizar lastLogin
@@ -59,6 +60,7 @@ export async function actionLogin(email: string, password: string): Promise<Logi
       businessId: user.businessId,
       locationId: defaultLocation,
       vendorId: user.id,
+      enabledModules: user.business?.enabledModules || ["pos", "inventario", "caja", "bodega", "entregas", "compras", "contabilidad", "facturacion"],
       active: user.active,
       createdAt: user.createdAt
     }

@@ -1,11 +1,12 @@
-﻿export interface User {
+export interface User {
   id: string
   email: string
   name: string
-  role: "dueno" | "vendedor" | "cajero" | "bodeguero" | "chofer"
+  role: "dueno" | "vendedor" | "cajero" | "bodeguero" | "chofer" | "admin" | "super_admin" | "encargado"
   businessId: string
   locationId?: string
   vendorId?: string
+  enabledModules?: string[]
   active: boolean
   createdAt: Date
 }
@@ -28,6 +29,7 @@ export interface JWTPayload {
   email: string
   role: string
   businessId: string
+  enabledModules?: string[]
   iat?: number
   exp?: number
 }

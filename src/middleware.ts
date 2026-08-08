@@ -68,9 +68,16 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL(dashboardMap[payload.role as string] || '/login', request.url))
     }
 
-    // Verificar acceso por plan (solo para módulos que requieren plan)
-    // Nota: En producción, esto se verificaría contra la BD del negocio
-    // Por ahora, confiar en que el cliente valida contra localStorage
+    // Verificar acceso por módulos habilitados para la empresa (Super Admin sin restricción)
+    if (payload.role !== 'super_admin' && payload.enabledModules && Array.isArray(payload.enabledModules)) {
+      const enabledMods = payload.enabledModules as string[]
+      for (const [routePrefix, moduleKey] of Object.entries(routeModules)) {
+        if (pathname.startsWith(routePrefix) && !enabledMods.includes(moduleKey)) {
+          console.log(`[Middleware] Module '${moduleKey}' disabled for tenant. Redirecting to '/'`)
+          return NextResponse.redirect(new URL('/', request.url))
+        }
+      }
+    }
 
     return NextResponse.next()
   } catch (error) {

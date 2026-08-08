@@ -4,13 +4,31 @@ import { useState, useEffect } from 'react'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { LogoutButton } from '@/components/LogoutButton'
 
+const ALL_NAV_MODULES = [
+  { key: 'pos', label: '🛒 Punto de Venta', href: '/pos' },
+  { key: 'inventario', label: '📦 Inventario', href: '/inventario' },
+  { key: 'caja', label: '💳 Caja & Cobros', href: '/caja' },
+  { key: 'bodega', label: '🗺 Bodega', href: '/bodega' },
+  { key: 'almacen', label: '🏬 Almacén', href: '/almacen' },
+  { key: 'compras', label: '🛒 Compras', href: '/compras' },
+  { key: 'contabilidad', label: '💰 Contabilidad', href: '/contabilidad' },
+  { key: 'entregas', label: '🚚 Entregas', href: '/entregas' },
+  { key: 'reportes', label: '📊 Reportes', href: '/reportes' },
+]
+
 export default function Home() {
   const [userRole, setUserRole] = useState<string | null>(null)
+  const [enabledModules, setEnabledModules] = useState<string[]>([])
 
   useEffect(() => {
     const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {}
     setUserRole(user.role || null)
+    setEnabledModules(user.enabledModules || ['pos', 'inventario', 'caja', 'bodega', 'almacen', 'compras', 'contabilidad', 'entregas', 'reportes'])
   }, [])
+
+  const visibleModules = userRole === 'super_admin'
+    ? ALL_NAV_MODULES
+    : ALL_NAV_MODULES.filter(m => enabledModules.length === 0 || enabledModules.includes(m.key))
 
   return (
     <main style={{
@@ -54,12 +72,28 @@ export default function Home() {
           </span>
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {userRole === 'super_admin' && (
+            <a
+              href="/superadmin"
+              style={{
+                background: '#F97316',
+                color: '#fff',
+                padding: '6px 14px',
+                borderRadius: '6px',
+                fontWeight: '700',
+                fontSize: '13px',
+                textDecoration: 'none'
+              }}
+            >
+              ⚡ SuperAdmin Dashboard
+            </a>
+          )}
           <ThemeToggle />
           <LogoutButton />
         </div>
       </div>
 
-      <div style={{ maxWidth: '600px', width: '100%' }}>
+      <div style={{ maxWidth: '650px', width: '100%' }}>
         {/* Header */}
         <div style={{ marginBottom: '3rem' }}>
           <h1 style={{
@@ -81,303 +115,43 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Status Card */}
-        <div style={{
-          background: 'var(--bg-primary)',
-          border: `1px solid var(--border-color)`,
-          borderRadius: '8px',
-          padding: '1.5rem',
-          marginBottom: '2rem'
-        }}>
-          <h2 style={{
-            fontSize: '14px',
-            fontWeight: '600',
-            color: 'var(--text-primary)',
-            margin: '0 0 1rem 0',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px'
-          }}>
-            Estado Fase 1 - MVP
-          </h2>
-
-          <ul style={{
-            fontSize: '14px',
-            lineHeight: '2',
-            color: 'var(--text-secondary)',
-            margin: '0',
-            paddingLeft: '0',
-            listStyle: 'none'
-          }}>
-            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
-              Base de datos (SQLite)
-            </li>
-            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
-              Prisma ORM multi-tenant
-            </li>
-            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
-              Stack Next.js 15 + React 18
-            </li>
-            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
-              Módulo POS (carrito, cobro)
-            </li>
-            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
-              Módulo Bodega (surtido)
-            </li>
-            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
-              Módulo Reportes (KPIs del día, vendedor, inventario)
-            </li>
-            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
-              Módulo Inventario (costos, márgenes, stock)
-            </li>
-            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
-              Módulo Almacén (movimientos de stock)
-            </li>
-            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
-              Módulo Compras (órdenes, recepción automática)
-            </li>
-            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
-              Módulo Contabilidad (CxC, CxP, flujo de caja, rentabilidad)
-            </li>
-            <li style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>✓</span>
-              Módulo Entregas (Kanban, geolocación, repartidores)
-            </li>
-          </ul>
-        </div>
-
         {/* Navigation Buttons */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr',
+          gridTemplateColumns: 'repeat(3, 1fr)',
           gap: '1rem',
           marginBottom: '2rem'
         }}>
-          <a
-            href="/pos"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'var(--bg-primary)',
-              color: 'var(--accent-orange)',
-              border: `1px solid var(--border-color)`,
-              padding: '12px 24px',
-              borderRadius: '4px',
-              textAlign: 'center',
-              textDecoration: 'none',
-              fontSize: '16px',
-              fontWeight: '500',
-              transition: 'all 0.2s',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'var(--bg-tertiary)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'var(--bg-primary)'
-            }}
-          >
-            Punto de Venta
-          </a>
-          <a
-            href="/bodega"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'var(--bg-primary)',
-              color: 'var(--accent-orange)',
-              border: `1px solid var(--border-color)`,
-              padding: '12px 24px',
-              borderRadius: '4px',
-              textAlign: 'center',
-              textDecoration: 'none',
-              fontSize: '16px',
-              fontWeight: '500',
-              transition: 'all 0.2s',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'var(--bg-tertiary)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'var(--bg-primary)'
-            }}
-          >
-            Bodega
-          </a>
-          <a
-            href="/reportes"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'var(--bg-primary)',
-              color: 'var(--accent-orange)',
-              border: `1px solid var(--border-color)`,
-              padding: '12px 24px',
-              borderRadius: '4px',
-              textAlign: 'center',
-              textDecoration: 'none',
-              fontSize: '16px',
-              fontWeight: '500',
-              transition: 'all 0.2s',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'var(--bg-tertiary)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'var(--bg-primary)'
-            }}
-          >
-            Reportes
-          </a>
-          <a
-            href="/inventario"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'var(--bg-primary)',
-              color: 'var(--accent-orange)',
-              border: `1px solid var(--border-color)`,
-              padding: '12px 24px',
-              borderRadius: '4px',
-              textAlign: 'center',
-              textDecoration: 'none',
-              fontSize: '16px',
-              fontWeight: '500',
-              transition: 'all 0.2s',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'var(--bg-tertiary)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'var(--bg-primary)'
-            }}
-          >
-            Inventario
-          </a>
-          <a
-            href="/almacen"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'var(--bg-primary)',
-              color: 'var(--accent-orange)',
-              border: `1px solid var(--border-color)`,
-              padding: '12px 24px',
-              borderRadius: '4px',
-              textAlign: 'center',
-              textDecoration: 'none',
-              fontSize: '16px',
-              fontWeight: '500',
-              transition: 'all 0.2s',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'var(--bg-tertiary)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'var(--bg-primary)'
-            }}
-          >
-            Almacén
-          </a>
-          <a
-            href="/compras"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'var(--bg-primary)',
-              color: 'var(--accent-orange)',
-              border: `1px solid var(--border-color)`,
-              padding: '12px 24px',
-              borderRadius: '4px',
-              textAlign: 'center',
-              textDecoration: 'none',
-              fontSize: '16px',
-              fontWeight: '500',
-              transition: 'all 0.2s',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'var(--bg-tertiary)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'var(--bg-primary)'
-            }}
-          >
-            Compras
-          </a>
-          <a
-            href="/contabilidad"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'var(--bg-primary)',
-              color: 'var(--accent-orange)',
-              border: `1px solid var(--border-color)`,
-              padding: '12px 24px',
-              borderRadius: '4px',
-              textAlign: 'center',
-              textDecoration: 'none',
-              fontSize: '16px',
-              fontWeight: '500',
-              transition: 'all 0.2s',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'var(--bg-tertiary)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'var(--bg-primary)'
-            }}
-          >
-            Contabilidad
-          </a>
-          <a
-            href="/entregas"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'var(--bg-primary)',
-              color: 'var(--accent-orange)',
-              border: `1px solid var(--border-color)`,
-              padding: '12px 24px',
-              borderRadius: '4px',
-              textAlign: 'center',
-              textDecoration: 'none',
-              fontSize: '16px',
-              fontWeight: '500',
-              transition: 'all 0.2s',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'var(--bg-tertiary)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'var(--bg-primary)'
-            }}
-          >
-            Entregas
-          </a>
+          {visibleModules.map(mod => (
+            <a
+              key={mod.key}
+              href={mod.href}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'var(--bg-primary)',
+                color: 'var(--accent-orange)',
+                border: `1px solid var(--border-color)`,
+                padding: '14px 20px',
+                borderRadius: '8px',
+                textAlign: 'center',
+                textDecoration: 'none',
+                fontSize: '15px',
+                fontWeight: '700',
+                transition: 'all 0.2s',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'var(--bg-tertiary)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'var(--bg-primary)'
+              }}
+            >
+              {mod.label}
+            </a>
+          ))}
         </div>
 
         {/* Admin Section - Solo para Dueño */}
