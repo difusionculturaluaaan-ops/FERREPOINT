@@ -898,12 +898,22 @@ body{font-family:'Barlow',sans-serif;background:var(--gf);color:var(--tp);font-s
 <!-- MODAL TICKET -->
 <div class="overlay" id="ovTicket">
   <div class="modal" style="max-width:480px">
-    <h3 id="ticketTitulo">✅ Venta registrada</h3>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h3 id="ticketTitulo" style="margin:0">✅ Venta registrada</h3>
+      <button class="btn-sec" onclick="cerrar('ovTicket')" style="padding:4px 8px;font-size:12px;cursor:pointer">✕</button>
+    </div>
+    <!-- BOTONES DE COMPROBANTE DENTRO DE LA VENTANA EMERGENTE -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;padding:8px;background:var(--gf);border-radius:8px">
+      <button class="tmod-opt" id="btnTComp" onclick="switchTMod('completo')" style="padding:7px 4px;font-size:11px;font-weight:700;border:1.5px solid var(--gb);border-radius:6px;background:#fff;cursor:pointer">📄 Completo</button>
+      <button class="tmod-opt" id="btnTRes" onclick="switchTMod('resumido')" style="padding:7px 4px;font-size:11px;font-weight:700;border:1.5px solid var(--gb);border-radius:6px;background:#fff;cursor:pointer">📋 Resumido</button>
+      <button class="tmod-opt" id="btnTWA" onclick="switchTMod('whatsapp')" style="padding:7px 4px;font-size:11px;font-weight:700;border:1.5px solid #25D366;color:#128C7E;border-radius:6px;background:rgba(37,211,102,0.15);cursor:pointer">💬 WhatsApp</button>
+      <button class="tmod-opt" id="btnTSin" onclick="switchTMod('sin')" style="padding:7px 4px;font-size:11px;font-weight:700;border:1.5px solid var(--gb);border-radius:6px;background:#fff;cursor:pointer">🚫 Sin papel</button>
+    </div>
     <div id="ticketCont"></div>
     <div class="modal-footer">
       <button class="btn-sec" onclick="cerrar('ovTicket')">Cerrar</button>
       <button class="btn-primary" onclick="window.print()" id="btnPrint">🖨 Imprimir</button>
-      <button class="btn-primary" onclick="copiarWA()" id="btnWA" style="display:none;background:var(--ve)">💬 Copiar</button>
+      <button class="btn-primary" onclick="abrirWADirecto()" id="btnWA" style="display:none;background:#25D366;color:#fff;border:none;box-shadow:0 2px 8px rgba(37,211,102,0.3)">💬 Enviar por WhatsApp</button>
     </div>
   </div>
 </div>
@@ -1174,6 +1184,14 @@ function cobrar(drawer){
 
   const v={folio,fecha,hora,vend,cnombre,crfc,items:[...carrito],sub,iva,total,pago:pagoSel,ticket:ticketSel,entrega:entData};
   ventas.push(v);
+  window._curVenta = v;
+  if(!window._cobrosCaja) window._cobrosCaja = [];
+  window._cobrosCaja.unshift({
+    id: 'C'+String(ventas.length).padStart(3,'0'),
+    folio, fecha, hora, vendedor: vend, cliente: cnombre,
+    items: [...carrito], sub, iva, total, pago: pagoSel, estado: 'pendiente'
+  });
+
   if(mobile) cerrarDrawer();
   if(ticketSel==='sin') alert(`✅ ${folio} — $${total.toFixed(2)}${entData?' · Entrega programada ✓':''}`);
   else if(ticketSel==='whatsapp') showWA(v);
@@ -1188,8 +1206,36 @@ function cobrar(drawer){
 }
 function cobrarD(){cobrar(true);}
 
-// ════ TICKET ════
+// ════ TICKET & COMPROBANTES EN MODAL ════
+function switchTMod(tipo){
+  if(!window._curVenta)return;
+  window._curVenta.ticket=tipo;
+  ['btnTComp','btnTRes','btnTWA','btnTSin'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.style.borderColor='var(--gb)';el.style.background='#fff';el.style.color='var(--tp)';}
+  });
+  if(tipo==='sin'){
+    cerrar('ovTicket');
+    alert(`✅ Venta #${window._curVenta.folio} registrada sin ticket impreso.`);
+    return;
+  }
+  if(tipo==='whatsapp'){
+    const b=document.getElementById('btnTWA');
+    if(b){b.style.borderColor='#25D366';b.style.background='rgba(37,211,102,0.2)';b.style.color='#128C7E';}
+    showWA(window._curVenta);
+  }else if(tipo==='resumido'){
+    const b=document.getElementById('btnTRes');
+    if(b){b.style.borderColor='var(--na)';b.style.background='var(--nal)';b.style.color='var(--na)';}
+    showTicket(window._curVenta);
+  }else{
+    const b=document.getElementById('btnTComp');
+    if(b){b.style.borderColor='var(--na)';b.style.background='var(--nal)';b.style.color='var(--na)';}
+    showTicket(window._curVenta);
+  }
+}
+
 function showTicket(v){
+  window._curVenta=v;
   const res=v.ticket==='resumido';
   const itH=res?'':v.items.map(i=>`<div class="it-row"><span class="it-desc">${i.qty} ${i.nombre.substring(0,22)}${i.nombre.length>22?'…':''}</span><span>$${(i.precio*i.qty*1.16).toFixed(2)}</span></div>`).join('');
   const entH=v.entrega?`<div class="entrega-bloque"><strong>📦 ORDEN DE ENTREGA ${v.entrega.id}</strong>Dirección: ${v.entrega.dir}${v.entrega.ref?'<br>Ref: '+v.entrega.ref:''}<br>Fecha/hora: ${v.entrega.fecha} ${v.entrega.hora}<br>Chofer: ${v.entrega.chofer}${v.entrega.urgente?'<br><strong style="color:var(--ro)">⚠ URGENTE</strong>':''}</div>`:'';
@@ -1214,14 +1260,22 @@ function showTicket(v){
   document.getElementById('ovTicket').classList.add('show');
 }
 function showWA(v){
+  window._curVenta=v;
   const lineas=v.items.map(i=>`• ${i.qty}x ${i.nombre} — $${(i.precio*i.qty*1.16).toFixed(2)}`).join('\n');
   const entT=v.entrega?`\n\n🚚 *Entrega a domicilio*\nDirección: ${v.entrega.dir}\nFecha/hora: ${v.entrega.fecha} ${v.entrega.hora}`:'';
-  window._wa=`🔩 *FERREPOINT*\nFolio: ${v.folio} | ${v.fecha}\n\n${lineas}\n\nSubtotal: $${v.sub.toFixed(2)}\nIVA: $${v.iva.toFixed(2)}\n*TOTAL: $${v.total.toFixed(2)}*\n\nPago: ${v.pago}${entT}\n\nGracias por su compra 👷`;
-  document.getElementById('ticketTitulo').textContent='💬 Ticket WhatsApp';
-  document.getElementById('ticketCont').innerHTML=`<div class="ticket-print"><p style="font-size:12px;color:var(--gm);margin-bottom:8px">Listo para copiar y enviar:</p><pre style="white-space:pre-wrap;font-size:12px;background:var(--gf);padding:10px;border-radius:6px;line-height:1.5">${window._wa}</pre></div>`;
+  window._wa=`🔩 *FERREPOINT*\nFolio: ${v.folio} | ${v.fecha}\nCliente: ${v.cnombre}\n\n${lineas}\n\nSubtotal: $${v.sub.toFixed(2)}\nIVA: $${v.iva.toFixed(2)}\n*TOTAL: $${v.total.toFixed(2)}*\n\nPago: ${v.pago}${entT}\n\n¡Gracias por tu compra! 🏗️`;
+  document.getElementById('ticketTitulo').textContent='💬 Comprobante por WhatsApp';
+  document.getElementById('ticketCont').innerHTML=`<div class="ticket-print"><p style="font-size:12px;color:var(--gm);margin-bottom:8px">Mensaje formateado listo para enviar:</p><pre style="white-space:pre-wrap;font-size:12px;background:var(--gf);padding:10px;border-radius:6px;line-height:1.5">${window._wa}</pre></div>`;
   document.getElementById('btnPrint').style.display='none';
   document.getElementById('btnWA').style.display='inline-block';
   document.getElementById('ovTicket').classList.add('show');
+}
+function abrirWADirecto(){
+  if(window._wa){
+    const phone=(window._curVenta&&window._curVenta.clienteTel)?window._curVenta.clienteTel.replace(/\D/g,''):'';
+    const url=phone?`https://wa.me/52${phone}?text=${encodeURIComponent(window._wa)}`:`https://wa.me/?text=${encodeURIComponent(window._wa)}`;
+    window.open(url,'_blank');
+  }
 }
 function copiarWA(){navigator.clipboard.writeText(window._wa||'');const b=document.getElementById('btnWA');b.textContent='✅ Copiado';setTimeout(()=>b.textContent='💬 Copiar',1500);}
 function cerrar(id){document.getElementById(id).classList.remove('show');}
