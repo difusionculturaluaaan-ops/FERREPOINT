@@ -173,30 +173,6 @@ export default function Home() {
           </ul>
         </div>
 
-        {/* Seed Button */}
-        <button
-          onClick={handleSeed}
-          disabled={isPending}
-          style={{
-            width: '100%',
-            background: 'var(--accent-orange)',
-            color: '#FFFFFF',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '4px',
-            fontSize: '16px',
-            fontWeight: '500',
-            cursor: isPending ? 'not-allowed' : 'pointer',
-            opacity: isPending ? 0.7 : 1,
-            marginBottom: '1rem',
-            transition: 'background 0.2s'
-          }}
-          onMouseEnter={e => !isPending && (e.currentTarget.style.background = 'var(--accent-orange-dark)')}
-          onMouseLeave={e => !isPending && (e.currentTarget.style.background = 'var(--accent-orange)')}
-        >
-          {isPending ? 'Poblando base de datos...' : 'Preparar datos de demostración'}
-        </button>
-
         {/* Navigation Buttons */}
         <div style={{
           display: 'grid',
