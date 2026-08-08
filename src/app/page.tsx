@@ -469,23 +469,6 @@ export default function Home() {
             </a>
           </div>
         )}
-
-        {/* Credentials */}
-        <div style={{
-          background: 'var(--bg-tertiary)',
-          border: `1px solid var(--border-color)`,
-          borderRadius: '4px',
-          padding: '1rem',
-          fontSize: '13px',
-          color: 'var(--text-secondary)',
-          lineHeight: '1.8'
-        }}>
-          <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '0.5rem' }}>
-            Credenciales de demostración:
-          </strong>
-          Dueño: dueno@ferreteria.com / password123<br />
-          Vendedor: vendedor@ferreteria.com / password123
-        </div>
       </div>
     </main>
   )
