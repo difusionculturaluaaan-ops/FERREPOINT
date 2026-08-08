@@ -192,10 +192,20 @@ export async function actionMarkOrderAsReady(saleId: string) {
 // Obtener productos - VENDEDOR
 export async function actionGetProducts(businessId: string, locationId?: string) {
   try {
-    const products = await prisma.product.findMany({
+    let products = await prisma.product.findMany({
       where: { businessId, active: true },
       include: { image: true }
     })
+
+    if (products.length === 0 && businessId) {
+      const { seedTenantDefaultCatalog } = await import('@/lib/seedTenantCatalog')
+      await seedTenantDefaultCatalog(businessId, locationId)
+      products = await prisma.product.findMany({
+        where: { businessId, active: true },
+        include: { image: true }
+      })
+    }
+
     return products
   } catch (error) {
     console.error("Get products error:", error)

@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function actionGetProducts(businessId: string, locationId?: string, search?: string) {
   try {
-    const products = await prisma.product.findMany({
+    let products = await prisma.product.findMany({
       where: {
         businessId,
         ...(locationId && { locationId }),
@@ -22,6 +22,23 @@ export async function actionGetProducts(businessId: string, locationId?: string,
       },
       orderBy: { createdAt: 'desc' }
     })
+
+    if (products.length === 0 && businessId && !search) {
+      const { seedTenantDefaultCatalog } = await import('@/lib/seedTenantCatalog')
+      await seedTenantDefaultCatalog(businessId, locationId)
+      products = await prisma.product.findMany({
+        where: {
+          businessId,
+          ...(locationId && { locationId })
+        },
+        include: {
+          image: true,
+          supplier: true,
+          location: true
+        },
+        orderBy: { createdAt: 'desc' }
+      })
+    }
 
     return products
   } catch (error) {

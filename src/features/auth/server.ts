@@ -299,6 +299,10 @@ export async function actionCreateTenant(
       }
     })
 
+    // Poblar inventario por defecto para el nuevo tenant
+    const { seedTenantDefaultCatalog } = await import('@/lib/seedTenantCatalog')
+    await seedTenantDefaultCatalog(business.id, location.id)
+
     return {
       success: true,
       tenantId: business.id,
