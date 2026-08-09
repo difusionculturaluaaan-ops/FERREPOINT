@@ -36,6 +36,47 @@ export async function actionLogin(email: string, password: string): Promise<Logi
       } as any
     }
 
+    // Auto-crear/reparar demoferretodo si intenta ingresar y no existe
+    if (!user && email.toLowerCase() === 'demoferretodo@ferreteria.com' && password === 'password123') {
+      let biz = await prisma.business.findFirst({ where: { name: 'DEMOFerretodo' } })
+      if (!biz) {
+        biz = await prisma.business.create({
+          data: {
+            name: 'DEMOFerretodo',
+            rfc: 'PEFE662120',
+            plan: 'starter',
+            enabledModules: ['pos', 'inventario']
+          }
+        })
+      }
+      let loc = await prisma.location.findFirst({ where: { businessId: biz.id } })
+      if (!loc) {
+        loc = await prisma.location.create({
+          data: { businessId: biz.id, name: 'Sucursal Matriz', clave: 'MATRIZ' }
+        })
+      }
+      const hashedPassword = await hash('password123', 10)
+      const createdAdmin = await prisma.user.create({
+        data: {
+          businessId: biz.id,
+          locationId: loc.id,
+          email: 'demoferretodo@ferreteria.com',
+          password: hashedPassword,
+          name: 'Admin DEMOFerretodo',
+          role: 'admin',
+          active: true
+        }
+      })
+
+      const { seedTenantDefaultCatalog } = await import('@/lib/seedTenantCatalog')
+      await seedTenantDefaultCatalog(biz.id, loc.id)
+
+      user = await prisma.user.findFirst({
+        where: { id: createdAdmin.id },
+        include: { business: { include: { locations: { take: 1 } } } }
+      }) as any
+    }
+
     if (!user) {
       return { success: false, error: "Credenciales incorrectas" }
     }
@@ -47,8 +88,8 @@ export async function actionLogin(email: string, password: string): Promise<Logi
     // Validar contraseña
     let passwordMatch = await compare(password, user.password)
 
-    // Fallback de reparación de contraseña para superadmin
-    if (!passwordMatch && email.toLowerCase() === 'superadmin@ferrepoint.com' && password === 'password123') {
+    // Fallback de reparación de contraseña para superadmin y demoferretodo
+    if (!passwordMatch && (email.toLowerCase() === 'superadmin@ferrepoint.com' || email.toLowerCase() === 'demoferretodo@ferreteria.com') && password === 'password123') {
       const hashedPassword = await hash('password123', 10)
       await prisma.user.update({
         where: { id: user.id },
