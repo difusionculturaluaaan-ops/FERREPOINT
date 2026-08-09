@@ -107,7 +107,7 @@ export async function actionLogin(email: string, password: string): Promise<Logi
       userId: user.id,
       email: user.email,
       role: user.role,
-      businessId: user.businessId,
+      businessId: user.businessId || "",
       enabledModules: user.business?.enabledModules || ["pos", "inventario", "caja", "bodega", "entregas", "compras", "contabilidad", "facturacion"]
     })
 
@@ -118,16 +118,16 @@ export async function actionLogin(email: string, password: string): Promise<Logi
     })
 
     // Obtener primera location (default)
-    const defaultLocation = user.business.locations?.[0]?.id || ""
+    const defaultLocation = user.business?.locations?.[0]?.id || ""
     console.log('[actionLogin] defaultLocation:', defaultLocation)
-    console.log('[actionLogin] locations:', user.business.locations)
+    console.log('[actionLogin] locations:', user.business?.locations)
 
     const responseUser = {
       id: user.id,
       email: user.email,
       name: user.name,
       role: user.role as any,
-      businessId: user.businessId,
+      businessId: user.businessId || "",
       locationId: defaultLocation,
       vendorId: user.id,
       enabledModules: user.business?.enabledModules || ["pos", "inventario", "caja", "bodega", "entregas", "compras", "contabilidad", "facturacion"],
