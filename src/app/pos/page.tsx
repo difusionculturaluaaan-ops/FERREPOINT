@@ -971,7 +971,11 @@ export default function POSPage() {
                         cursor: cart.length === 0 || submitting ? 'not-allowed' : 'pointer',
                       }}
                     >
-                      {submitting ? 'Procesando...' : '✓ GENERAR ORDEN'}
+                      {submitting
+                        ? 'Procesando...'
+                        : requiresCajero
+                        ? '📥 ENVIAR A CAJA PARA COBRO'
+                        : '✓ COBRAR Y COMPLETAR VENTA'}
                     </button>
                   </div>
                 </form>

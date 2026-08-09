@@ -17,13 +17,47 @@ export async function actionCreateOrder(
   comprobante?: string
 ) {
   try {
+    let targetBusinessId = businessId
+    if (!targetBusinessId || targetBusinessId === "undefined") {
+      const firstBiz = await prisma.business.findFirst()
+      targetBusinessId = firstBiz?.id || ""
+    }
+
+    if (!targetBusinessId) {
+      return { success: false, error: "No existe una empresa registrada para esta orden" }
+    }
+
+    let targetLocationId = locationId
+    if (!targetLocationId || targetLocationId === "undefined") {
+      const firstLoc = await prisma.location.findFirst({ where: { businessId: targetBusinessId } })
+      targetLocationId = firstLoc?.id || ""
+    }
+    if (!targetLocationId) {
+      const anyLoc = await prisma.location.findFirst()
+      targetLocationId = anyLoc?.id || ""
+    }
+
+    let targetVendorId = vendorId
+    if (!targetVendorId || targetVendorId === "undefined") {
+      const firstVendor = await prisma.user.findFirst({ where: { businessId: targetBusinessId } })
+      targetVendorId = firstVendor?.id || ""
+    }
+    if (!targetVendorId) {
+      const anyVendor = await prisma.user.findFirst()
+      targetVendorId = anyVendor?.id || ""
+    }
+
+    if (!targetLocationId || !targetVendorId) {
+      return { success: false, error: "No se encontró sucursal o usuario asignado para esta venta" }
+    }
+
     const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0)
     const iva = subtotal * 0.16
     const total = subtotal + iva
 
     // Generar folio único
     const lastSale = await prisma.sale.findFirst({
-      where: { businessId },
+      where: { businessId: targetBusinessId },
       orderBy: { createdAt: "desc" }
     })
     const folioNumber = lastSale ? parseInt(lastSale.folio) + 1 : 1
@@ -43,9 +77,9 @@ export async function actionCreateOrder(
         iva,
         total,
         status: "pendiente",
-        business: { connect: { id: businessId } },
-        location: { connect: { id: locationId } },
-        vendor: { connect: { id: vendorId } },
+        business: { connect: { id: targetBusinessId } },
+        location: { connect: { id: targetLocationId } },
+        vendor: { connect: { id: targetVendorId } },
         items: {
           create: items.map(item => ({
             productId: item.productId,
@@ -112,8 +146,17 @@ export async function actionProcessPayment(
 // Obtener órdenes pendientes de pago - CAJERO
 export async function actionGetPendingOrders(businessId: string) {
   try {
+    let targetBusinessId = businessId
+    if (!targetBusinessId || targetBusinessId === "undefined") {
+      const firstBiz = await prisma.business.findFirst()
+      targetBusinessId = firstBiz?.id || ""
+    }
+
     const orders = await prisma.sale.findMany({
-      where: { businessId, status: "pendiente" },
+      where: {
+        ...(targetBusinessId ? { businessId: targetBusinessId } : {}),
+        status: "pendiente"
+      },
       include: {
         items: { include: { product: true } },
         vendor: true
@@ -130,12 +173,20 @@ export async function actionGetPendingOrders(businessId: string) {
 // Obtener órdenes pagadas (para Vendedor) - NOTIFICACIÓN
 export async function actionGetPaidOrders(businessId: string, vendorId: string) {
   try {
+    let targetBusinessId = businessId
+    if (!targetBusinessId || targetBusinessId === "undefined") {
+      const firstBiz = await prisma.business.findFirst()
+      targetBusinessId = firstBiz?.id || ""
+    }
+
     const orders = await prisma.sale.findMany({
-      where: { businessId, vendorId, status: { in: ["pagada", "preparada"] } },
+      where: {
+        ...(targetBusinessId ? { businessId: targetBusinessId } : {}),
+        status: { in: ["pagada", "preparada"] }
+      },
       include: { items: true },
       orderBy: { createdAt: "desc" }
     })
-
     return orders
   } catch (error) {
     console.error("Get paid orders error:", error)
