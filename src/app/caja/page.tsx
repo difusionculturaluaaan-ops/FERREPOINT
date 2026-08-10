@@ -130,12 +130,14 @@ export default function CajaPage() {
       {/* Header */}
       <header
         style={{
-          backgroundColor: 'var(--bg-secondary)',
-          borderBottom: '1px solid var(--border-color)',
-          padding: '1rem',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          padding: '1rem 1.5rem',
+          backgroundColor: 'var(--bg-primary)',
+          borderBottom: '1px solid var(--border-color)',
+          flexWrap: 'wrap',
+          gap: '1rem'
         }}
       >
         <div>
@@ -153,13 +155,13 @@ export default function CajaPage() {
             style={{
               fontSize: '0.875rem',
               color: 'var(--text-secondary)',
-              margin: '0.5rem 0 0 0',
+              margin: '0.25rem 0 0 0',
             }}
           >
             Procesamiento de pagos
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <DashboardButton />
           <ThemeToggle />
           <LogoutButton />
@@ -192,9 +194,9 @@ export default function CajaPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '2rem',
-          padding: '2rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '1.5rem',
+          padding: '1.5rem 1rem',
           maxWidth: '1400px',
           margin: '0 auto',
         }}

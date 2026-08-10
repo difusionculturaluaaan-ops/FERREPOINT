@@ -128,20 +128,22 @@ export default function ReportesPage() {
       <div style={{
         background: 'var(--bg-primary)',
         borderBottom: '1px solid var(--border-color)',
-        padding: '1.5rem 2rem',
+        padding: '1rem 1.5rem',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '1rem'
       }}>
         <h1 style={{
-          fontSize: '28px',
+          fontSize: '24px',
           fontWeight: '600',
           color: 'var(--text-primary)',
           margin: '0'
         }}>
           Reportes
         </h1>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <DashboardButton />
           <ThemeToggle />
           <LogoutButton />
@@ -152,11 +154,13 @@ export default function ReportesPage() {
       <div style={{
         background: 'var(--bg-primary)',
         borderBottom: '1px solid var(--border-color)',
-        padding: '0 2rem',
+        padding: '0 1rem',
         display: 'flex',
-        gap: '1rem',
+        gap: '0.5rem',
         maxWidth: '1600px',
-        margin: '0 auto'
+        margin: '0 auto',
+        overflowX: 'auto',
+        WebkitOverflowScrolling: 'touch'
       }}>
         {[
           { id: 'hoy', label: 'Hoy' },
@@ -168,7 +172,7 @@ export default function ReportesPage() {
             key={tab.id}
             onClick={() => setViewMode(tab.id as any)}
             style={{
-              padding: '1rem 1.5rem',
+              padding: '0.85rem 1.25rem',
               background: viewMode === tab.id ? 'var(--accent-orange)' : 'transparent',
               color: viewMode === tab.id ? 'var(--bg-primary)' : 'var(--text-secondary)',
               border: 'none',
@@ -176,7 +180,8 @@ export default function ReportesPage() {
               cursor: 'pointer',
               fontWeight: '600',
               fontSize: '14px',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
+              whiteSpace: 'nowrap'
             }}
             onMouseEnter={e => {
               if (viewMode !== tab.id) {
@@ -199,12 +204,13 @@ export default function ReportesPage() {
         <div style={{
           background: 'var(--bg-primary)',
           borderBottom: '1px solid var(--border-color)',
-          padding: '1.5rem 2rem',
+          padding: '1rem 1.5rem',
           display: 'flex',
-          gap: '1rem',
+          gap: '0.75rem',
           maxWidth: '1600px',
           margin: '0 auto',
-          alignItems: 'center'
+          alignItems: 'center',
+          flexWrap: 'wrap'
         }}>
           <label style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-secondary)' }}>
             {viewMode === 'hoy' ? 'Fecha:' : 'Semana comenzando:'}
@@ -242,7 +248,7 @@ export default function ReportesPage() {
 
       {/* Content */}
       <div style={{
-        padding: '2rem',
+        padding: '1.5rem 1rem',
         maxWidth: '1600px',
         margin: '0 auto'
       }}>
@@ -261,8 +267,8 @@ export default function ReportesPage() {
             {/* KPI Cards */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '1.5rem',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: '1rem',
               marginBottom: '2rem'
             }}>
               <div style={{

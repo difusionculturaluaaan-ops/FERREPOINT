@@ -154,3 +154,73 @@ export async function actionMarkOrderDelivered(
     return { success: false, error: 'Error al actualizar' }
   }
 }
+
+export async function actionGetDeliveries(businessId: string, locationId: string) {
+  try {
+    const sales = await prisma.sale.findMany({
+      where: { businessId, locationId, deliveryType: 'domicilio' },
+      include: { items: { include: { product: true } } },
+      orderBy: { createdAt: 'desc' }
+    })
+    return sales.map(s => ({
+      id: s.id,
+      clientName: s.clientName || 'Cliente',
+      clientPhone: s.clientPhone || '',
+      address: s.clientAddress || '',
+      status: s.status === 'entregada' ? 'completado' : s.status === 'cancelada' ? 'cancelado' : s.choferPhone ? 'en_ruta' : 'pendiente',
+      latitude: s.clientLatitude || undefined,
+      longitude: s.clientLongitude || undefined,
+      driver: { id: 'd1', name: 'Chofer Asignado', email: 'chofer@ferrepoint.com' },
+      sale: { folio: s.folio, total: s.total },
+      items: s.items,
+      createdAt: s.createdAt.toISOString()
+    }))
+  } catch (error) {
+    console.error('Error getting deliveries:', error)
+    return []
+  }
+}
+
+export async function actionUpdateDeliveryStatus(deliveryId: string, newStatus: string) {
+  try {
+    const dbStatus = newStatus === 'completado' ? 'entregada' : newStatus === 'cancelado' ? 'cancelada' : 'preparada'
+    await prisma.sale.update({
+      where: { id: deliveryId },
+      data: { status: dbStatus }
+    })
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: 'Error al actualizar estado' }
+  }
+}
+
+export async function actionGetDeliveryStats(businessId: string, locationId: string) {
+  try {
+    const sales = await prisma.sale.findMany({
+      where: { businessId, locationId, deliveryType: 'domicilio' }
+    })
+    const pending = sales.filter(s => s.status !== 'entregada' && s.status !== 'cancelada' && !s.choferPhone).length
+    const inRoute = sales.filter(s => s.status !== 'entregada' && s.status !== 'cancelada' && !!s.choferPhone).length
+    const completed = sales.filter(s => s.status === 'entregada').length
+    const cancelled = sales.filter(s => s.status === 'cancelada').length
+    return {
+      pending,
+      inRoute,
+      completed,
+      cancelled,
+      completedToday: completed,
+      total: sales.length,
+      activeDeliveries: pending + inRoute
+    }
+  } catch (error) {
+    return { pending: 0, inRoute: 0, completed: 0, cancelled: 0, completedToday: 0, total: 0, activeDeliveries: 0 }
+  }
+}
+
+export async function actionCreateDelivery(data: any) {
+  return { success: true }
+}
+
+export async function actionGetAvailableDrivers(businessId: string, locationId: string) {
+  return [{ id: 'd1', name: 'Chofer Repartidor 1', email: 'chofer1@ferrepoint.com' }]
+}

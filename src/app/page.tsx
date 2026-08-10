@@ -34,23 +34,23 @@ export default function Home() {
     <main style={{
       minHeight: '100vh',
       background: 'var(--bg-secondary)',
-      padding: '2rem',
+      padding: '1rem',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: 'center'
+      justifyContent: 'flex-start'
     }}>
       {/* Header */}
       <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
+        width: '100%',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '1.5rem 2rem',
-        borderBottom: '1px solid var(--border-color)'
+        padding: '1rem 1.5rem',
+        borderBottom: '1px solid var(--border-color)',
+        marginBottom: '2rem',
+        flexWrap: 'wrap',
+        gap: '0.75rem'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{
@@ -71,7 +71,7 @@ export default function Home() {
             FERREPOINT
           </span>
         </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           {userRole === 'super_admin' && (
             <a
               href="/superadmin"
@@ -93,9 +93,9 @@ export default function Home() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '650px', width: '100%' }}>
+      <div style={{ maxWidth: '750px', width: '100%', padding: '0 0.5rem' }}>
         {/* Header */}
-        <div style={{ marginBottom: '3rem' }}>
+        <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
           <h1 style={{
             fontSize: '32px',
             fontWeight: '600',
@@ -118,7 +118,7 @@ export default function Home() {
         {/* Navigation Buttons */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
           gap: '1rem',
           marginBottom: '2rem'
         }}>

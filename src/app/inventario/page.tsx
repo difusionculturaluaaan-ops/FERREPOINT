@@ -214,20 +214,22 @@ export default function InventarioPage() {
       <div style={{
         background: 'var(--bg-primary)',
         borderBottom: '1px solid var(--border-color)',
-        padding: '1.5rem 2rem',
+        padding: '1rem 1.5rem',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '1rem'
       }}>
         <h1 style={{
-          fontSize: '28px',
+          fontSize: '24px',
           fontWeight: '600',
           color: 'var(--text-primary)',
           margin: '0'
         }}>
           Inventario
         </h1>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <DashboardButton />
           <ThemeToggle />
           <LogoutButton />
@@ -237,9 +239,9 @@ export default function InventarioPage() {
       {/* Summary Cards */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(5, 1fr)',
-        gap: '1.5rem',
-        padding: '2rem',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+        gap: '1rem',
+        padding: '1rem 1.5rem',
         maxWidth: '1600px',
         margin: '0 auto'
       }}>
@@ -247,10 +249,10 @@ export default function InventarioPage() {
           background: 'var(--bg-primary)',
           border: '1px solid var(--border-color)',
           borderRadius: '4px',
-          padding: '1.5rem',
+          padding: '1.25rem 1rem',
           textAlign: 'center'
         }}>
-          <div style={{ fontSize: '28px', fontWeight: '600', color: 'var(--accent-orange)' }}>
+          <div style={{ fontSize: '24px', fontWeight: '600', color: 'var(--accent-orange)' }}>
             {summary.totalProducts}
           </div>
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
@@ -262,10 +264,10 @@ export default function InventarioPage() {
           background: 'var(--bg-primary)',
           border: '1px solid var(--border-color)',
           borderRadius: '4px',
-          padding: '1.5rem',
+          padding: '1.25rem 1rem',
           textAlign: 'center'
         }}>
-          <div style={{ fontSize: '28px', fontWeight: '600', color: 'var(--error)' }}>
+          <div style={{ fontSize: '24px', fontWeight: '600', color: 'var(--error)' }}>
             {summary.lowStock}
           </div>
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
@@ -277,7 +279,7 @@ export default function InventarioPage() {
           background: 'var(--bg-primary)',
           border: '1px solid var(--border-color)',
           borderRadius: '4px',
-          padding: '1.5rem',
+          padding: '1.25rem 1rem',
           textAlign: 'center'
         }}>
           <div style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text-primary)' }}>
@@ -292,7 +294,7 @@ export default function InventarioPage() {
           background: 'var(--bg-primary)',
           border: '1px solid var(--border-color)',
           borderRadius: '4px',
-          padding: '1.5rem',
+          padding: '1.25rem 1rem',
           textAlign: 'center'
         }}>
           <div style={{ fontSize: '18px', fontWeight: '600', color: 'var(--success)' }}>
@@ -307,7 +309,7 @@ export default function InventarioPage() {
           background: 'var(--bg-primary)',
           border: '1px solid var(--border-color)',
           borderRadius: '4px',
-          padding: '1.5rem',
+          padding: '1.25rem 1rem',
           textAlign: 'center'
         }}>
           <div style={{ fontSize: '20px', fontWeight: '600', color: 'var(--accent-orange)' }}>
@@ -321,14 +323,15 @@ export default function InventarioPage() {
 
       {/* Controls */}
       <div style={{
-        padding: '0 2rem',
+        padding: '0 1.5rem',
         maxWidth: '1600px',
         margin: '0 auto',
-        marginBottom: '2rem',
+        marginBottom: '1.5rem',
         display: 'flex',
         gap: '1rem',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        flexWrap: 'wrap'
       }}>
         <input
           type="text"
@@ -337,6 +340,7 @@ export default function InventarioPage() {
           onChange={e => setSearch(e.target.value)}
           style={{
             flex: 1,
+            minWidth: '220px',
             padding: '10px 12px',
             border: '1px solid var(--border-color)',
             borderRadius: '4px',
@@ -368,10 +372,11 @@ export default function InventarioPage() {
             borderRadius: '4px',
             cursor: 'pointer',
             fontWeight: '600',
-            fontSize: '14px'
+            fontSize: '14px',
+            whiteSpace: 'nowrap'
           }}
         >
-          Nuevo Producto
+          + Nuevo Producto
         </button>
       </div>
 
@@ -651,6 +656,7 @@ export default function InventarioPage() {
           }}>
             <table style={{
               width: '100%',
+              minWidth: '700px',
               borderCollapse: 'collapse'
             }}>
               <thead>

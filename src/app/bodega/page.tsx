@@ -140,10 +140,12 @@ export default function BodegaPage() {
           style={{
             backgroundColor: 'var(--bg-secondary)',
             borderBottom: '1px solid var(--border-color)',
-            padding: '1rem 2rem',
+            padding: '1rem 1.5rem',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem'
           }}
         >
           <div>
@@ -154,7 +156,7 @@ export default function BodegaPage() {
               Preparación de órdenes y ubicación visual por pasillos
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <DashboardButton />
             <ThemeToggle />
             <LogoutButton />
@@ -183,9 +185,9 @@ export default function BodegaPage() {
         )}
 
         {/* Main Layout */}
-        <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+        <div style={{ padding: '1.5rem 1rem', maxWidth: '1400px', margin: '0 auto' }}>
           {/* KPI Stats Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
             <div style={{ padding: '1.25rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase' }}>⏳ Órdenes por Surtir</div>
               <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--accent-orange)', marginTop: '0.25rem' }}>{stats.pending}</div>
@@ -223,7 +225,7 @@ export default function BodegaPage() {
               🎉 ¡No hay órdenes pendientes de surtido en este momento!
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
               {orders.map((ord) => {
                 const totalItemsCount = ord.items.length;
                 const pickedItemsCount = ord.items.filter(i => checkedItems[i.id]).length;

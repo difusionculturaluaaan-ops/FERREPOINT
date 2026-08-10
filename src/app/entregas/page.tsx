@@ -141,20 +141,22 @@ export default function EntregasPage() {
       <div style={{
         background: 'var(--bg-primary)',
         borderBottom: '1px solid var(--border-color)',
-        padding: '1.5rem 2rem',
+        padding: '1rem 1.5rem',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '1rem'
       }}>
         <h1 style={{
-          fontSize: '28px',
+          fontSize: '24px',
           fontWeight: '600',
           color: 'var(--text-primary)',
           margin: '0'
         }}>
           Entregas
         </h1>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <DashboardButton />
           <ThemeToggle />
           <LogoutButton />
@@ -164,9 +166,9 @@ export default function EntregasPage() {
       {/* Summary */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(5, 1fr)',
-        gap: '1.5rem',
-        padding: '2rem',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+        gap: '1rem',
+        padding: '1rem 1.5rem',
         maxWidth: '1600px',
         margin: '0 auto'
       }}>
@@ -174,10 +176,10 @@ export default function EntregasPage() {
           background: 'var(--bg-primary)',
           border: '1px solid var(--border-color)',
           borderRadius: '4px',
-          padding: '1.5rem',
+          padding: '1.25rem 1rem',
           textAlign: 'center'
         }}>
-          <div style={{ fontSize: '28px', fontWeight: '600', color: 'var(--warning)' }}>
+          <div style={{ fontSize: '24px', fontWeight: '600', color: 'var(--warning)' }}>
             {summary.pending}
           </div>
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
@@ -189,10 +191,10 @@ export default function EntregasPage() {
           background: 'var(--bg-primary)',
           border: '1px solid var(--border-color)',
           borderRadius: '4px',
-          padding: '1.5rem',
+          padding: '1.25rem 1rem',
           textAlign: 'center'
         }}>
-          <div style={{ fontSize: '28px', fontWeight: '600', color: 'var(--accent-orange)' }}>
+          <div style={{ fontSize: '24px', fontWeight: '600', color: 'var(--accent-orange)' }}>
             {summary.inRoute}
           </div>
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
@@ -204,10 +206,10 @@ export default function EntregasPage() {
           background: 'var(--bg-primary)',
           border: '1px solid var(--border-color)',
           borderRadius: '4px',
-          padding: '1.5rem',
+          padding: '1.25rem 1rem',
           textAlign: 'center'
         }}>
-          <div style={{ fontSize: '28px', fontWeight: '600', color: 'var(--success)' }}>
+          <div style={{ fontSize: '24px', fontWeight: '600', color: 'var(--success)' }}>
             {summary.completed}
           </div>
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
@@ -222,10 +224,10 @@ export default function EntregasPage() {
           background: 'var(--bg-primary)',
           border: '1px solid var(--border-color)',
           borderRadius: '4px',
-          padding: '1.5rem',
+          padding: '1.25rem 1rem',
           textAlign: 'center'
         }}>
-          <div style={{ fontSize: '28px', fontWeight: '600', color: 'var(--error)' }}>
+          <div style={{ fontSize: '24px', fontWeight: '600', color: 'var(--error)' }}>
             {summary.cancelled}
           </div>
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
@@ -237,10 +239,10 @@ export default function EntregasPage() {
           background: 'var(--bg-primary)',
           border: '1px solid var(--border-color)',
           borderRadius: '4px',
-          padding: '1.5rem',
+          padding: '1.25rem 1rem',
           textAlign: 'center'
         }}>
-          <div style={{ fontSize: '28px', fontWeight: '600', color: 'var(--accent-orange)' }}>
+          <div style={{ fontSize: '24px', fontWeight: '600', color: 'var(--accent-orange)' }}>
             {summary.total}
           </div>
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
@@ -252,9 +254,9 @@ export default function EntregasPage() {
       {/* Kanban */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '2rem',
-        padding: '0 2rem',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gap: '1.5rem',
+        padding: '0 1.5rem',
         maxWidth: '1600px',
         margin: '0 auto',
         marginBottom: '2rem'
