@@ -420,11 +420,49 @@ export default function POSPage() {
 
   return (
     <div style={styles.container}>
+      <style>{`
+        /* Responsividad POS */
+        @media (max-width: 768px) {
+          [data-pos-main] {
+            grid-template-columns: 1fr !important;
+          }
+          [data-pos-sidebar] {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            overflow-y: auto;
+            z-index: 100;
+          }
+          [data-pos-catalog] {
+            height: 50vh;
+            overflow-y: auto;
+          }
+        }
+
+        @media (max-width: 480px) {
+          [data-pos-sidebar] {
+            height: 60%;
+          }
+          [data-pos-catalog] {
+            height: 40vh;
+          }
+          [data-pos-header-right] {
+            gap: 0.5rem !important;
+          }
+          [data-pos-title] {
+            font-size: 1.1rem !important;
+          }
+        }
+      `}</style>
       <header style={styles.header}>
         <div style={styles.headerLeft}>
-          <h1 style={styles.title}>🛒 PUNTO DE VENTA</h1>
+          <h1 style={styles.title} data-pos-title>🛒 PUNTO DE VENTA</h1>
         </div>
-        <div style={styles.headerRight}>
+        <div style={styles.headerRight} data-pos-header-right>
           <button
             onClick={() => {
               setShowOrdersModal(true);
@@ -489,8 +527,8 @@ export default function POSPage() {
         </div>
       )}
 
-      <div style={styles.mainContent}>
-        <div style={styles.catalogSection}>
+      <div style={styles.mainContent} data-pos-main>
+        <div style={styles.catalogSection} data-pos-catalog>
           <div style={styles.searchContainer}>
             <input
               type="text"
@@ -551,7 +589,7 @@ export default function POSPage() {
           )}
         </div>
 
-        <div style={styles.sidebarSection}>
+        <div style={styles.sidebarSection} data-pos-sidebar>
           <div style={styles.cartBox}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 style={styles.cartTitle}>Carrito ({cart.length})</h2>
