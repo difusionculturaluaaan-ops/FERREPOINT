@@ -128,6 +128,30 @@ export async function actionProcessPayment(
       include: { items: true, vendor: true }
     })
 
+    // Auto-create SurtidoOrder if domicilio delivery
+    if (sale.deliveryType === "domicilio" && sale.items.length > 0) {
+      try {
+        const { actionCreateSurtidoOrder } = await import("@/features/bodega/server")
+        const itemsData = sale.items.map(item => ({
+          productId: item.productId,
+          qty: item.qty,
+          price: item.price,
+          subtotal: item.subtotal
+        }))
+
+        const surtidoResult = await actionCreateSurtidoOrder(
+          sale.businessId,
+          sale.locationId,
+          sale.id,
+          itemsData
+        )
+
+        console.log("[actionProcessPayment] SurtidoOrder created:", surtidoResult.success)
+      } catch (err) {
+        console.error("[actionProcessPayment] Error creating SurtidoOrder:", err)
+      }
+    }
+
     broadcastAppEvent({
       type: 'ORDER_PAID',
       businessId: sale.businessId,

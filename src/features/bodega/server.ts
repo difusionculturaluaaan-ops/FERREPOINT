@@ -86,3 +86,36 @@ export async function actionGetBodegaStats(businessId: string, locationId: strin
     return { pending: 0, inProgress: 0, completed: 0, total: 0 }
   }
 }
+
+// Auto-create SurtidoOrder when a domicilio order is paid
+export async function actionCreateSurtidoOrder(
+  businessId: string,
+  locationId: string,
+  saleId: string,
+  items: { productId: string; qty: number; price: number; subtotal: number }[]
+) {
+  try {
+    const surtidoOrder = await prisma.surtidoOrder.create({
+      data: {
+        businessId,
+        locationId,
+        saleId,
+        status: 'pendiente',
+        items: {
+          create: items.map(item => ({
+            productId: item.productId,
+            qtyOrdered: item.qty,
+            qtyPicked: 0,
+            price: item.price
+          }))
+        }
+      },
+      include: { items: true }
+    })
+
+    return { success: true, surtidoOrder }
+  } catch (error) {
+    console.error('Error creating surtido order:', error)
+    return { success: false, error: String(error) }
+  }
+}
