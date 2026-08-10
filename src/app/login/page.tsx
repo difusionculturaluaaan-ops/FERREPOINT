@@ -144,27 +144,9 @@ export default function LoginPage() {
         padding: '1rem',
         width: '100%'
       }}>
-        <div style={{
-          width: '100%',
-          maxWidth: '960px',
-          display: 'flex',
-          flexDirection: 'row',
-          borderRadius: '16px',
-          boxShadow: '0 30px 80px rgba(0,0,0,0.35)',
-          overflow: 'hidden',
-          background: 'var(--bg-primary)'
-        }} className="login-container">
+        <div className="login-container">
           {/* Panel Izquierdo - Marca */}
-          <div style={{
-            background: 'var(--bg-secondary)',
-            padding: '52px 44px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            gap: '2rem',
-            flex: '1 1 45%',
-            minWidth: 0
-          }} className="login-left">
+          <div className="login-left">
             <div>
               <div style={{
                 display: 'inline-block',
@@ -215,15 +197,7 @@ export default function LoginPage() {
           </div>
 
           {/* Panel Derecho - Formulario */}
-          <div style={{
-            padding: '52px 44px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            flex: '1 1 55%',
-            minWidth: 0,
-            overflow: 'auto'
-          }} className="login-right">
+          <div className="login-right">
             <h2 style={{
               fontSize: '24px',
               fontWeight: '800',
@@ -262,12 +236,12 @@ export default function LoginPage() {
                   placeholder="tu@correo.com"
                   style={{
                     width: '100%',
-                    padding: '10px',
+                    padding: '12px',
                     background: 'var(--bg-secondary)',
                     border: '1px solid var(--border-color)',
                     borderRadius: '9px',
                     color: 'var(--text-primary)',
-                    fontSize: '14px',
+                    fontSize: '15px',
                     boxSizing: 'border-box',
                     fontFamily: 'inherit'
                   }}
@@ -309,12 +283,12 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   style={{
                     width: '100%',
-                    padding: '10px',
+                    padding: '12px',
                     background: 'var(--bg-secondary)',
                     border: '1px solid var(--border-color)',
                     borderRadius: '9px',
                     color: 'var(--text-primary)',
-                    fontSize: '14px',
+                    fontSize: '15px',
                     boxSizing: 'border-box',
                     fontFamily: 'inherit'
                   }}
@@ -352,7 +326,7 @@ export default function LoginPage() {
                   border: 'none',
                   borderRadius: '9px',
                   fontWeight: '600',
-                  fontSize: '14px',
+                  fontSize: '15px',
                   cursor: isLoading ? 'not-allowed' : 'pointer',
                   marginTop: '1rem',
                   transition: 'background 0.2s'
@@ -419,103 +393,60 @@ export default function LoginPage() {
           overflow-x: hidden !important;
         }
 
+        .login-container {
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+          max-width: 480px;
+          border-radius: 16px;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+          overflow: hidden;
+          background: var(--bg-primary);
+        }
+
+        .login-left {
+          display: none;
+        }
+
+        .login-right {
+          width: 100%;
+          padding: 2rem 1.5rem;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+
+        @media (min-width: 769px) {
+          .login-container {
+            flex-direction: row !important;
+            max-width: 960px !important;
+          }
+
+          .login-left {
+            display: flex !important;
+            flex: 1 1 45% !important;
+            padding: 52px 44px !important;
+            background: var(--bg-secondary) !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            gap: 2rem !important;
+          }
+
+          .login-right {
+            flex: 1 1 55% !important;
+            padding: 52px 44px !important;
+          }
+        }
+
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
           25% { transform: translateX(-10px); }
           75% { transform: translateX(10px); }
         }
+
         @keyframes bounce {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.1); }
-        }
-
-        /* All mobile devices: width-based */
-        @media (max-width: 768px) {
-          .login-container {
-            flex-direction: column !important;
-            width: 100% !important;
-            max-width: 100% !important;
-          }
-          .login-left {
-            display: none !important;
-          }
-          .login-right {
-            flex: 1 1 100% !important;
-            padding: 2.5rem 2rem !important;
-            width: 100% !important;
-            min-width: 0 !important;
-          }
-        }
-
-        /* Portrait orientation (phones) */
-        @media (orientation: portrait) and (max-width: 768px) {
-          .login-container {
-            flex-direction: column !important;
-            width: 100% !important;
-          }
-          .login-right {
-            width: 100% !important;
-            padding: 2rem 1.5rem !important;
-            min-width: 0 !important;
-          }
-          .login-right h2 {
-            font-size: 22px !important;
-            margin: 0 0 0.5rem 0 !important;
-          }
-          .login-right p {
-            font-size: 13px !important;
-            margin: 0 0 1.5rem 0 !important;
-          }
-          .login-right input {
-            width: 100% !important;
-            font-size: 16px !important;
-            padding: 10px !important;
-          }
-          .login-right button {
-            width: 100% !important;
-            font-size: 14px !important;
-            padding: 12px !important;
-          }
-        }
-
-        /* Landscape orientation (tablets) */
-        @media (orientation: landscape) and (max-height: 600px) {
-          .login-container {
-            flex-direction: row !important;
-          }
-          .login-left {
-            display: none !important;
-          }
-          .login-right {
-            flex: 1 !important;
-            padding: 1.5rem !important;
-          }
-        }
-
-        /* Small phones */
-        @media (max-width: 480px) {
-          .login-right {
-            padding: 1.5rem 1rem !important;
-          }
-          .login-right h2 {
-            font-size: 20px !important;
-            margin-bottom: 0.25rem !important;
-          }
-          .login-right form {
-            gap: 0.75rem !important;
-          }
-          .login-right button {
-            font-size: 13px !important;
-            padding: 10px !important;
-            margin-top: 0.5rem !important;
-          }
-          .login-right label {
-            font-size: 11px !important;
-          }
-          .login-right input {
-            padding: 8px !important;
-            font-size: 13px !important;
-          }
         }
       `}</style>
     </div>
