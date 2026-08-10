@@ -413,10 +413,10 @@ export default function LoginPage() {
         }
 
         html, body {
-          margin: 0;
-          padding: 0;
-          width: 100%;
-          overflow-x: hidden;
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          overflow-x: hidden !important;
         }
 
         @keyframes shake {
@@ -429,10 +429,12 @@ export default function LoginPage() {
           50% { transform: scale(1.1); }
         }
 
-        /* Tablet y abajo: 1 columna */
+        /* All mobile devices: width-based */
         @media (max-width: 768px) {
           .login-container {
             flex-direction: column !important;
+            width: 100% !important;
+            max-width: 100% !important;
           }
           .login-left {
             display: none !important;
@@ -440,27 +442,57 @@ export default function LoginPage() {
           .login-right {
             flex: 1 1 100% !important;
             padding: 2.5rem 2rem !important;
+            width: 100% !important;
+            min-width: 0 !important;
           }
         }
 
-        /* Mobile: pequeño */
-        @media (max-width: 600px) {
+        /* Portrait orientation (phones) */
+        @media (orientation: portrait) and (max-width: 768px) {
+          .login-container {
+            flex-direction: column !important;
+            width: 100% !important;
+          }
           .login-right {
+            width: 100% !important;
             padding: 2rem 1.5rem !important;
+            min-width: 0 !important;
           }
           .login-right h2 {
             font-size: 22px !important;
+            margin: 0 0 0.5rem 0 !important;
           }
           .login-right p {
-            font-size: 12px !important;
+            font-size: 13px !important;
+            margin: 0 0 1.5rem 0 !important;
           }
-          .login-right input,
+          .login-right input {
+            width: 100% !important;
+            font-size: 16px !important;
+            padding: 10px !important;
+          }
           .login-right button {
+            width: 100% !important;
             font-size: 14px !important;
+            padding: 12px !important;
           }
         }
 
-        /* Mobile: muy pequeño */
+        /* Landscape orientation (tablets) */
+        @media (orientation: landscape) and (max-height: 600px) {
+          .login-container {
+            flex-direction: row !important;
+          }
+          .login-left {
+            display: none !important;
+          }
+          .login-right {
+            flex: 1 !important;
+            padding: 1.5rem !important;
+          }
+        }
+
+        /* Small phones */
         @media (max-width: 480px) {
           .login-right {
             padding: 1.5rem 1rem !important;
@@ -469,13 +501,13 @@ export default function LoginPage() {
             font-size: 20px !important;
             margin-bottom: 0.25rem !important;
           }
-          .login-right p {
-            font-size: 12px !important;
-            margin: 0 0 1.5rem 0 !important;
+          .login-right form {
+            gap: 0.75rem !important;
           }
           .login-right button {
             font-size: 13px !important;
             padding: 10px !important;
+            margin-top: 0.5rem !important;
           }
           .login-right label {
             font-size: 11px !important;
