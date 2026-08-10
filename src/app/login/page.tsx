@@ -141,18 +141,18 @@ export default function LoginPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '2rem'
+        padding: 'max(1rem, 5vw)'
       }}>
         <div style={{
           width: '100%',
           maxWidth: '960px',
           display: 'grid',
-          gridTemplateColumns: '1.05fr 1fr',
+          gridTemplateColumns: 'clamp(280px, 100%, 1.05fr) 1fr',
           borderRadius: '16px',
           boxShadow: '0 30px 80px rgba(0,0,0,0.35)',
           overflow: 'hidden',
           background: 'var(--bg-primary)'
-        }}>
+        }} data-login-grid>
           {/* Panel Izquierdo - Marca */}
           <div style={{
             background: 'var(--bg-secondary)',
@@ -410,6 +410,30 @@ export default function LoginPage() {
         @keyframes bounce {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.1); }
+        }
+
+        @media (max-width: 768px) {
+          [data-login-grid] {
+            grid-template-columns: 1fr !important;
+          }
+          [data-login-grid] > div:first-child {
+            display: none !important;
+          }
+          [data-login-grid] > div:last-child {
+            padding: 2rem 1.5rem !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          [data-login-grid] > div:last-child {
+            padding: 1.5rem 1rem !important;
+          }
+          [data-login-grid] > div:last-child h2 {
+            font-size: 20px !important;
+          }
+          [data-login-grid] > div:last-child button {
+            font-size: 13px !important;
+          }
         }
       `}</style>
     </div>
