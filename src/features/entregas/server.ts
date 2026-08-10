@@ -2,234 +2,155 @@
 
 import { prisma } from '@/lib/prisma'
 
-export async function actionCreateDelivery(
+// Generar mensaje WhatsApp con ubicación del cliente para el chofer
+export async function actionGenerateWhatsappMessage(
   businessId: string,
-  locationId: string,
-  driverId: string,
-  saleId: string,
-  clientName: string,
-  clientPhone: string,
-  address: string,
-  lat?: number,
-  lng?: number
+  saleId: string
 ) {
   try {
-    const sale = await prisma.sale.findUnique({
-      where: { id: saleId },
-      include: { items: true }
-    })
-
-    if (!sale) {
-      return { error: 'Venta no encontrada' }
-    }
-
-    const delivery = await prisma.delivery.create({
-      data: {
-        businessId,
-        locationId,
-        driverId,
-        saleId,
-        clientName,
-        clientPhone,
-        address,
-        latitude: lat,
-        longitude: lng,
-        status: 'pendiente',
-        items: {
-          create: sale.items.map(item => ({
-            productId: item.productId,
-            qty: item.qty
-          }))
-        }
+    // Obtener datos de la orden (multi-tenant: filtrar por businessId)
+    const sale = await prisma.sale.findFirst({
+      where: {
+        id: saleId,
+        businessId // Multi-tenant safety
       },
       include: {
-        driver: { select: { name: true, email: true } },
-        sale: { select: { folio: true, total: true } },
         items: {
-          include: {
-            product: { select: { name: true, clave: true } }
-          }
+          include: { product: true }
         }
       }
     })
 
-    return { success: true, delivery }
+    if (!sale) {
+      return { success: false, error: 'Orden no encontrada' }
+    }
+
+    if (!sale.clientLatitude || !sale.clientLongitude) {
+      return { success: false, error: 'Orden sin coordenadas GPS' }
+    }
+
+    if (sale.deliveryType !== 'domicilio') {
+      return { success: false, error: 'Esta orden es para mostrador, no requiere entrega' }
+    }
+
+    // Construir Google Maps URL
+    const googleMapsUrl = `https://maps.google.com/?q=${sale.clientLatitude},${sale.clientLongitude}`
+
+    // Construir mensaje WhatsApp formateado
+    const itemsText = sale.items
+      .map(item => `• ${item.product.name} (x${item.qty})`)
+      .join('\n')
+
+    const whatsappMessage = `📦 *NUEVA ENTREGA - FERREPOINT*
+
+*Folio:* #${sale.folio}
+*Cliente:* ${sale.clientName || 'Cliente'}
+*Tel:* ${sale.clientPhone || 'N/A'}
+
+*📍 UBICACIÓN GPS:*
+${googleMapsUrl}
+
+*Dirección:*
+${sale.clientAddress}
+
+*Productos:*
+${itemsText}
+
+*💰 Monto:* $${sale.total.toFixed(2)}`
+
+    return {
+      success: true,
+      message: whatsappMessage,
+      googleMapsUrl,
+      clientPhone: sale.clientPhone,
+      folio: sale.folio
+    }
   } catch (error) {
-    console.error('Error creating delivery:', error)
-    return { error: 'Error al crear entrega' }
+    console.error('Error generating whatsapp message:', error)
+    return { success: false, error: 'Error al generar mensaje' }
   }
 }
 
-export async function actionGetDeliveries(
+// Actualizar que se envió WhatsApp al chofer
+export async function actionMarkWhatsappSent(
   businessId: string,
-  locationId?: string,
-  status?: string,
-  driverId?: string
+  saleId: string,
+  choferPhone: string
 ) {
   try {
-    const deliveries = await prisma.delivery.findMany({
+    const sale = await prisma.sale.update({
       where: {
-        businessId,
-        ...(locationId && { locationId }),
-        ...(status && { status: status as any }),
-        ...(driverId && { driverId })
+        id: saleId
       },
+      data: {
+        choferPhone,
+        whatsappSentAt: new Date()
+      }
+    })
+
+    // Multi-tenant verification
+    if (sale.businessId !== businessId) {
+      return { success: false, error: 'No autorizado' }
+    }
+
+    return { success: true, sale }
+  } catch (error) {
+    console.error('Error marking whatsapp sent:', error)
+    return { success: false, error: 'Error al actualizar' }
+  }
+}
+
+// Obtener órdenes listas para entregar (por chofer o todas)
+export async function actionGetDeliveryOrders(
+  businessId: string,
+  locationId: string,
+  choferEmail?: string
+) {
+  try {
+    const where: any = {
+      businessId,
+      locationId,
+      deliveryType: 'domicilio',
+      status: 'preparada'
+    }
+
+    const orders = await prisma.sale.findMany({
+      where,
       include: {
-        driver: { select: { id: true, name: true, email: true } },
-        sale: { select: { folio: true, total: true } },
-        items: {
-          include: {
-            product: { select: { name: true, clave: true } }
-          }
-        }
+        items: { include: { product: true } },
+        vendor: { select: { name: true, email: true } }
       },
       orderBy: { createdAt: 'desc' }
     })
 
-    return deliveries
+    return orders
   } catch (error) {
-    console.error('Error fetching deliveries:', error)
+    console.error('Error getting delivery orders:', error)
     return []
   }
 }
 
-export async function actionUpdateDeliveryStatus(
-  deliveryId: string,
-  status: 'pendiente' | 'en_ruta' | 'completado' | 'cancelado',
-  latitude?: number,
-  longitude?: number
+// Marcar orden como entregada
+export async function actionMarkOrderDelivered(
+  businessId: string,
+  saleId: string
 ) {
   try {
-    const delivery = await prisma.delivery.update({
-      where: { id: deliveryId },
+    const sale = await prisma.sale.update({
+      where: { id: saleId },
       data: {
-        status,
-        ...(latitude && { latitude }),
-        ...(longitude && { longitude }),
-        ...(status === 'completado' && { completedAt: new Date() })
-      },
-      include: {
-        driver: { select: { name: true } },
-        sale: { select: { folio: true } }
+        status: 'entregada'
       }
     })
 
-    return { success: true, delivery }
-  } catch (error) {
-    console.error('Error updating delivery:', error)
-    return { error: 'Error al actualizar entrega' }
-  }
-}
-
-export async function actionGetDeliveryStats(businessId: string, locationId?: string) {
-  try {
-    const deliveries = await prisma.delivery.findMany({
-      where: {
-        businessId,
-        ...(locationId && { locationId })
-      }
-    })
-
-    const pending = deliveries.filter(d => d.status === 'pendiente').length
-    const inRoute = deliveries.filter(d => d.status === 'en_ruta').length
-    const completed = deliveries.filter(d => d.status === 'completado').length
-    const cancelled = deliveries.filter(d => d.status === 'cancelado').length
-
-    // Entregas completadas hoy
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const completedToday = deliveries.filter(
-      d => d.status === 'completado' && d.completedAt && new Date(d.completedAt) >= today
-    ).length
-
-    return {
-      pending,
-      inRoute,
-      completed,
-      cancelled,
-      completedToday,
-      total: deliveries.length,
-      activeDeliveries: pending + inRoute
+    // Multi-tenant verification
+    if (sale.businessId !== businessId) {
+      return { success: false, error: 'No autorizado' }
     }
+
+    return { success: true, sale }
   } catch (error) {
-    console.error('Error fetching delivery stats:', error)
-    return {
-      pending: 0,
-      inRoute: 0,
-      completed: 0,
-      cancelled: 0,
-      completedToday: 0,
-      total: 0,
-      activeDeliveries: 0
-    }
-  }
-}
-
-export async function actionGetDriverDeliveries(driverId: string) {
-  try {
-    const deliveries = await prisma.delivery.findMany({
-      where: {
-        driverId,
-        status: { in: ['pendiente', 'en_ruta'] }
-      },
-      include: {
-        sale: { select: { folio: true, total: true } },
-        items: {
-          include: {
-            product: { select: { name: true, clave: true } }
-          }
-        }
-      },
-      orderBy: { createdAt: 'asc' }
-    })
-
-    return deliveries
-  } catch (error) {
-    console.error('Error fetching driver deliveries:', error)
-    return []
-  }
-}
-
-export async function actionUpdateDriverLocation(
-  deliveryId: string,
-  latitude: number,
-  longitude: number
-) {
-  try {
-    await prisma.delivery.update({
-      where: { id: deliveryId },
-      data: {
-        latitude,
-        longitude,
-        lastLocationUpdate: new Date()
-      }
-    })
-
-    return { success: true }
-  } catch (error) {
-    console.error('Error updating location:', error)
-    return { error: 'Error al actualizar ubicación' }
-  }
-}
-
-export async function actionGetAvailableDrivers(businessId: string, locationId: string) {
-  try {
-    const drivers = await prisma.user.findMany({
-      where: {
-        businessId,
-        role: 'chofer',
-        active: true
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true
-      }
-    })
-
-    return drivers
-  } catch (error) {
-    console.error('Error fetching drivers:', error)
-    return []
+    console.error('Error marking delivered:', error)
+    return { success: false, error: 'Error al actualizar' }
   }
 }

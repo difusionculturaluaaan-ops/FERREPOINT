@@ -185,6 +185,10 @@ model Sale {
   paidBy         String? // ID del cajero que procesó el pago
   clientPhone    String?
   clientAddress  String?
+  clientLatitude Float?   // Coordenada GPS latitude
+  clientLongitude Float?  // Coordenada GPS longitude
+  choferPhone    String?  // Teléfono del chofer asignado (para enviar WhatsApp)
+  whatsappSentAt DateTime? // Cuándo se envió el WhatsApp al chofer
   createdAt      DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
