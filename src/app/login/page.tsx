@@ -147,7 +147,7 @@ export default function LoginPage() {
           width: '100%',
           maxWidth: '960px',
           display: 'grid',
-          gridTemplateColumns: 'clamp(280px, 100%, 1.05fr) 1fr',
+          gridTemplateColumns: '1.05fr 1fr',
           borderRadius: '16px',
           boxShadow: '0 30px 80px rgba(0,0,0,0.35)',
           overflow: 'hidden',
@@ -402,6 +402,10 @@ export default function LoginPage() {
       )}
 
       <style>{`
+        * {
+          box-sizing: border-box;
+        }
+
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
           25% { transform: translateX(-10px); }
@@ -412,7 +416,7 @@ export default function LoginPage() {
           50% { transform: scale(1.1); }
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
           [data-login-grid] {
             grid-template-columns: 1fr !important;
           }
@@ -420,7 +424,23 @@ export default function LoginPage() {
             display: none !important;
           }
           [data-login-grid] > div:last-child {
+            padding: 2.5rem 2rem !important;
+          }
+        }
+
+        @media (max-width: 600px) {
+          [data-login-grid] > div:last-child {
             padding: 2rem 1.5rem !important;
+          }
+          [data-login-grid] > div:last-child h2 {
+            font-size: 22px !important;
+          }
+          [data-login-grid] > div:last-child p {
+            font-size: 12px !important;
+          }
+          [data-login-grid] input,
+          [data-login-grid] button {
+            font-size: 14px !important;
           }
         }
 
@@ -430,8 +450,17 @@ export default function LoginPage() {
           }
           [data-login-grid] > div:last-child h2 {
             font-size: 20px !important;
+            margin-bottom: 0.25rem !important;
           }
           [data-login-grid] > div:last-child button {
+            font-size: 13px !important;
+            padding: 10px !important;
+          }
+          [data-login-grid] label {
+            font-size: 11px !important;
+          }
+          [data-login-grid] input {
+            padding: 8px !important;
             font-size: 13px !important;
           }
         }
