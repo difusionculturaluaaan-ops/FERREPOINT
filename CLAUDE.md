@@ -281,7 +281,18 @@ Deploy automático a Vercel.
 
 ---
 
-**Last Updated:** Agosto 2026 (Neon Integration Live)  
+## Aprendizajes & Convenciones Responsivas
+
+### 2026-08-09: Reglas Responsivas Mobile-First
+- **Navegación / Inicio**: Grids de módulos en `repeat(auto-fit, minmax(160px, 1fr))`.
+- **Caja & Cobros**: Contenedor principal en `repeat(auto-fit, minmax(300px, 1fr))` para apilamiento vertical automático en celular y doble columna en desktop.
+- **Inventario / Reportes**: Tarjetas KPI en `minmax(160px, 1fr)` o `minmax(180px, 1fr)`. Tablas envueltas en scroll horizontal táctil con `minWidth: '700px'`.
+- **Bodega**: Tarjetas de órdenes en `minmax(280px, 1fr)` para evitar overflow lateral en pantallas estrechas (320px - 400px).
+- **Login / Auth**: Por defecto en móvil, ocultar panel decorativo izquierdo (`display: none`) y renderizar formulario en 100% de ancho. Activar layout 2 columnas sólo en `@media (min-width: 769px)`.
+
+---
+
+**Last Updated:** Agosto 2026 (Neon Integration & Mobile-First Layout Live)  
 **Memoria de Contexto:** `.claude/memory/CONTEXTO_MEJORAS_2026.md`  
 **Stack:** Next.js 16, React 19, Prisma 5, Neon PostgreSQL, Tailwind 3.4
 
