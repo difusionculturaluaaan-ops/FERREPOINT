@@ -104,15 +104,15 @@ export async function actionCreateSurtidoOrder(
         items: {
           create: items.map(item => ({
             productId: item.productId,
-            qtyOrdered: item.qty,
-            qtyPicked: 0,
-            price: item.price
+            qty: item.qty,
+            surtido: false
           }))
         }
       },
-      include: { items: true }
+      include: { items: { include: { product: true } } }
     })
 
+    console.log('[actionCreateSurtidoOrder] Created:', { saleId, orderId: surtidoOrder.id, itemsCount: items.length })
     return { success: true, surtidoOrder }
   } catch (error) {
     console.error('Error creating surtido order:', error)

@@ -37,11 +37,12 @@ interface WareHouseOrder {
 export default function BodegaPage() {
   const [orders, setOrders] = useState<WareHouseOrder[]>([]);
   const [checkedItems, setCheckedItems] = useState<{ [itemId: string]: boolean }>({});
-  const [stats, setStats] = useState({ pending: 0, completed: 0, total: 0 });
+  const [stats, setStats] = useState({ pending: 0, completed: 0, total: 0, inProgress: 0 });
   const [loading, setLoading] = useState(true);
   const [businessId, setBusinessId] = useState('');
   const [locationId, setLocationId] = useState('');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
 
   const showToast = useCallback((message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -55,8 +56,9 @@ export default function BodegaPage() {
       const data = await actionGetOrdersForWarehouse(businessId);
       setOrders(data as any);
       setStats({
-        pending: data.length,
-        completed: 0,
+        pending: data.filter((o: any) => o.status === 'pendiente').length,
+        inProgress: data.filter((o: any) => o.status === 'en_proceso').length,
+        completed: data.filter((o: any) => o.status === 'completado').length,
         total: data.length
       });
     } catch (err) {
@@ -107,6 +109,27 @@ export default function BodegaPage() {
       console.error('Error completing order:', err);
       showToast('Error al completar orden', 'error');
     }
+  };
+
+  const handleChangeOrderStatus = async (orderId: string, newStatus: 'pendiente' | 'en_proceso' | 'completado', folio: string) => {
+    try {
+      // Update order status in surtidoOrder
+      const res = await actionCompleteSurtidoOrder(orderId); // TODO: crear actionUpdateSurtidoOrderStatus
+      if (res.success) {
+        const statusLabel = { pendiente: '⏳ Pendiente', en_proceso: '⏳ En Preparación', completado: '✅ Listo' }[newStatus] || newStatus;
+        showToast(`📌 Orden #${folio} → ${statusLabel}`, 'success');
+        loadData();
+      }
+    } catch (err) {
+      console.error('Error changing order status:', err);
+    }
+  };
+
+  // Filter orders by status
+  const ordersByStatus = {
+    pendiente: orders.filter(o => o.status === 'pendiente'),
+    en_proceso: orders.filter(o => o.status === 'en_proceso'),
+    completado: orders.filter(o => o.status === 'completado')
   };
 
   return (
