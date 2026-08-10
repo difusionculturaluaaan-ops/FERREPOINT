@@ -141,18 +141,19 @@ export default function LoginPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 'max(1rem, 5vw)'
+        padding: '1rem',
+        width: '100%'
       }}>
         <div style={{
           width: '100%',
           maxWidth: '960px',
-          display: 'grid',
-          gridTemplateColumns: '1.05fr 1fr',
+          display: 'flex',
+          flexDirection: 'row',
           borderRadius: '16px',
           boxShadow: '0 30px 80px rgba(0,0,0,0.35)',
           overflow: 'hidden',
           background: 'var(--bg-primary)'
-        }} data-login-grid>
+        }} className="login-container">
           {/* Panel Izquierdo - Marca */}
           <div style={{
             background: 'var(--bg-secondary)',
@@ -160,8 +161,10 @@ export default function LoginPage() {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            gap: '2rem'
-          }}>
+            gap: '2rem',
+            flex: '1 1 45%',
+            minWidth: 0
+          }} className="login-left">
             <div>
               <div style={{
                 display: 'inline-block',
@@ -216,8 +219,11 @@ export default function LoginPage() {
             padding: '52px 44px',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center'
-          }}>
+            justifyContent: 'center',
+            flex: '1 1 55%',
+            minWidth: 0,
+            overflow: 'auto'
+          }} className="login-right">
             <h2 style={{
               fontSize: '24px',
               fontWeight: '800',
@@ -406,6 +412,13 @@ export default function LoginPage() {
           box-sizing: border-box;
         }
 
+        html, body {
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          overflow-x: hidden;
+        }
+
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
           25% { transform: translateX(-10px); }
@@ -416,50 +429,58 @@ export default function LoginPage() {
           50% { transform: scale(1.1); }
         }
 
-        @media (max-width: 900px) {
-          [data-login-grid] {
-            grid-template-columns: 1fr !important;
+        /* Tablet y abajo: 1 columna */
+        @media (max-width: 768px) {
+          .login-container {
+            flex-direction: column !important;
           }
-          [data-login-grid] > div:first-child {
+          .login-left {
             display: none !important;
           }
-          [data-login-grid] > div:last-child {
+          .login-right {
+            flex: 1 1 100% !important;
             padding: 2.5rem 2rem !important;
           }
         }
 
+        /* Mobile: pequeño */
         @media (max-width: 600px) {
-          [data-login-grid] > div:last-child {
+          .login-right {
             padding: 2rem 1.5rem !important;
           }
-          [data-login-grid] > div:last-child h2 {
+          .login-right h2 {
             font-size: 22px !important;
           }
-          [data-login-grid] > div:last-child p {
+          .login-right p {
             font-size: 12px !important;
           }
-          [data-login-grid] input,
-          [data-login-grid] button {
+          .login-right input,
+          .login-right button {
             font-size: 14px !important;
           }
         }
 
+        /* Mobile: muy pequeño */
         @media (max-width: 480px) {
-          [data-login-grid] > div:last-child {
+          .login-right {
             padding: 1.5rem 1rem !important;
           }
-          [data-login-grid] > div:last-child h2 {
+          .login-right h2 {
             font-size: 20px !important;
             margin-bottom: 0.25rem !important;
           }
-          [data-login-grid] > div:last-child button {
+          .login-right p {
+            font-size: 12px !important;
+            margin: 0 0 1.5rem 0 !important;
+          }
+          .login-right button {
             font-size: 13px !important;
             padding: 10px !important;
           }
-          [data-login-grid] label {
+          .login-right label {
             font-size: 11px !important;
           }
-          [data-login-grid] input {
+          .login-right input {
             padding: 8px !important;
             font-size: 13px !important;
           }
