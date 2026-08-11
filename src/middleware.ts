@@ -3,90 +3,90 @@ import { jwtVerify } from 'jose'
 import { canAccessModule } from '@/lib/plans'
 
 const secret = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+ process.env.JWT_SECRET || 'your-secret-key-change-in-production'
 )
 
 const publicRoutes = ['/login', '/api/auth/login', '/upgrade', '/demo', '/demo.html', '/_next', '/static', '/favicon']
 const roleRoutes: Record<string, string[]> = {
-  super_admin: ['/', '/superadmin', '/admin', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes'],
-  admin: ['/', '/admin', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes'],
-  dueno: ['/', '/admin', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes'],
-  encargado: ['/', '/admin/usuarios', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes'],
-  vendedor: ['/pos', '/reportes'],
-  cajero: ['/caja', '/pos', '/reportes'],
-  bodeguero: ['/bodega', '/reportes'],
-  chofer: ['/entregas']
+ super_admin: ['/', '/superadmin', '/admin', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes'],
+ admin: ['/', '/admin', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes'],
+ dueno: ['/', '/admin', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes'],
+ encargado: ['/', '/admin/usuarios', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes'],
+ vendedor: ['/pos', '/reportes'],
+ cajero: ['/caja', '/pos', '/reportes'],
+ bodeguero: ['/bodega', '/reportes'],
+ chofer: ['/entregas']
 }
 
 // Map routes to modules for plan checking
 const routeModules: Record<string, string> = {
-  '/bodega': 'bodega',
-  '/entregas': 'entregas',
-  '/contabilidad': 'contabilidad',
-  '/inventario': 'inventario',
-  '/reportes': 'reportes',
-  '/pos': 'pos'
+ '/bodega': 'bodega',
+ '/entregas': 'entregas',
+ '/contabilidad': 'contabilidad',
+ '/inventario': 'inventario',
+ '/reportes': 'reportes',
+ '/pos': 'pos'
 }
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-  const token = request.cookies.get('token')?.value
+ const { pathname } = request.nextUrl
+ const token = request.cookies.get('token')?.value
 
-  console.log('[Middleware] Path:', pathname, 'Has token:', !!token)
+ console.log('[Middleware] Path:', pathname, 'Has token:', !!token)
 
-  // Rutas públicas — pasar sin verificación
-  if (publicRoutes.some(route => pathname.startsWith(route))) {
-    return NextResponse.next()
-  }
+ // Rutas públicas — pasar sin verificación
+ if (publicRoutes.some(route => pathname.startsWith(route))) {
+ return NextResponse.next()
+ }
 
-  // Sin token → redirigir a login
-  if (!token) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
+ // Sin token → redirigir a login
+ if (!token) {
+ return NextResponse.redirect(new URL('/login', request.url))
+ }
 
-  // Verificar JWT
-  try {
-    const verified = await jwtVerify(token, secret)
-    const payload = verified.payload
+ // Verificar JWT
+ try {
+ const verified = await jwtVerify(token, secret)
+ const payload = verified.payload
 
-    // Verificar acceso por rol
-    const allowedRoutes = roleRoutes[payload.role as string] || []
-    const hasAccess = allowedRoutes.some(route => pathname.startsWith(route))
+ // Verificar acceso por rol
+ const allowedRoutes = roleRoutes[payload.role as string] || []
+ const hasAccess = allowedRoutes.some(route => pathname.startsWith(route))
 
-    if (!hasAccess) {
-      // Redirigir al dashboard del rol
-      const dashboardMap: Record<string, string> = {
-        super_admin: '/superadmin',
-        admin: '/',
-        dueno: '/',
-        encargado: '/',
-        vendedor: '/pos',
-        bodeguero: '/bodega',
-        chofer: '/entregas',
-        cajero: '/caja'
-      }
-      return NextResponse.redirect(new URL(dashboardMap[payload.role as string] || '/login', request.url))
-    }
+ if (!hasAccess) {
+ // Redirigir al dashboard del rol
+ const dashboardMap: Record<string, string> = {
+ super_admin: '/superadmin',
+ admin: '/',
+ dueno: '/',
+ encargado: '/',
+ vendedor: '/pos',
+ bodeguero: '/bodega',
+ chofer: '/entregas',
+ cajero: '/caja'
+ }
+ return NextResponse.redirect(new URL(dashboardMap[payload.role as string] || '/login', request.url))
+ }
 
-    // Verificar acceso por módulos habilitados para la empresa (Super Admin sin restricción)
-    if (payload.role !== 'super_admin' && payload.enabledModules && Array.isArray(payload.enabledModules)) {
-      const enabledMods = payload.enabledModules as string[]
-      for (const [routePrefix, moduleKey] of Object.entries(routeModules)) {
-        if (pathname.startsWith(routePrefix) && !enabledMods.includes(moduleKey)) {
-          console.log(`[Middleware] Module '${moduleKey}' disabled for tenant. Redirecting to '/'`)
-          return NextResponse.redirect(new URL('/', request.url))
-        }
-      }
-    }
+ // Verificar acceso por módulos habilitados para la empresa (Super Admin sin restricción)
+ if (payload.role !== 'super_admin' && payload.enabledModules && Array.isArray(payload.enabledModules)) {
+ const enabledMods = payload.enabledModules as string[]
+ for (const [routePrefix, moduleKey] of Object.entries(routeModules)) {
+ if (pathname.startsWith(routePrefix) && !enabledMods.includes(moduleKey)) {
+ console.log(`[Middleware] Module '${moduleKey}' disabled for tenant. Redirecting to '/'`)
+ return NextResponse.redirect(new URL('/', request.url))
+ }
+ }
+ }
 
-    return NextResponse.next()
-  } catch (error) {
-    console.log('[Middleware] Token verification failed:', error)
-    // Token inválido — redirigir a login
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
+ return NextResponse.next()
+ } catch (error) {
+ console.log('[Middleware] Token verification failed:', error)
+ // Token inválido — redirigir a login
+ return NextResponse.redirect(new URL('/login', request.url))
+ }
 }
 
 export const config = {
-  matcher: ['/((?!_next|static|favicon|demo\\.html|demo|api).*)']
+ matcher: ['/((?!_next|static|favicon|demo\\.html|demo|api).*)']
 }

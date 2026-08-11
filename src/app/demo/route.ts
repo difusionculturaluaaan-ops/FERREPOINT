@@ -3,12 +3,12 @@ import fs from 'fs';
 import path from 'path';
 
 export async function GET() {
-  const filePath = path.join(process.cwd(), 'public', 'demo', 'index.html');
-  const htmlContent = fs.readFileSync(filePath, 'utf8');
-  return new NextResponse(htmlContent, {
-    headers: {
-      'Content-Type': 'text/html; charset=utf-8',
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-    },
-  });
+ const filePath = path.join(process.cwd(), 'public', 'demo', 'index.html');
+ const htmlContent = fs.readFileSync(filePath, 'utf8');
+ return new NextResponse(htmlContent, {
+ headers: {
+ 'Content-Type': 'text/html; charset=utf-8',
+ 'Cache-Control': 'no-cache, no-store, must-revalidate',
+ },
+ });
 }
