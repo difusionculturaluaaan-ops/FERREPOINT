@@ -423,23 +423,63 @@ export default function POSPage() {
       <style>{`
         /* Responsividad POS */
         @media (max-width: 768px) {
+          [data-pos-header] {
+            padding: 0.75rem 1rem !important;
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+          }
+          [data-pos-header-right] {
+            gap: 0.4rem !important;
+            flex-wrap: wrap !important;
+          }
+          [data-pos-header-right] button {
+            padding: 0.4rem 0.6rem !important;
+            font-size: 0.8rem !important;
+            margin-right: 0 !important;
+          }
           [data-pos-main] {
             grid-template-columns: 1fr !important;
+            padding: 0.5rem !important;
           }
           [data-pos-sidebar] {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            height: 50%;
-            border-top: 1px solid var(--border-color);
+            height: 52%;
+            border-top: 2px solid var(--accent-orange, #e8632c);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
             background: var(--bg-primary);
             overflow-y: auto;
             z-index: 100;
+            padding: 0.5rem !important;
           }
           [data-pos-catalog] {
-            height: 50vh;
+            height: calc(48vh - 50px);
             overflow-y: auto;
+            padding-bottom: 0.5rem;
+          }
+        }
+
+        @media (max-width: 520px) {
+          [data-payment-grid],
+          [data-comprobante-grid] {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 8px !important;
+          }
+          [data-payment-grid] button,
+          [data-comprobante-grid] button {
+            padding: 10px 6px !important;
+            font-size: 0.8rem !important;
+            min-height: 42px !important;
+          }
+          [data-modal-footer] {
+            flex-direction: column-reverse !important;
+            gap: 0.5rem !important;
+          }
+          [data-modal-footer] button {
+            width: 100% !important;
+            margin: 0 !important;
           }
         }
 
@@ -448,17 +488,45 @@ export default function POSPage() {
             height: 60%;
           }
           [data-pos-catalog] {
-            height: 40vh;
-          }
-          [data-pos-header-right] {
-            gap: 0.5rem !important;
+            height: calc(40vh - 40px);
           }
           [data-pos-title] {
             font-size: 1.1rem !important;
           }
+          [data-search-container] {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 0.35rem !important;
+          }
+          [data-products-grid] {
+            grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)) !important;
+            gap: 0.5rem !important;
+          }
+          [data-product-card] {
+            padding: 0.6rem !important;
+          }
+          [data-cart-item] {
+            flex-wrap: wrap !important;
+            row-gap: 0.35rem !important;
+          }
+          [data-cart-details] {
+            flex: 1 1 100% !important;
+          }
+          [data-pos-alert] {
+            margin: 0.5rem !important;
+            padding: 0.75rem !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+          }
+          [data-pos-alert] a {
+            margin-left: 0 !important;
+            width: 100% !important;
+            justify-content: center !important;
+            margin-top: 0.5rem !important;
+          }
         }
       `}</style>
-      <header style={styles.header}>
+      <header style={styles.header} data-pos-header>
         <div style={styles.headerLeft}>
           <h1 style={styles.title} data-pos-title>🛒 PUNTO DE VENTA</h1>
         </div>
@@ -479,7 +547,7 @@ export default function POSPage() {
       </header>
 
       {successMessage && (
-        <div style={styles.successAlert}>
+        <div style={styles.successAlert} data-pos-alert>
           <div style={styles.successContent}>
             <span style={styles.successIcon}>✓</span>
             <div>
@@ -514,14 +582,14 @@ export default function POSPage() {
       )}
 
       {notificationMessage && (
-        <div style={styles.notificationAlert}>
+        <div style={styles.notificationAlert} data-pos-alert>
           <span style={styles.notificationIcon}>✓</span>
           <p>{notificationMessage}</p>
         </div>
       )}
 
       {error && (
-        <div style={styles.errorAlert}>
+        <div style={styles.errorAlert} data-pos-alert>
           <span style={styles.errorIcon}>⚠</span>
           <p>{error}</p>
         </div>
@@ -529,7 +597,7 @@ export default function POSPage() {
 
       <div style={styles.mainContent} data-pos-main>
         <div style={styles.catalogSection} data-pos-catalog>
-          <div style={styles.searchContainer}>
+          <div style={styles.searchContainer} data-search-container>
             <input
               type="text"
               placeholder="Buscar producto por nombre, clave o categoría..."
@@ -543,10 +611,11 @@ export default function POSPage() {
           </div>
 
           {filteredProducts.length > 0 ? (
-            <div style={styles.productsGrid}>
+            <div style={styles.productsGrid} data-products-grid>
               {filteredProducts.map((product) => (
                 <div
                   key={product.id}
+                  data-product-card
                   style={{
                     ...styles.productCard,
                     opacity: product.stock > 0 ? 1 : 0.5,
@@ -620,8 +689,8 @@ export default function POSPage() {
               <>
                 <div ref={cartItemsRef} style={styles.cartItems}>
                   {cart.map((item) => (
-                    <div key={item.productId} style={styles.cartItem}>
-                      <div style={styles.cartItemDetails}>
+                    <div key={item.productId} style={styles.cartItem} data-cart-item>
+                      <div style={styles.cartItemDetails} data-cart-details>
                         <p style={styles.cartItemName}>{item.qty}x {item.name}</p>
                         <p style={styles.cartItemClave}>{item.clave}</p>
                       </div>
@@ -684,7 +753,7 @@ export default function POSPage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
                   <button
                     onClick={() => setShowFullCartModal(true)}
                     style={{
@@ -694,7 +763,8 @@ export default function POSPage() {
                       border: '1px solid var(--border-color)',
                       flex: '0 0 auto',
                       width: 'auto',
-                      padding: '0.75rem 1rem'
+                      padding: '0.75rem 1rem',
+                      marginTop: 0,
                     }}
                     title="Ver pantalla completa del carrito"
                   >
@@ -702,7 +772,7 @@ export default function POSPage() {
                   </button>
                   <button
                     onClick={() => setShowPaymentModal(true)}
-                    style={{ ...styles.cobrButton, flex: 1, marginTop: '0.75rem' }}
+                    style={{ ...styles.cobrButton, flex: 1, marginTop: 0 }}
                   >
                     💳 COBRAR (${total.toFixed(2)})
                   </button>
@@ -806,7 +876,7 @@ export default function POSPage() {
                     {/* FORMA DE PAGO */}
                     <div style={styles.formGroup}>
                       <label style={styles.label}>FORMA DE PAGO *</label>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }} data-payment-grid>
                         <button
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, paymentMethod: 'efectivo' }))}
@@ -893,7 +963,7 @@ export default function POSPage() {
                     {/* COMPROBANTE */}
                     <div style={styles.formGroup}>
                       <label style={styles.label}>COMPROBANTE *</label>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }} data-comprobante-grid>
                         <button
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, comprobante: 'completo' }))}
@@ -992,7 +1062,7 @@ export default function POSPage() {
                     </div>
                   </div>
 
-                  <div style={styles.modalFooter}>
+                  <div style={styles.modalFooter} data-modal-footer>
                     <button
                       type="button"
                       onClick={() => setShowPaymentModal(false)}
@@ -1127,7 +1197,7 @@ export default function POSPage() {
               )}
             </div>
 
-            <div style={styles.modalFooter}>
+            <div style={styles.modalFooter} data-modal-footer>
               <button
                 type="button"
                 onClick={() => setShowOrdersModal(false)}
@@ -1162,7 +1232,7 @@ export default function POSPage() {
 
             <div style={styles.modalBody}>
               {/* Search input within cart */}
-              <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                 <input
                   type="text"
                   placeholder="Filtrar productos en el carrito..."
@@ -1196,7 +1266,7 @@ export default function POSPage() {
 
               {/* Cart items table */}
               <div style={{ overflowX: 'auto', maxHeight: '48vh', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                <table style={{ width: '100%', minWidth: '550px', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                   <thead>
                     <tr style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
                       <th style={{ padding: '10px 12px' }}>#</th>
@@ -1255,7 +1325,7 @@ export default function POSPage() {
               </div>
 
               {/* Totals Summary */}
-              <div style={{ marginTop: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ marginTop: '1.25rem', padding: '1rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '8px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
                 <div>
                   <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Total de artículos: <strong>{cart.reduce((sum, i) => sum + i.qty, 0)} unidades</strong></span>
                 </div>
@@ -1268,7 +1338,7 @@ export default function POSPage() {
               </div>
             </div>
 
-            <div style={styles.modalFooter}>
+            <div style={styles.modalFooter} data-modal-footer>
               <button
                 type="button"
                 onClick={() => setShowFullCartModal(false)}
@@ -1872,7 +1942,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '0.9rem',
     cursor: 'pointer',
     transition: 'all 0.2s',
-    marginRight: '1rem',
   },
   ordersSearchContainer: {
     marginBottom: '1rem',
