@@ -516,6 +516,49 @@ export default function POSPage() {
         }
 
         @media (max-width: 520px) {
+          [data-modal-content] {
+            width: 95% !important;
+            max-height: 90vh !important;
+            margin: auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+          }
+          [data-payment-form] {
+            height: 100% !important;
+            max-height: 90vh !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+          }
+          [data-modal-header] {
+            padding: 0.75rem 1rem !important;
+            flex-shrink: 0 !important;
+          }
+          [data-order-summary] {
+            padding: 0.75rem 1rem !important;
+            flex-shrink: 0 !important;
+          }
+          [data-modal-body] {
+            padding: 0.75rem 1rem !important;
+            flex: 1 1 auto !important;
+            overflow-y: auto !important;
+            max-height: none !important;
+            -webkit-overflow-scrolling: touch !important;
+          }
+          [data-modal-footer] {
+            flex-direction: column-reverse !important;
+            gap: 0.5rem !important;
+            padding: 0.75rem 1rem !important;
+            flex-shrink: 0 !important;
+            background: var(--bg-primary) !important;
+          }
+          [data-modal-footer] button {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0.75rem !important;
+            font-size: 0.95rem !important;
+          }
           [data-payment-grid],
           [data-comprobante-grid] {
             grid-template-columns: repeat(2, 1fr) !important;
@@ -526,14 +569,6 @@ export default function POSPage() {
             padding: 10px 6px !important;
             font-size: 0.8rem !important;
             min-height: 42px !important;
-          }
-          [data-modal-footer] {
-            flex-direction: column-reverse !important;
-            gap: 0.5rem !important;
-          }
-          [data-modal-footer] button {
-            width: 100% !important;
-            margin: 0 !important;
           }
         }
 
@@ -862,9 +897,9 @@ export default function POSPage() {
           {/* Payment Modal */}
           {showPaymentModal && (
             <div style={styles.modalOverlay}>
-              <div style={styles.modalContent}>
-                <form onSubmit={handleCreateOrder} style={{ width: '100%' }}>
-                  <div style={styles.modalHeader}>
+              <div style={styles.modalContent} data-modal-content>
+                <form onSubmit={handleCreateOrder} style={{ width: '100%', display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '90vh', overflow: 'hidden' }} data-payment-form>
+                  <div style={styles.modalHeader} data-modal-header>
                     <h2 style={styles.modalTitle}>Pago y Datos del Cliente</h2>
                     <button
                       type="button"
@@ -876,7 +911,7 @@ export default function POSPage() {
                   </div>
 
                   {/* Order Summary */}
-                  <div style={styles.orderSummary}>
+                  <div style={styles.orderSummary} data-order-summary>
                     <div style={styles.orderSummaryRow}>
                       <span>Items:</span>
                       <span style={styles.orderSummaryValue}>{cart.length}</span>
@@ -895,7 +930,7 @@ export default function POSPage() {
                     </div>
                   </div>
 
-                  <div style={styles.modalBody}>
+                  <div style={styles.modalBody} data-modal-body>
                     <div style={styles.formGroup}>
                       <label style={styles.label}>Nombre del Cliente *</label>
                       <input
