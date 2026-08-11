@@ -40,6 +40,7 @@ export default function POSPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showOrdersModal, setShowOrdersModal] = useState(false);
   const [showFullCartModal, setShowFullCartModal] = useState(false);
+  const [isMobileCartExpanded, setIsMobileCartExpanded] = useState(false);
   const [cartSearchTerm, setCartSearchTerm] = useState('');
   const [ordersSearchTerm, setOrdersSearchTerm] = useState('');
   const [ordersPage, setOrdersPage] = useState(0);
@@ -440,24 +441,47 @@ export default function POSPage() {
           [data-pos-main] {
             grid-template-columns: 1fr !important;
             padding: 0.5rem !important;
+            padding-bottom: 120px !important;
+          }
+          [data-pos-catalog] {
+            height: calc(100vh - 145px) !important;
+            overflow-y: auto;
+            padding-bottom: 1rem;
           }
           [data-pos-sidebar] {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            height: 52%;
             border-top: 2px solid var(--accent-orange, #e8632c);
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.3);
             background: var(--bg-primary);
-            overflow-y: auto;
+            overflow: hidden;
             z-index: 100;
-            padding: 0.5rem !important;
+            padding: 0.5rem 0.75rem !important;
+            transition: max-height 0.3s ease-in-out;
           }
-          [data-pos-catalog] {
-            height: calc(48vh - 50px);
-            overflow-y: auto;
-            padding-bottom: 0.5rem;
+          [data-pos-sidebar][data-mobile-expanded="false"] {
+            height: auto !important;
+            max-height: 125px !important;
+          }
+          [data-pos-sidebar][data-mobile-expanded="false"] [data-cart-items-container],
+          [data-pos-sidebar][data-mobile-expanded="false"] [data-cart-totals-container] {
+            display: none !important;
+          }
+          [data-pos-sidebar][data-mobile-expanded="true"] {
+            height: 60vh !important;
+            max-height: 70vh !important;
+            overflow-y: auto !important;
+          }
+          [data-pos-cart-box] {
+            max-height: none !important;
+          }
+        }
+
+        @media (min-width: 769px) {
+          [data-mobile-toggle-btn] {
+            display: none !important;
           }
         }
 
@@ -484,12 +508,6 @@ export default function POSPage() {
         }
 
         @media (max-width: 480px) {
-          [data-pos-sidebar] {
-            height: 60%;
-          }
-          [data-pos-catalog] {
-            height: calc(40vh - 40px);
-          }
           [data-pos-title] {
             font-size: 1.1rem !important;
           }
@@ -658,36 +676,64 @@ export default function POSPage() {
           )}
         </div>
 
-        <div style={styles.sidebarSection} data-pos-sidebar>
-          <div style={styles.cartBox}>
+        <div style={styles.sidebarSection} data-pos-sidebar data-mobile-expanded={isMobileCartExpanded ? 'true' : 'false'}>
+          <div style={styles.cartBox} data-pos-cart-box>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={styles.cartTitle}>Carrito ({cart.length})</h2>
-              {cart.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowFullCartModal(true)}
-                  style={{
-                    background: 'var(--bg-primary)',
-                    border: '1px solid var(--accent-orange)',
-                    color: 'var(--accent-orange)',
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '0.8rem',
-                    fontWeight: '600',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                  }}
-                >
-                  🔍 Ver Detallado
-                </button>
-              )}
+              <h2 style={styles.cartTitle}>
+                Carrito ({cart.length})
+                {cart.length > 0 && (
+                  <span style={{ fontSize: '0.9rem', color: 'var(--accent-orange)', marginLeft: '6px' }}>
+                    • ${total.toFixed(2)}
+                  </span>
+                )}
+              </h2>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                {cart.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileCartExpanded(!isMobileCartExpanded)}
+                    style={{
+                      background: isMobileCartExpanded ? 'var(--bg-primary)' : 'var(--accent-orange)',
+                      border: '1px solid var(--accent-orange)',
+                      color: isMobileCartExpanded ? 'var(--accent-orange)' : '#fff',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem',
+                      fontWeight: '600',
+                    }}
+                    data-mobile-toggle-btn
+                  >
+                    {isMobileCartExpanded ? '▼ Minimizar' : '▲ Desplegar'}
+                  </button>
+                )}
+                {cart.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowFullCartModal(true)}
+                    style={{
+                      background: 'var(--bg-primary)',
+                      border: '1px solid var(--accent-orange)',
+                      color: 'var(--accent-orange)',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem',
+                      fontWeight: '600',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    🔍 Detallado
+                  </button>
+                )}
+              </div>
             </div>
 
             {cart.length > 0 ? (
               <>
-                <div ref={cartItemsRef} style={styles.cartItems}>
+                <div ref={cartItemsRef} style={styles.cartItems} data-cart-items-container>
                   {cart.map((item) => (
                     <div key={item.productId} style={styles.cartItem} data-cart-item>
                       <div style={styles.cartItemDetails} data-cart-details>
@@ -738,7 +784,7 @@ export default function POSPage() {
                   ))}
                 </div>
 
-                <div style={styles.cartTotals}>
+                <div style={styles.cartTotals} data-cart-totals-container>
                   <div style={styles.totalRow}>
                     <span>Subtotal:</span>
                     <span>${subtotal.toFixed(2)}</span>
