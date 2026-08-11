@@ -444,38 +444,68 @@ export default function POSPage() {
             padding-bottom: 120px !important;
           }
           [data-pos-catalog] {
-            height: calc(100vh - 145px) !important;
-            overflow-y: auto;
+            height: calc(100vh - 170px) !important;
+            overflow-y: auto !important;
             padding-bottom: 1rem;
+            -webkit-overflow-scrolling: touch !important;
           }
           [data-pos-sidebar] {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            border-top: 2px solid var(--accent-orange, #e8632c);
-            box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.3);
-            background: var(--bg-primary);
-            overflow: hidden;
-            z-index: 100;
-            padding: 0.5rem 0.75rem !important;
-            transition: max-height 0.3s ease-in-out;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            border-top: 2px solid var(--accent-orange, #e8632c) !important;
+            box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.35) !important;
+            background: var(--bg-primary) !important;
+            z-index: 100 !important;
+            padding: 0.75rem !important;
+            box-sizing: border-box !important;
+            transition: height 0.3s ease-in-out, max-height 0.3s ease-in-out !important;
           }
           [data-pos-sidebar][data-mobile-expanded="false"] {
             height: auto !important;
-            max-height: 125px !important;
+            max-height: none !important;
+            overflow: hidden !important;
           }
           [data-pos-sidebar][data-mobile-expanded="false"] [data-cart-items-container],
           [data-pos-sidebar][data-mobile-expanded="false"] [data-cart-totals-container] {
             display: none !important;
           }
           [data-pos-sidebar][data-mobile-expanded="true"] {
-            height: 60vh !important;
-            max-height: 70vh !important;
-            overflow-y: auto !important;
+            height: 75vh !important;
+            max-height: 85vh !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
           }
           [data-pos-cart-box] {
             max-height: none !important;
+            min-height: 0 !important;
+            height: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            padding: 0 !important;
+            border: none !important;
+            background: transparent !important;
+            overflow: hidden !important;
+          }
+          [data-cart-items-container] {
+            flex: 1 1 auto !important;
+            overflow-y: auto !important;
+            max-height: none !important;
+            min-height: 100px !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding-right: 0.25rem !important;
+          }
+          [data-cart-totals-container] {
+            flex-shrink: 0 !important;
+            border-top: 1px solid var(--border-color) !important;
+            padding-top: 0.5rem !important;
+            margin-top: 0.5rem !important;
+          }
+          [data-cart-action-row] {
+            flex-shrink: 0 !important;
+            margin-top: 0.5rem !important;
           }
         }
 
@@ -799,7 +829,7 @@ export default function POSPage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }} data-cart-action-row>
                   <button
                     onClick={() => setShowFullCartModal(true)}
                     style={{
