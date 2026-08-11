@@ -26,7 +26,7 @@ export default function POSPage() {
  deliveryType: 'mostrador',
  clientAddress: '',
  paymentMethod: 'efectivo',
- comprobante: 'whatsapp',
+ comprobante: 'completo',
  });
  const [lastWhatsAppUrl, setLastWhatsAppUrl] = useState<string>('');
  const [userData, setUserData] = useState<UserData | null>(null);
@@ -272,9 +272,9 @@ export default function POSPage() {
  setError('');
  };
 
- const handleInputChange = (
- e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
- ) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
  const { name, value } = e.target;
  setFormData((prev) => ({
  ...prev,
@@ -305,114 +305,223 @@ export default function POSPage() {
  return cleanPhone ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}` : `https://api.whatsapp.com/send?text=${encoded}`;
  };
 
- const handleCreateOrder = async (e: React.FormEvent) => {
- e.preventDefault();
+  const handlePrintTicket = (
+    folio: string,
+    clientName: string,
+    itemsList: CartItem[],
+    subtotalAmt: number,
+    taxAmt: number,
+    totalAmt: number,
+    method: string,
+    type: 'completo' | 'resumido'
+  ) => {
+    const printWin = window.open('', '_blank', 'width=380,height=600');
+    if (!printWin) return;
 
- if (!userData) {
- setError('Usuario no autenticado');
- return;
- }
+    const dateStr = new Date().toLocaleString('es-MX', {
+      dateStyle: 'short',
+      timeStyle: 'medium',
+    });
 
- if (cart.length === 0) {
- setError('El carrito está vacío');
- return;
- }
+    const itemsRows = type === 'completo'
+      ? itemsList.map(i => `
+        <tr>
+          <td style="padding: 3px 0; word-break: break-word;">${i.name} <br/><small>(${i.qty} x $${i.price.toFixed(2)})</small></td>
+          <td style="text-align: right; vertical-align: top; padding: 3px 0;">$${i.subtotal.toFixed(2)}</td>
+        </tr>
+      `).join('')
+      : `
+        <tr>
+          <td style="padding: 6px 0;">Resumen (${itemsList.reduce((sum, i) => sum + i.qty, 0)} artículos)</td>
+          <td style="text-align: right; padding: 6px 0;">$${subtotalAmt.toFixed(2)}</td>
+        </tr>
+      `;
 
- if (formData.deliveryType !== 'mostrador' && !formData.clientAddress.trim()) {
- setError('Por favor ingresa la dirección de entrega');
- return;
- }
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8" />
+        <title>Ticket #${folio}</title>
+        <style>
+          @page { size: 80mm auto; margin: 0; }
+          body {
+            font-family: 'Courier New', Courier, monospace;
+            width: 270px;
+            margin: 0 auto;
+            padding: 12px;
+            font-size: 12px;
+            color: #000;
+            background: #fff;
+          }
+          .text-center { text-align: center; }
+          .text-right { text-align: right; }
+          .bold { font-weight: bold; }
+          .title { font-size: 16px; font-weight: bold; margin-bottom: 2px; }
+          .subtitle { font-size: 11px; margin-bottom: 8px; text-transform: uppercase; }
+          .divider { border-top: 1px dashed #000; margin: 8px 0; }
+          table { width: 100%; border-collapse: collapse; font-size: 11px; }
+          .total-row { font-size: 14px; font-weight: bold; }
+          @media print {
+            body { width: 100%; padding: 4px; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="text-center title">FERREPOINT</div>
+        <div class="text-center subtitle">Ticket de Venta (${type.toUpperCase()})</div>
+        <div class="divider"></div>
+        <div><strong>Folio:</strong> #${folio}</div>
+        <div><strong>Fecha:</strong> ${dateStr}</div>
+        <div><strong>Cliente:</strong> ${clientName || 'Cliente Mostrador'}</div>
+        <div><strong>Método Pago:</strong> ${method.toUpperCase()}</div>
+        <div class="divider"></div>
+        <table>
+          ${itemsRows}
+        </table>
+        <div class="divider"></div>
+        <table>
+          <tr><td>Subtotal:</td><td class="text-right">$${subtotalAmt.toFixed(2)}</td></tr>
+          <tr><td>IVA (16%):</td><td class="text-right">$${taxAmt.toFixed(2)}</td></tr>
+          <tr class="total-row"><td>TOTAL:</td><td class="text-right">$${totalAmt.toFixed(2)}</td></tr>
+        </table>
+        <div class="divider"></div>
+        <div class="text-center" style="font-size: 11px; margin-top: 10px; font-weight: bold;">
+          ¡Gracias por su compra!
+        </div>
+        <script>
+          window.onload = function() {
+            window.print();
+            setTimeout(function() { window.close(); }, 500);
+          };
+        </script>
+      </body>
+      </html>
+    `);
+    printWin.document.close();
+  };
 
- setSubmitting(true);
- setError('');
+  const handleCreateOrder = async (e: React.FormEvent, isDirectPayment?: boolean) => {
+    e.preventDefault();
 
- try {
- const items = cart.map((item) => ({
- productId: item.productId,
- qty: item.qty,
- price: item.price,
- subtotal: item.subtotal,
- }));
+    if (!userData) {
+      setError('Usuario no autenticado');
+      return;
+    }
 
- const response = await actionCreateOrder(
- userData.businessId,
- userData.locationId,
- userData.vendorId,
- items,
- formData.clientName || 'Cliente Mostrador',
- formData.clientPhone || undefined,
- formData.clientAddress || undefined,
- formData.deliveryType,
- formData.paymentMethod,
- formData.comprobante
- );
+    if (cart.length === 0) {
+      setError('El carrito está vacío');
+      return;
+    }
 
- if (response.success && response.sale) {
- const folioStr = response.sale.folio || 'N/A';
- const waUrl = buildWhatsAppUrl(
- folioStr,
- formData.clientName || 'Cliente Mostrador',
- formData.clientPhone || '',
- total,
- cart,
- formData.paymentMethod
- );
- setLastWhatsAppUrl(waUrl);
+    if (formData.deliveryType !== 'mostrador' && !formData.clientAddress.trim()) {
+      setError('Por favor ingresa la dirección de entrega');
+      return;
+    }
 
- // Si no requiere cajero, procesar pago inmediatamente
- if (!requiresCajero && response.sale?.id) {
- const paymentResult = await actionProcessPayment(
- response.sale.id,
- formData.paymentMethod,
- userData.vendorId,
- formData.comprobante
- );
+    setSubmitting(true);
+    setError('');
 
- if (paymentResult.success) {
- setSuccessFolio(folioStr);
- setSuccessMessage(` Venta completada. Folio: #${folioStr}`);
- } else {
- setError('Orden creada pero error al procesar pago');
- }
- } else {
- setSuccessFolio(folioStr);
- setSuccessMessage(`Orden creada. Folio: #${folioStr}`);
- }
+    try {
+      const items = cart.map((item) => ({
+        productId: item.productId,
+        qty: item.qty,
+        price: item.price,
+        subtotal: item.subtotal,
+      }));
 
- // Si eligió comprobante por WhatsApp, abrirlo automáticamente
- if (formData.comprobante === 'whatsapp' || formData.clientPhone) {
- window.open(waUrl, '_blank');
- }
+      const response = await actionCreateOrder(
+        userData.businessId,
+        userData.locationId,
+        userData.vendorId,
+        items,
+        formData.clientName || 'Cliente Mostrador',
+        formData.clientPhone || undefined,
+        formData.clientAddress || undefined,
+        formData.deliveryType,
+        formData.paymentMethod,
+        formData.comprobante
+      );
 
- setTimeout(() => {
- setCart([]);
- setFormData({
- clientName: '',
- clientPhone: '',
- deliveryType: 'mostrador',
- clientAddress: '',
- paymentMethod: 'efectivo',
- comprobante: 'whatsapp',
- });
- setSuccessMessage('');
- setSuccessFolio('');
- setLastWhatsAppUrl('');
- setShowPaymentModal(false);
+      if (response.success && response.sale) {
+        const folioStr = response.sale.folio || 'N/A';
+        const waUrl = buildWhatsAppUrl(
+          folioStr,
+          formData.clientName || 'Cliente Mostrador',
+          formData.clientPhone || '',
+          total,
+          cart,
+          formData.paymentMethod
+        );
+        setLastWhatsAppUrl(waUrl);
 
- if (userData) {
- actionGetPaidOrders(userData.businessId, userData.vendorId).then(setPaidOrders);
- }
- }, 5000);
- } else {
- setError((response as any).error || 'Error al crear la orden');
- }
- } catch (err) {
- console.error('Error creating order:', err);
- setError('Error al crear la orden. Por favor intenta nuevamente.');
- } finally {
- setSubmitting(false);
- }
- };
+        // Si isDirectPayment está especificado, se respeta. Si no, se evalúa !requiresCajero
+        const shouldPayNow = isDirectPayment !== undefined ? isDirectPayment : !requiresCajero;
+
+        if (shouldPayNow && response.sale?.id) {
+          const paymentResult = await actionProcessPayment(
+            response.sale.id,
+            formData.paymentMethod,
+            userData.vendorId,
+            formData.comprobante
+          );
+
+          if (paymentResult.success) {
+            setSuccessFolio(folioStr);
+            setSuccessMessage(`✓ Venta completada y pagada en mostrador. Folio: #${folioStr}`);
+          } else {
+            setError('Orden creada pero ocurrió un error al procesar el pago');
+          }
+        } else {
+          setSuccessFolio(folioStr);
+          setSuccessMessage(`📥 Orden enviada a Caja para cobro. Folio: #${folioStr}`);
+        }
+
+        // Si eligió comprobante por WhatsApp, abrirlo automáticamente
+        if (formData.comprobante === 'whatsapp') {
+          window.open(waUrl, '_blank');
+        } else if (formData.comprobante === 'completo' || formData.comprobante === 'resumido') {
+          handlePrintTicket(
+            folioStr,
+            formData.clientName || 'Cliente Mostrador',
+            cart,
+            subtotal,
+            tax,
+            total,
+            formData.paymentMethod,
+            formData.comprobante
+          );
+        }
+
+        setTimeout(() => {
+          setCart([]);
+          setFormData({
+            clientName: '',
+            clientPhone: '',
+            deliveryType: 'mostrador',
+            clientAddress: '',
+            paymentMethod: 'efectivo',
+            comprobante: 'completo',
+          });
+          setSuccessMessage('');
+          setSuccessFolio('');
+          setLastWhatsAppUrl('');
+          setShowPaymentModal(false);
+
+          if (userData) {
+            actionGetPaidOrders(userData.businessId, userData.vendorId).then(setPaidOrders);
+          }
+        }, 5000);
+      } else {
+        setError((response as any).error || 'Error al crear la orden');
+      }
+    } catch (err) {
+      console.error('Error creating order:', err);
+      setError('Error al crear la orden. Por favor intenta nuevamente.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
  if (loading) {
  return (
@@ -903,7 +1012,7 @@ export default function POSPage() {
  {showPaymentModal && (
  <div style={styles.modalOverlay}>
  <div style={styles.modalContent} data-modal-content>
- <form onSubmit={handleCreateOrder} style={{ width: '100%', display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '90vh', overflow: 'hidden' }} data-payment-form>
+ <form style={{ width: '100%', display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '90vh', overflow: 'hidden' }} data-payment-form>
  <div style={styles.modalHeader} data-modal-header>
  <h2 style={styles.modalTitle}>Pago y Datos del Cliente</h2>
  <button
@@ -1118,7 +1227,7 @@ export default function POSPage() {
  style={{
  padding: '9px 4px',
  borderRadius: '8px',
- border: '2px solid #25D366',
+ border: formData.comprobante === 'whatsapp' ? '2px solid #25D366' : '1px solid var(--border-color)',
  background: formData.comprobante === 'whatsapp' ? 'rgba(37,211,102,0.15)' : 'var(--bg-primary)',
  color: formData.comprobante === 'whatsapp' ? '#128C7E' : 'var(--text-primary)',
  fontWeight: '700',
@@ -1187,19 +1296,50 @@ export default function POSPage() {
  Cancelar
  </button>
  <button
- type="submit"
+ type="button"
  disabled={cart.length === 0 || submitting}
+ onClick={(e) => handleCreateOrder(e, false)}
  style={{
- ...styles.submitButton,
- opacity: cart.length === 0 || submitting ? 0.5 : 1,
+ flex: 1,
+ padding: '0.75rem',
+ background: '#1A5FA8',
+ color: '#ffffff',
+ border: 'none',
+ borderRadius: '0.5rem',
+ fontWeight: '700',
+ fontSize: '0.88rem',
  cursor: cart.length === 0 || submitting ? 'not-allowed' : 'pointer',
+ opacity: cart.length === 0 || submitting ? 0.5 : 1,
+ display: 'flex',
+ alignItems: 'center',
+ justifyContent: 'center',
+ gap: '6px'
  }}
  >
- {submitting
- ? 'Procesando...'
- : requiresCajero
- ? 'ENVIAR A CAJA PARA COBRO'
- : 'COBRAR Y COMPLETAR VENTA'}
+ 📥 ENVIAR A CAJA
+ </button>
+ <button
+ type="button"
+ disabled={cart.length === 0 || submitting}
+ onClick={(e) => handleCreateOrder(e, true)}
+ style={{
+ flex: 1.2,
+ padding: '0.75rem',
+ background: 'var(--accent-orange)',
+ color: '#ffffff',
+ border: 'none',
+ borderRadius: '0.5rem',
+ fontWeight: '700',
+ fontSize: '0.88rem',
+ cursor: cart.length === 0 || submitting ? 'not-allowed' : 'pointer',
+ opacity: cart.length === 0 || submitting ? 0.5 : 1,
+ display: 'flex',
+ alignItems: 'center',
+ justifyContent: 'center',
+ gap: '6px'
+ }}
+ >
+ 💳 COBRAR AHORA
  </button>
  </div>
  </form>
