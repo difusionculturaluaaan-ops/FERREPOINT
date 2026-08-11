@@ -45,17 +45,17 @@ export default function ContabilidadPage() {
       let bId = localStorage.getItem('businessId') || '';
       let lId = localStorage.getItem('locationId') || '';
 
-      if (!bId) {
-        try {
-          const res = await fetch('/api/pos/context');
-          const data = await res.json();
-          if (data && !data.error) {
-            bId = data.businessId;
-            lId = data.locationId;
-          }
-        } catch (err) {
-          console.error('Error fetching context route:', err);
+      try {
+        const res = await fetch('/api/pos/context');
+        const data = await res.json();
+        if (data && !data.error) {
+          bId = data.businessId;
+          lId = data.locationId;
+          localStorage.setItem('businessId', bId);
+          if (lId) localStorage.setItem('locationId', lId);
         }
+      } catch (err) {
+        console.error('Error fetching context route:', err);
       }
 
       setBusinessId(bId || 'default');

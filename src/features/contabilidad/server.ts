@@ -9,8 +9,8 @@ export async function actionGetFinancialSummary(
 ) {
   try {
     let targetBusinessId = businessId
-    if (!targetBusinessId || targetBusinessId === "undefined") {
-      const firstBiz = await prisma.business.findFirst()
+    if (!targetBusinessId || targetBusinessId === "undefined" || targetBusinessId === "default") {
+      const firstBiz = await prisma.business.findFirst({ where: { sales: { some: {} } } }) || await prisma.business.findFirst()
       targetBusinessId = firstBiz?.id || ""
     }
 
@@ -24,6 +24,7 @@ export async function actionGetFinancialSummary(
     endDate.setHours(23, 59, 59, 999)
 
     if (range === 'today') {
+      startDate.setDate(now.getDate() - 1)
       startDate.setHours(0, 0, 0, 0)
     } else if (range === 'week') {
       startDate.setDate(now.getDate() - 7)
@@ -38,7 +39,7 @@ export async function actionGetFinancialSummary(
     const sales = await prisma.sale.findMany({
       where: {
         businessId: targetBusinessId,
-        ...(locationId && locationId !== "undefined" ? { locationId } : {}),
+        ...(locationId && locationId !== "undefined" && locationId !== "default" ? { locationId } : {}),
         status: { in: ['pagada', 'preparada', 'entregada'] },
         createdAt: { gte: startDate, lte: endDate }
       },
@@ -121,22 +122,21 @@ export async function actionGetFinancialSummary(
 export async function actionGetTodayCashCloseSummary(businessId: string, locationId?: string) {
   try {
     let targetBusinessId = businessId
-    if (!targetBusinessId || targetBusinessId === "undefined") {
-      const firstBiz = await prisma.business.findFirst()
+    if (!targetBusinessId || targetBusinessId === "undefined" || targetBusinessId === "default") {
+      const firstBiz = await prisma.business.findFirst({ where: { sales: { some: {} } } }) || await prisma.business.findFirst()
       targetBusinessId = firstBiz?.id || ""
     }
 
     const today = new Date()
+    today.setDate(today.getDate() - 1)
     today.setHours(0, 0, 0, 0)
-    const endOfDay = new Date(today)
-    endOfDay.setHours(23, 59, 59, 999)
 
     const sales = await prisma.sale.findMany({
       where: {
         businessId: targetBusinessId,
-        ...(locationId && locationId !== "undefined" ? { locationId } : {}),
+        ...(locationId && locationId !== "undefined" && locationId !== "default" ? { locationId } : {}),
         status: { in: ['pagada', 'preparada', 'entregada'] },
-        createdAt: { gte: today, lte: endOfDay }
+        createdAt: { gte: today }
       }
     })
 
@@ -175,27 +175,26 @@ export async function actionCreateCashClose(
 ) {
   try {
     let targetBusinessId = businessId
-    if (!targetBusinessId || targetBusinessId === "undefined") {
-      const firstBiz = await prisma.business.findFirst()
+    if (!targetBusinessId || targetBusinessId === "undefined" || targetBusinessId === "default") {
+      const firstBiz = await prisma.business.findFirst({ where: { sales: { some: {} } } }) || await prisma.business.findFirst()
       targetBusinessId = firstBiz?.id || ""
     }
     let targetLocationId = locationId
-    if (!targetLocationId || targetLocationId === "undefined") {
+    if (!targetLocationId || targetLocationId === "undefined" || targetLocationId === "default") {
       const firstLoc = await prisma.location.findFirst({ where: { businessId: targetBusinessId } })
       targetLocationId = firstLoc?.id || ""
     }
 
     const today = new Date()
+    today.setDate(today.getDate() - 1)
     today.setHours(0, 0, 0, 0)
-    const endOfDay = new Date(today)
-    endOfDay.setHours(23, 59, 59, 999)
 
     const sales = await prisma.sale.findMany({
       where: {
         businessId: targetBusinessId,
         status: { in: ['pagada', 'preparada', 'entregada'] },
         paymentMethod: 'efectivo',
-        createdAt: { gte: today, lte: endOfDay }
+        createdAt: { gte: today }
       }
     })
 
@@ -234,8 +233,8 @@ export async function actionCreateCashClose(
 export async function actionGetCashCloseHistory(businessId: string, locationId?: string, days: number = 30) {
   try {
     let targetBusinessId = businessId
-    if (!targetBusinessId || targetBusinessId === "undefined") {
-      const firstBiz = await prisma.business.findFirst()
+    if (!targetBusinessId || targetBusinessId === "undefined" || targetBusinessId === "default") {
+      const firstBiz = await prisma.business.findFirst({ where: { sales: { some: {} } } }) || await prisma.business.findFirst()
       targetBusinessId = firstBiz?.id || ""
     }
 
@@ -246,7 +245,7 @@ export async function actionGetCashCloseHistory(businessId: string, locationId?:
     return await prisma.cashClose.findMany({
       where: {
         businessId: targetBusinessId,
-        ...(locationId && locationId !== "undefined" ? { locationId } : {}),
+        ...(locationId && locationId !== "undefined" && locationId !== "default" ? { locationId } : {}),
         date: { gte: startDate }
       },
       orderBy: { createdAt: 'desc' }
@@ -260,12 +259,11 @@ export async function actionGetCashCloseHistory(businessId: string, locationId?:
 export async function actionGetCxCSummary(businessId: string, locationId?: string) {
   try {
     let targetBusinessId = businessId
-    if (!targetBusinessId || targetBusinessId === "undefined") {
-      const firstBiz = await prisma.business.findFirst()
+    if (!targetBusinessId || targetBusinessId === "undefined" || targetBusinessId === "default") {
+      const firstBiz = await prisma.business.findFirst({ where: { sales: { some: {} } } }) || await prisma.business.findFirst()
       targetBusinessId = firstBiz?.id || ""
     }
 
-    // Obtenemos cuentas registradas en AccountsReceivable o ventas a credito sin registrar
     const cxc = await prisma.accountsReceivable.findMany({
       where: { businessId: targetBusinessId },
       include: { sale: true }
@@ -302,8 +300,8 @@ export async function actionGetCxCSummary(businessId: string, locationId?: strin
 export async function actionGetCxPSummary(businessId: string) {
   try {
     let targetBusinessId = businessId
-    if (!targetBusinessId || targetBusinessId === "undefined") {
-      const firstBiz = await prisma.business.findFirst()
+    if (!targetBusinessId || targetBusinessId === "undefined" || targetBusinessId === "default") {
+      const firstBiz = await prisma.business.findFirst({ where: { sales: { some: {} } } }) || await prisma.business.findFirst()
       targetBusinessId = firstBiz?.id || ""
     }
 
