@@ -287,17 +287,22 @@ export default function POSPage() {
   const total = subtotal + tax;
 
   const buildWhatsAppUrl = (folio: string, clientName: string, phone: string, totalAmt: number, itemsList: CartItem[], method: string) => {
-    const cleanPhone = (phone || '').replace(/\D/g, '');
+    let cleanPhone = (phone || '').replace(/\D/g, '');
+    if (cleanPhone.length === 10) {
+      cleanPhone = '52' + cleanPhone;
+    } else if (cleanPhone.length === 11 && cleanPhone.startsWith('1')) {
+      cleanPhone = '52' + cleanPhone.substring(1);
+    }
     const formattedItems = itemsList.map(i => `• ${i.qty}x ${i.name} ($${i.subtotal.toFixed(2)})`).join('\n');
-    const msg = `*FERREPOINT* — Comprobante de Venta 🧾\n\n` +
+    const msg = `*FERREPOINT* - Comprobante de Venta 📄\n\n` +
       `*Folio:* #${folio}\n` +
       `*Cliente:* ${clientName || 'Cliente Mostrador'}\n` +
       `*Forma de Pago:* ${method.toUpperCase()}\n\n` +
       `*Productos:*\n${formattedItems}\n\n` +
       `*Total:* $${totalAmt.toFixed(2)}\n\n` +
-      `¡Gracias por tu preferencia en Ferretería Centro! 🏗️`;
+      `¡Gracias por tu preferencia! 🏗`;
     const encoded = encodeURIComponent(msg);
-    return cleanPhone ? `https://wa.me/52${cleanPhone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
+    return cleanPhone ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}` : `https://api.whatsapp.com/send?text=${encoded}`;
   };
 
   const handleCreateOrder = async (e: React.FormEvent) => {
