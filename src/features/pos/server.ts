@@ -194,28 +194,32 @@ export async function actionGetPendingOrders(businessId: string) {
  }
 }
 
-// Obtener órdenes pagadas (para Vendedor) - NOTIFICACIÓN
-export async function actionGetPaidOrders(businessId: string, vendorId: string) {
- try {
- let targetBusinessId = businessId
- if (!targetBusinessId || targetBusinessId === "undefined") {
- const firstBiz = await prisma.business.findFirst()
- targetBusinessId = firstBiz?.id || ""
- }
+// Obtener órdenes pagadas (para Vendedor o Caja) - HISTORIAL Y NOTIFICACIÓN
+export async function actionGetPaidOrders(businessId: string, vendorId?: string) {
+  try {
+    let targetBusinessId = businessId
+    if (!targetBusinessId || targetBusinessId === "undefined") {
+      const firstBiz = await prisma.business.findFirst()
+      targetBusinessId = firstBiz?.id || ""
+    }
 
- const orders = await prisma.sale.findMany({
- where: {
- ...(targetBusinessId ? { businessId: targetBusinessId } : {}),
- status: { in: ["pagada", "preparada"] }
- },
- include: { items: true },
- orderBy: { createdAt: "desc" }
- })
- return orders
- } catch (error) {
- console.error("Get paid orders error:", error)
- return []
- }
+    const orders = await prisma.sale.findMany({
+      where: {
+        ...(targetBusinessId ? { businessId: targetBusinessId } : {}),
+        ...(vendorId ? { vendorId } : {}),
+        status: { in: ["pagada", "preparada", "entregada"] }
+      },
+      include: {
+        items: { include: { product: true } },
+        vendor: true
+      },
+      orderBy: { createdAt: "desc" }
+    })
+    return orders
+  } catch (error) {
+    console.error("Get paid orders error:", error)
+    return []
+  }
 }
 
 // Obtener órdenes para preparar en bodega (si es domicilio)
