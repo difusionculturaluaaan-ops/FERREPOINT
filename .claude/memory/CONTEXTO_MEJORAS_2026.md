@@ -91,3 +91,13 @@
   - `src/components/FeatureGate.tsx`: Se actualizó el componente de seguridad para realizar un fetch asíncrono a la base de datos Neon (`actionGetBusinessPlan`) si los permisos locales en `localStorage` estaban incompletos o desactualizados.
   - **Despliegue**: Subido a GitHub y desplegado en Vercel exitosamente.
 
+### 16. Formato Ejecutivo de Nota de Venta Tamaño Carta (`paperFormat = 'carta'`)
+- **Desarrollo**: Se agregó soporte completo para imprimir Comprobantes y Notas de Venta en formato **Hoja Carta Completa (Letter Size)** para impresoras normales o PDF.
+- **Detalles Incluidos**:
+  - Encabezado con datos fiscales y de contacto del tenant (`RFC`, `Dirección`, `Teléfono`, `Email`).
+  - Datos de cliente, dirección de entrega, folio corporativo en naranja/negro y nombre del vendedor.
+  - Tabla completa con `Clave del Producto`, `Descripción`, `Cantidad`, `Precio Unitario` e `Importe`.
+  - Conversión de total a **Importe en Letra** (ej. `"TRESCIENTOS NOVENTA Y SEIS PESOS 48/100 M.N."`).
+  - Selector de formato conmutable en tiempo real en `TicketPreviewModal`: **`📄 Nota Carta (Completo)`** vs **`🧾 Ticket Térmico (80mm)`**.
+
+

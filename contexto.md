@@ -68,3 +68,13 @@
 ### 14. Insignia de Perfil de Usuario con Rol (`UserProfileBadge`) y Sincronización Server-Side de `FeatureGate`
 - `src/components/UserProfileBadge.tsx`: Muestra el nombre real del usuario activo y su rol con distintivo visual de color (`⚡ SuperAdmin`, `🔑 Administrador`, `👑 Dueño`, `🏢 Encargado`, `📦 Bodeguero`, `🛒 Vendedor`, `💵 Cajero`, `🚚 Chofer`). Integrado en `/`, `/pos`, `/caja`, `/bodega`.
 - `src/components/FeatureGate.tsx`: Fetch asíncrono a la base de datos Neon (`actionGetBusinessPlan`) si `localStorage` del cliente tiene permisos viejos, evitando falsos bloqueos en Vercel producción.
+
+### 15. Formato Ejecutivo de Nota de Venta Tamaño Carta (`paperFormat = 'carta'`)
+- **Desarrollo**: Se agregó soporte completo para imprimir Comprobantes y Notas de Venta en formato **Hoja Carta Completa (Letter Size)** para impresoras normales o PDF.
+- **Detalles Incluidos**:
+  - Encabezado con datos fiscales y de contacto del tenant (`RFC`, `Dirección`, `Teléfono`, `Email`).
+  - Datos de cliente, dirección de entrega, folio corporativo en naranja/negro y nombre del vendedor.
+  - Tabla completa con `Clave del Producto`, `Descripción`, `Cantidad`, `Precio Unitario` e `Importe`.
+  - Conversión de total a **Importe en Letra** (ej. `"TRESCIENTOS NOVENTA Y SEIS PESOS 48/100 M.N."`).
+  - Selector de formato conmutable en tiempo real en `TicketPreviewModal`: **`📄 Nota Carta (Completo)`** vs **`🧾 Ticket Térmico (80mm)`**.
+
