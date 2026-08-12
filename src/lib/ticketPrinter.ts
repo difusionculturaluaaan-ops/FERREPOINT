@@ -141,7 +141,7 @@ function numeroALetras(num: number): string {
 export function generateTicketHTML(params: PrintTicketParams): string {
   const {
     title = 'FERREPOINT',
-    subtitle = 'Comprobante de Venta',
+    subtitle = 'Nota de Venta',
     folio,
     dateStr = new Date().toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'medium' }),
     clientName = 'Cliente Mostrador',
