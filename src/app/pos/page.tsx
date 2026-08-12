@@ -51,7 +51,7 @@ export default function POSPage() {
     clientName: string;
     paymentMethod: string;
     dateStr?: string;
-    items: { name: string; qty: number; price: number; subtotal: number }[];
+    items: { name: string; qty: number; price: number; subtotal: number; clave?: string }[];
     subtotal: number;
     iva: number;
     total: number;
@@ -329,27 +329,40 @@ export default function POSPage() {
     taxAmt: number,
     totalAmt: number,
     method: string,
-    type: 'completo' | 'resumido'
+    type: 'completo' | 'resumido',
+    paperFormat: 'carta' | 'ticket' = 'carta'
   ) => {
-    const printWin = window.open('', '_blank', 'width=380,height=600');
+    const winWidth = paperFormat === 'carta' ? 900 : 380;
+    const winHeight = paperFormat === 'carta' ? 800 : 600;
+    const printWin = window.open('', '_blank', `width=${winWidth},height=${winHeight}`);
     if (!printWin) return;
 
     const htmlContent = generateTicketHTML({
-      title: 'FERREPOINT',
-      subtitle: 'Ticket de Venta',
+      title: 'DEMOFerretodo',
+      subtitle: 'Nota de Venta',
       folio,
       clientName: clientName || 'Cliente Mostrador',
+      clientPhone: formData.clientPhone,
+      clientAddress: formData.clientAddress,
       paymentMethod: method.toUpperCase(),
+      businessName: 'DEMOFerretodo - Ferretería & Materiales',
+      businessRfc: 'DFE240101XYZ',
+      businessAddress: 'Av. Ferretera #500, Col. Industrial',
+      businessPhone: '818-555-9000',
+      businessEmail: 'contacto@demoferretodo.com',
+      vendorName: userData?.email?.split('@')[0] || 'Vendedor Mostrador',
       items: itemsList.map(i => ({
         name: i.name,
         qty: i.qty,
         price: i.price,
-        subtotal: i.subtotal
+        subtotal: i.subtotal,
+        clave: i.clave
       })),
       subtotal: subtotalAmt,
       iva: taxAmt,
       total: totalAmt,
-      ticketType: type
+      ticketType: type,
+      paperFormat: paperFormat
     });
 
     printWin.document.write(htmlContent);
@@ -1588,16 +1601,17 @@ export default function POSPage() {
           total={previewTicketData.total}
           ticketType={previewTicketData.ticketType}
           whatsAppUrl={previewTicketData.whatsAppUrl}
-          onPrint={() => {
+          onPrint={(chosenFormat) => {
             handlePrintTicket(
               previewTicketData.folio,
               previewTicketData.clientName,
-              previewTicketData.items.map(i => ({ productId: '', name: i.name, qty: i.qty, price: i.price, subtotal: i.subtotal })),
+              previewTicketData.items.map(i => ({ productId: '', name: i.name, qty: i.qty, price: i.price, subtotal: i.subtotal, clave: i.clave })),
               previewTicketData.subtotal,
               previewTicketData.iva,
               previewTicketData.total,
               previewTicketData.paymentMethod,
-              previewTicketData.ticketType
+              previewTicketData.ticketType,
+              chosenFormat
             );
           }}
         />

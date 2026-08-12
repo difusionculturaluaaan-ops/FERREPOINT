@@ -130,9 +130,10 @@ export default function CajaPage() {
     }
   };
 
-  // Ticket printer helper
-  const handlePrintTicket = (saleObj: any, methodUsed?: string) => {
-    const printWin = window.open('', '_blank', 'width=380,height=600');
+  const handlePrintTicket = (saleObj: any, methodUsed?: string, chosenFormat: 'carta' | 'ticket' = 'carta') => {
+    const winWidth = chosenFormat === 'carta' ? 900 : 380;
+    const winHeight = chosenFormat === 'carta' ? 800 : 600;
+    const printWin = window.open('', '_blank', `width=${winWidth},height=${winHeight}`);
     if (!printWin) return;
 
     const dateStr = new Date(saleObj.createdAt || Date.now()).toLocaleString('es-MX', {
@@ -144,22 +145,32 @@ export default function CajaPage() {
     const pMethod = (methodUsed || saleObj.paymentMethod || 'EFECTIVO').toUpperCase();
 
     const htmlContent = generateTicketHTML({
-      title: 'FERREPOINT',
-      subtitle: 'Comprobante de Caja',
+      title: 'DEMOFerretodo',
+      subtitle: 'Nota de Venta',
       folio: saleObj.folio || 'N/A',
       dateStr,
       clientName: saleObj.clientName || 'Cliente Mostrador',
+      clientPhone: saleObj.clientPhone || '',
+      clientAddress: saleObj.clientAddress || '',
       paymentMethod: pMethod,
+      businessName: 'DEMOFerretodo - Ferretería & Materiales',
+      businessRfc: 'DFE240101XYZ',
+      businessAddress: 'Av. Ferretera #500, Col. Industrial',
+      businessPhone: '818-555-9000',
+      businessEmail: 'contacto@demoferretodo.com',
+      vendorName: saleObj.vendor?.name || 'Vendedor Mostrador',
       items: items.map((i: any) => ({
         name: i.product?.name || i.name || 'Producto',
         qty: i.qty || 1,
         price: i.price || 0,
         subtotal: i.subtotal || 0,
+        clave: i.product?.clave || i.clave || ''
       })),
       subtotal: saleObj.subtotal || 0,
       iva: saleObj.iva || 0,
       total: saleObj.total || 0,
-      ticketType: 'completo'
+      ticketType: 'completo',
+      paperFormat: chosenFormat
     });
 
     printWin.document.write(htmlContent);
@@ -846,8 +857,8 @@ export default function CajaPage() {
           total={previewTicketData.total}
           ticketType={previewTicketData.ticketType}
           whatsAppUrl={previewTicketData.whatsAppUrl}
-          onPrint={() => {
-            handlePrintTicket(previewTicketData.saleObj);
+          onPrint={(chosenFormat) => {
+            handlePrintTicket(previewTicketData.saleObj, undefined, chosenFormat);
           }}
         />
       )}
