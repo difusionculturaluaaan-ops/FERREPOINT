@@ -9,6 +9,8 @@ import { actionGetOrdersForWarehouse, actionMarkOrderAsReady } from '@/features/
 import { actionGetSurtidoOrders, actionCompleteSurtidoOrder, actionGetBodegaStats } from '@/features/bodega/server';
 import { useRealtimeEvents } from '@/hooks/useRealtimeEvents';
 
+import { UserProfileBadge } from '@/components/UserProfileBadge';
+
 interface WareHouseOrder {
  id: string;
  folio: string;
@@ -157,6 +159,7 @@ export default function BodegaPage() {
  </p>
  </div>
  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+ <UserProfileBadge />
  <DashboardButton />
  <ThemeToggle />
  <LogoutButton />

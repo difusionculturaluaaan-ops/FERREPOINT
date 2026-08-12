@@ -4,9 +4,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LogoutButton } from '@/components/LogoutButton';
 import { DashboardButton } from '@/components/DashboardButton';
+import { generateTicketHTML } from '@/lib/ticketPrinter';
+import { TicketPreviewModal } from '@/components/TicketPreviewModal';
 import { actionGetPendingOrders, actionProcessPayment, actionGetPaidOrders } from '@/features/pos/server';
 import { PendingOrder, Sale } from '@/types';
 import { useRealtimeEvents } from '@/hooks/useRealtimeEvents';
+
+import { UserProfileBadge } from '@/components/UserProfileBadge';
 
 export default function CajaPage() {
   const [activeTab, setActiveTab] = useState<'pendientes' | 'historial'>('pendientes');
@@ -20,6 +24,20 @@ export default function CajaPage() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [businessId, setBusinessId] = useState('');
   const [cajeroId, setCajeroId] = useState('');
+  const [previewTicketData, setPreviewTicketData] = useState<{
+    isOpen: boolean;
+    folio: string;
+    clientName: string;
+    paymentMethod: string;
+    dateStr?: string;
+    items: { name: string; qty: number; price: number; subtotal: number }[];
+    subtotal: number;
+    iva: number;
+    total: number;
+    ticketType: 'completo' | 'resumido';
+    whatsAppUrl: string;
+    saleObj: any;
+  } | null>(null);
 
   // Show toast notification
   const showToast = useCallback((message: string, type: 'success' | 'error') => {
@@ -123,79 +141,28 @@ export default function CajaPage() {
     });
 
     const items = saleObj.items || [];
-    const itemsRows = items.map((i: any) => {
-      const prodName = i.product?.name || i.name || 'Producto';
-      return `
-        <tr>
-          <td style="padding: 3px 0; word-break: break-word;">${prodName} <br/><small>(${i.qty} x $${i.price.toFixed(2)})</small></td>
-          <td style="text-align: right; vertical-align: top; padding: 3px 0;">$${i.subtotal.toFixed(2)}</td>
-        </tr>
-      `;
-    }).join('');
-
     const pMethod = (methodUsed || saleObj.paymentMethod || 'EFECTIVO').toUpperCase();
 
-    printWin.document.write(`
-      <!DOCTYPE html>
-      <html lang="es">
-      <head>
-        <meta charset="UTF-8" />
-        <title>Ticket #${saleObj.folio || 'N/A'}</title>
-        <style>
-          @page { size: 80mm auto; margin: 0; }
-          body {
-            font-family: 'Courier New', Courier, monospace;
-            width: 270px;
-            margin: 0 auto;
-            padding: 12px;
-            font-size: 12px;
-            color: #000;
-            background: #fff;
-          }
-          .text-center { text-align: center; }
-          .text-right { text-align: right; }
-          .bold { font-weight: bold; }
-          .title { font-size: 16px; font-weight: bold; margin-bottom: 2px; }
-          .subtitle { font-size: 11px; margin-bottom: 8px; text-transform: uppercase; }
-          .divider { border-top: 1px dashed #000; margin: 8px 0; }
-          table { width: 100%; border-collapse: collapse; font-size: 11px; }
-          .total-row { font-size: 14px; font-weight: bold; }
-          @media print {
-            body { width: 100%; padding: 4px; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="text-center title">FERREPOINT</div>
-        <div class="text-center subtitle">Comprobante de Caja</div>
-        <div class="divider"></div>
-        <div><strong>Folio:</strong> #${saleObj.folio || 'N/A'}</div>
-        <div><strong>Fecha:</strong> ${dateStr}</div>
-        <div><strong>Cliente:</strong> ${saleObj.clientName || 'Cliente Mostrador'}</div>
-        <div><strong>Pago:</strong> ${pMethod}</div>
-        <div class="divider"></div>
-        <table>
-          ${itemsRows}
-        </table>
-        <div class="divider"></div>
-        <table>
-          <tr><td>Subtotal:</td><td class="text-right">$${(saleObj.subtotal || 0).toFixed(2)}</td></tr>
-          <tr><td>IVA (16%):</td><td class="text-right">$${(saleObj.iva || 0).toFixed(2)}</td></tr>
-          <tr class="total-row"><td>TOTAL:</td><td class="text-right">$${(saleObj.total || 0).toFixed(2)}</td></tr>
-        </table>
-        <div class="divider"></div>
-        <div class="text-center" style="font-size: 11px; margin-top: 10px; font-weight: bold;">
-          ¡Gracias por su compra!
-        </div>
-        <script>
-          window.onload = function() {
-            window.print();
-            setTimeout(function() { window.close(); }, 500);
-          };
-        </script>
-      </body>
-      </html>
-    `);
+    const htmlContent = generateTicketHTML({
+      title: 'FERREPOINT',
+      subtitle: 'Comprobante de Caja',
+      folio: saleObj.folio || 'N/A',
+      dateStr,
+      clientName: saleObj.clientName || 'Cliente Mostrador',
+      paymentMethod: pMethod,
+      items: items.map((i: any) => ({
+        name: i.product?.name || i.name || 'Producto',
+        qty: i.qty || 1,
+        price: i.price || 0,
+        subtotal: i.subtotal || 0,
+      })),
+      subtotal: saleObj.subtotal || 0,
+      iva: saleObj.iva || 0,
+      total: saleObj.total || 0,
+      ticketType: 'completo'
+    });
+
+    printWin.document.write(htmlContent);
     printWin.document.close();
   };
 
@@ -245,6 +212,7 @@ export default function CajaPage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <UserProfileBadge />
           <DashboardButton />
           <ThemeToggle />
           <LogoutButton />
@@ -748,12 +716,53 @@ export default function CajaPage() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewTicketData({
+                        isOpen: true,
+                        folio: selectedPaidOrder.folio || 'N/A',
+                        clientName: selectedPaidOrder.clientName || 'Cliente Mostrador',
+                        paymentMethod: selectedPaidOrder.paymentMethod || 'EFECTIVO',
+                        dateStr: new Date(selectedPaidOrder.createdAt).toLocaleString('es-MX'),
+                        items: (selectedPaidOrder.items || []).map((i: any) => ({
+                          name: i.product?.name || i.name || 'Producto',
+                          qty: i.qty || 1,
+                          price: i.price || 0,
+                          subtotal: i.subtotal || 0,
+                        })),
+                        subtotal: selectedPaidOrder.subtotal || 0,
+                        iva: selectedPaidOrder.iva || 0,
+                        total: selectedPaidOrder.total || 0,
+                        ticketType: 'completo',
+                        whatsAppUrl: getWhatsAppUrl(selectedPaidOrder),
+                        saleObj: selectedPaidOrder
+                      })}
+                      style={{
+                        flex: 1,
+                        minWidth: '140px',
+                        padding: '0.75rem',
+                        backgroundColor: 'var(--accent-orange, #e8632c)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        fontWeight: '700',
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      🔍 VER PREVISUALIZACIÓN
+                    </button>
                     <button
                       type="button"
                       onClick={() => handlePrintTicket(selectedPaidOrder)}
                       style={{
                         flex: 1,
+                        minWidth: '140px',
                         padding: '0.75rem',
                         backgroundColor: '#1A5FA8',
                         color: 'white',
@@ -768,7 +777,7 @@ export default function CajaPage() {
                         gap: '6px'
                       }}
                     >
-                      🖨️ REIMPRIMIR TICKET
+                      🖨️ IMPRIMIR
                     </button>
                     <a
                       href={getWhatsAppUrl(selectedPaidOrder)}
@@ -776,6 +785,7 @@ export default function CajaPage() {
                       rel="noopener noreferrer"
                       style={{
                         flex: 1,
+                        minWidth: '140px',
                         padding: '0.75rem',
                         backgroundColor: '#25D366',
                         color: 'white',
@@ -791,7 +801,7 @@ export default function CajaPage() {
                         gap: '6px'
                       }}
                     >
-                      💬 ENVIAR WHATSAPP
+                      💬 WHATSAPP
                     </a>
                   </div>
                 </div>
@@ -821,6 +831,26 @@ export default function CajaPage() {
         )}
 
       </div>
+
+      {previewTicketData && (
+        <TicketPreviewModal
+          isOpen={previewTicketData.isOpen}
+          onClose={() => setPreviewTicketData(null)}
+          folio={previewTicketData.folio}
+          clientName={previewTicketData.clientName}
+          paymentMethod={previewTicketData.paymentMethod}
+          dateStr={previewTicketData.dateStr}
+          items={previewTicketData.items}
+          subtotal={previewTicketData.subtotal}
+          iva={previewTicketData.iva}
+          total={previewTicketData.total}
+          ticketType={previewTicketData.ticketType}
+          whatsAppUrl={previewTicketData.whatsAppUrl}
+          onPrint={() => {
+            handlePrintTicket(previewTicketData.saleObj);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1,224 +1,231 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { PLANS } from '@/lib/plans';
+import { LogoutButton } from '@/components/LogoutButton';
+import { DashboardButton } from '@/components/DashboardButton';
+import { MODULE_DETAILS } from '@/lib/plans';
 
 export default function UpgradePage() {
- const router = useRouter();
+  const router = useRouter();
+  const [enabledModules, setEnabledModules] = useState<string[]>([]);
+  const [businessName, setBusinessName] = useState<string>('Mi Ferretería');
 
- return (
- <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
- {/* Header */}
- <header
- style={{
- backgroundColor: 'var(--bg-secondary)',
- borderBottom: '1px solid var(--border-color)',
- padding: '1rem',
- display: 'flex',
- justifyContent: 'space-between',
- alignItems: 'center',
- }}
- >
- <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '700' }}>
- Planes FERREPOINT
- </h1>
- <div style={{ display: 'flex', gap: '1rem' }}>
- <ThemeToggle />
- <button
- onClick={() => router.back()}
- style={{
- padding: '0.5rem 1rem',
- backgroundColor: 'var(--accent-orange)',
- color: 'white',
- border: 'none',
- borderRadius: '0.5rem',
- cursor: 'pointer',
- fontWeight: '600',
- }}
- >
- ← Volver
- </button>
- </div>
- </header>
+  useEffect(() => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (Array.isArray(user.enabledModules)) {
+          setEnabledModules(user.enabledModules);
+        }
+        if (user.name) {
+          setBusinessName(user.name);
+        }
+      }
+    } catch (e) {
+      console.error('Error loading modular context:', e);
+    }
+  }, []);
 
- {/* Content */}
- <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
- <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
- <h2 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '0.5rem' }}>
- Elige tu Plan
- </h2>
- <p style={{ color: 'var(--text-secondary)', fontSize: '1.125rem' }}>
- Acceso a más módulos y herramientas para crecer tu ferretería
- </p>
- </div>
+  const buildRequestWhatsAppUrl = (moduleLabel: string) => {
+    const text = `Hola equipo FERREPOINT! 👋 Me gustaría solicitar la activación a la medida del *${moduleLabel}* para mi ferretería (*${businessName}*). ¿Me podrían ayudar con la cotización y activación?`;
+    return `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+  };
 
- {/* Plans Grid */}
- <div
- style={{
- display: 'grid',
- gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
- gap: '2rem',
- marginBottom: '2rem',
- }}
- >
- {Object.entries(PLANS).map(([key, plan]) => (
- <div
- key={key}
- style={{
- backgroundColor: 'var(--bg-secondary)',
- border: '2px solid var(--border-color)',
- borderRadius: '1rem',
- padding: '2rem',
- textAlign: 'center',
- transition: 'all 0.3s',
- transform: key === 'professional' ? 'scale(1.05)' : 'scale(1)',
- boxShadow:
- key === 'professional'
- ? '0 10px 30px rgba(232, 99, 44, 0.2)'
- : 'none',
- }}
- onMouseEnter={(e) => {
- (e.currentTarget as HTMLDivElement).style.transform =
- key === 'professional' ? 'scale(1.08)' : 'scale(1.03)';
- }}
- onMouseLeave={(e) => {
- (e.currentTarget as HTMLDivElement).style.transform =
- key === 'professional' ? 'scale(1.05)' : 'scale(1)';
- }}
- >
- {key === 'professional' && (
- <div
- style={{
- backgroundColor: 'var(--accent-orange)',
- color: 'white',
- padding: '0.5rem',
- borderRadius: '0.5rem',
- fontSize: '0.875rem',
- fontWeight: '700',
- marginBottom: '1rem',
- }}
- >
- MÁS POPULAR
- </div>
- )}
+  return (
+    <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+      {/* Header */}
+      <header
+        style={{
+          backgroundColor: 'var(--bg-secondary)',
+          borderBottom: '1px solid var(--border-color)',
+          padding: '1rem 1.5rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem'
+        }}
+      >
+        <div>
+          <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '800', color: 'var(--accent-orange)' }}>
+            🧱 Activación Modular a la Medida
+          </h1>
+          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+            FERREPOINT activa módulos de forma independiente según las necesidades de tu ferretería
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <DashboardButton />
+          <ThemeToggle />
+          <LogoutButton />
+        </div>
+      </header>
 
- <h3
- style={{
- fontSize: '1.5rem',
- fontWeight: '700',
- marginBottom: '0.5rem',
- margin: key === 'professional' ? '0' : '0',
- }}
- >
- {plan.name}
- </h3>
+      {/* Content */}
+      <div style={{ padding: '2rem 1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <span
+            style={{
+              background: 'var(--nal, #FFF0E6)',
+              color: 'var(--accent-orange)',
+              padding: '6px 16px',
+              borderRadius: '20px',
+              fontWeight: '700',
+              fontSize: '0.85rem',
+              display: 'inline-block',
+              marginBottom: '0.75rem'
+            }}
+          >
+            CRECIMIENTO FLEXIBLE Y ESCALABLE
+          </span>
+          <h2 style={{ fontSize: '2.2rem', fontWeight: '800', margin: '0 0 0.5rem 0' }}>
+            Módulos y Procesos Habilitados
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', maxWidth: '700px', margin: '0 auto' }}>
+            Selecciona y solicita los módulos que requiera tu operación. No pagas por herramientas que no utilices.
+          </p>
+        </div>
 
- <div
- style={{
- fontSize: '2.5rem',
- fontWeight: '800',
- color: 'var(--accent-orange)',
- marginBottom: '1rem',
- }}
- >
- ${plan.price}
- <span style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>
- /mes
- </span>
- </div>
+        {/* Modules Grid */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: '1.5rem',
+            marginBottom: '3rem',
+          }}
+        >
+          {Object.entries(MODULE_DETAILS).map(([key, mod]) => {
+            const isEnabled = enabledModules.length === 0 || enabledModules.includes(key);
 
- <div style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
- <div style={{ marginBottom: '0.75rem', fontWeight: '600' }}>
- Módulos incluidos:
- </div>
- <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
- {plan.modules.map((mod) => (
- <div key={mod} style={{ marginBottom: '0.5rem' }}>
- {mod.charAt(0).toUpperCase() + mod.slice(1)}
- </div>
- ))}
- </div>
- </div>
+            return (
+              <div
+                key={key}
+                style={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  border: isEnabled ? '2px solid #10B981' : '1px solid var(--border-color)',
+                  borderRadius: '1rem',
+                  padding: '1.5rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  position: 'relative',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  boxShadow: isEnabled ? '0 4px 16px rgba(16, 185, 129, 0.1)' : 'none'
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
+                    <div style={{ fontSize: '2.2rem' }}>{mod.icon}</div>
+                    <span
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '20px',
+                        fontSize: '0.75rem',
+                        fontWeight: '800',
+                        textTransform: 'uppercase',
+                        background: isEnabled ? '#E8F5E9' : 'var(--bg-primary)',
+                        color: isEnabled ? '#2E7D32' : 'var(--text-secondary)',
+                        border: isEnabled ? '1px solid #A5D6A7' : '1px solid var(--border-color)'
+                      }}
+                    >
+                      {isEnabled ? '✓ Activo' : '🔒 Disponible'}
+                    </span>
+                  </div>
 
- <div
- style={{
- textAlign: 'left',
- fontSize: '0.875rem',
- color: 'var(--text-secondary)',
- marginBottom: '1.5rem',
- }}
- >
- <div style={{ marginBottom: '0.5rem' }}>
- Hasta {plan.maxUsers} usuarios
- </div>
- <div> Hasta {plan.maxLocations} sucursales</div>
- </div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: '800', margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>
+                    {mod.label}
+                  </h3>
+                  <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: '0 0 1.25rem 0', lineHeight: '1.5' }}>
+                    {mod.desc}
+                  </p>
+                </div>
 
- <button
- onClick={() => {
- alert(
- `Plan ${plan.name} - Contacta a soporte para activar: soporte@ferrepoint.com`
- );
- }}
- style={{
- width: '100%',
- padding: '0.75rem',
- backgroundColor:
- key === 'professional' ? 'var(--accent-orange)' : 'var(--bg-tertiary)',
- color:
- key === 'professional' ? 'white' : 'var(--text-primary)',
- border: 'none',
- borderRadius: '0.5rem',
- fontWeight: '600',
- cursor: 'pointer',
- transition: 'all 0.2s',
- }}
- onMouseEnter={(e) => {
- (e.currentTarget as HTMLButtonElement).style.opacity = '0.9';
- }}
- onMouseLeave={(e) => {
- (e.currentTarget as HTMLButtonElement).style.opacity = '1';
- }}
- >
- Seleccionar Plan
- </button>
- </div>
- ))}
- </div>
+                <div>
+                  {isEnabled ? (
+                    <button
+                      onClick={() => router.push(`/${key === 'pos' ? 'pos' : key}`)}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        backgroundColor: '#10B981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        fontWeight: '700',
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Ingresar al Módulo →
+                    </button>
+                  ) : (
+                    <a
+                      href={buildRequestWhatsAppUrl(mod.label)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '0.75rem',
+                        backgroundColor: 'var(--accent-orange)',
+                        color: 'white',
+                        borderRadius: '0.5rem',
+                        fontWeight: '700',
+                        fontSize: '0.9rem',
+                        textAlign: 'center',
+                        textDecoration: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      💬 Solicitar Activación vía WhatsApp
+                    </a>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
- {/* FAQ */}
- <div
- style={{
- backgroundColor: 'var(--bg-secondary)',
- padding: '2rem',
- borderRadius: '1rem',
- marginTop: '3rem',
- }}
- >
- <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1rem' }}>
- ¿Preguntas?
- </h3>
- <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
- Contacta a nuestro equipo de soporte para más información sobre planes personalizados
- o migraciones.
- </p>
- <a
- href="mailto:soporte@ferrepoint.com"
- style={{
- display: 'inline-block',
- padding: '0.75rem 1.5rem',
- backgroundColor: 'var(--accent-orange)',
- color: 'white',
- borderRadius: '0.5rem',
- textDecoration: 'none',
- fontWeight: '600',
- }}
- >
- Contactar Soporte
- </a>
- </div>
- </div>
- </div>
- );
+        {/* Contact Banner */}
+        <div
+          style={{
+            backgroundColor: 'var(--bg-secondary)',
+            border: '2px solid var(--accent-orange)',
+            borderRadius: '1rem',
+            padding: '2rem',
+            textAlign: 'center',
+          }}
+        >
+          <h3 style={{ fontSize: '1.4rem', fontWeight: '800', margin: '0 0 0.5rem 0' }}>
+            ¿Necesitas un módulo personalizado o múltiples sucursales?
+          </h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.25rem', maxWidth: '650px', margin: '0 auto 1.25rem auto' }}>
+            El equipo técnico de FERREPOINT ajusta la plataforma a los procesos de tu negocio. Ponte en contacto para personalizar la configuración.
+          </p>
+          <a
+            href="https://api.whatsapp.com/send?text=Hola%20FERREPOINT%2C%20quisiera%20asesor%C3%ADa%20para%20personalizar%20m%C3%B3dulos%20para%20mi%20ferretera."
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-block',
+              padding: '0.85rem 2rem',
+              backgroundColor: '#25D366',
+              color: 'white',
+              borderRadius: '0.5rem',
+              textDecoration: 'none',
+              fontWeight: '800',
+              fontSize: '1rem',
+              boxShadow: '0 4px 14px rgba(37,211,102,0.35)'
+            }}
+          >
+            💬 Contactar Soporte FERREPOINT
+          </a>
+        </div>
+      </div>
+    </div>
+  );
 }

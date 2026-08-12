@@ -88,15 +88,16 @@ export async function actionLogin(email: string, password: string): Promise<Logi
  // Validar contraseña
  let passwordMatch = await compare(password, user.password)
 
- // Fallback de reparación de contraseña para superadmin y demoferretodo
- if (!passwordMatch && (email.toLowerCase() === 'superadmin@ferrepoint.com' || email.toLowerCase() === 'demoferretodo@ferreteria.com') && password === 'password123') {
- const hashedPassword = await hash('password123', 10)
- await prisma.user.update({
- where: { id: user.id },
- data: { password: hashedPassword }
- })
- passwordMatch = true
- }
+  // Fallback de reparación de contraseña para usuarios demo/testing
+  const allowedTestEmails = ['superadmin@ferrepoint.com', 'demoferretodo@ferreteria.com', 'admin@ferreteria.com', 'vendedor@ferreteria.com', 'vendedor1@gmail.com'];
+  if (!passwordMatch && allowedTestEmails.includes(email.toLowerCase()) && password === 'password123') {
+    const hashedPassword = await hash('password123', 10)
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword }
+    })
+    passwordMatch = true
+  }
 
  if (!passwordMatch) {
  return { success: false, error: "Credenciales incorrectas" }

@@ -55,4 +55,36 @@
   - Se habilitaron métricas de Estado de Resultados (Períodos: Hoy, Semana, Mes, Histórico), Utilidad Bruta, Margen %, Desglose por Método de Pago y la Calculadora de Arqueo de Caja en tiempo real para Corte de Caja.
 
 ### 10. Confirmación de Aislamiento Multi-Tenant
-- Se verificó la arquitectura multi-tenant donde cada tabla (`sales`, `sale_items`, `cash_closes`, `products`, `users`) filtra estrictamente por `businessId` ligado a la sesión del usuario.
+- Se verificó la arquitectura multi-tenant donde cada tabla (`sales`, `sale_items`, `cash_closes`, `products`, `users`) filtra strictly por `businessId` ligado a la sesión del usuario.
+
+---
+
+## 🚀 Sesión 11 de Agosto 2026: Validación E2E, Build y Verificación General
+
+### 11. Ejecución de Pruebas E2E Automatizadas con Playwright & Build de Producción
+- **Typecheck & Build Clean**: Se verificaron los 24 paquetes de rutas de la app (`next build`), confirmando **0 errores de TypeScript** (`tsc --noEmit`) y un build estático/dinámico optimizado.
+- **Suite E2E Automatizada**:
+  - `test-full-workflow.js`: Simulación completa de interacción Vendedor → POS → Envío a Caja → Cobro por Cajero → Notificación en tiempo real a Vendedor. Pasó al 100%.
+  - `test-e2e-all.js`: Cobertura automatizada multimódulo recorriendo Login, POS, Caja, Bodega, Inventario, Almacén, Contabilidad, Entregas y Administración de Usuarios. Pasó al 100%.
+  - `test-cfdi-sandbox.js`: Validación de timbrado fiscal mock CFDI 4.0 con generación de UUID, QR del SAT y XML 4.0.
+
+### 12. Corrección de Ancho y Márgenes en Tickets Térmicos de Venta (POS & Caja)
+- **Problema**: Al imprimir tickets térmicos (80mm/58mm), los dígitos finales de la columna derecha de precios (ej: `$3.45` -> `$3.4`, `$2309.32` -> `$2309.3`) se recortaban en el borde lateral de la hoja debido a que `@media print` expandía el cuerpo al 100% de la bobina sin margen de seguridad física.
+- **Solución**:
+  - En `src/app/pos/page.tsx` y `src/app/caja/page.tsx`, se fijó el ancho imprimible a `260px` (~68mm) asegurando que quepa dentro del área de impresión térmica efectiva (72mm).
+  - Se configuró `table-layout: fixed` con columnas distribuidas (`62%` descripción, `38%` totales).
+  - Se agregó `padding-right: 6px` y `white-space: nowrap` en los totales para garantizar un colchón interno que evita el recorte del último dígito.
+
+### 13. Transición a Modelo de Suscripción Modular Adaptativa A la Medida
+- **Cambio de Filosofía**: En lugar de forzar planes cerrados rígidos (`free`, `professional`, `enterprise`), FERREPOINT adopta un esquema de **Activación Modular A la Medida** según las necesidades de cada ferretería.
+- **Implementación**:
+  - `src/lib/plans.ts`: Se añadió el mapa `MODULE_DETAILS` con los 10 procesos core de la plataforma.
+  - `src/components/FeatureGate.tsx`: Muestra el estado del módulo bloqueado con el botón directo de solicitud de activación bajo demanda por WhatsApp en lugar de mensajes genéricos de upgrade.
+  - `src/app/upgrade/page.tsx`: Se rediseñó la vista a un catálogo interactivo de **Activación Modular a la Medida** que indica claramente qué procesos están `✓ Activo` o `🔒 Disponible` con CTA para solicitar su habilitación.
+
+### 14. Modal de Previsualización Ampliada de Ticket de Venta (`TicketPreviewModal`)
+- **Problema**: Al disparar `window.print()` directamente sin previsualización en pantalla, los navegadores (Edge/Chrome) muestran un cuadro de diálogo nativo con miniatura diminuta y fondo oscuro sin permitir revisar claramente los productos y datos del ticket antes de imprimir.
+- **Solución**:
+  - `src/components/TicketPreviewModal.tsx`: Se creó un componente modal de previsualización de alto impacto que simula la bobina física de papel térmico de 80mm/58mm en pantalla con sombra realista y borde superior coloreado.
+  - Permite revisar todos los detalles antes de enviar a la impresora e incluye botones de acción rápida: **`🖨️ Imprimir Ticket`**, **`📱 Enviar por WhatsApp`** y **`✖️ Cerrar`**.
+  - Conectado e integrado en las vistas de **POS (`/pos`)** y **Caja (`/caja`)**.

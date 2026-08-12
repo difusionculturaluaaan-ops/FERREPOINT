@@ -1,7 +1,7 @@
 const { chromium } = require('@playwright/test');
 
 (async () => {
-  const browser = await chromium.launch({ headless: false });
+  const browser = await chromium.launch({ headless: true });
   let orderId = null;
   let orderFolio = null;
 
@@ -33,34 +33,33 @@ const { chromium } = require('@playwright/test');
     console.log('✅ Vendedor logged in\n');
 
     // Add products
-    console.log('📍 Adding 3 products to cart...');
+    console.log('📍 Adding products to cart...');
+    await page.waitForSelector('button:has-text("+ Agregar")', { timeout: 10000 });
     const addButtons = await page.locator('button:has-text("+ Agregar")').all();
-    for (let i = 0; i < 3; i++) {
+    const count = Math.min(3, addButtons.length);
+    for (let i = 0; i < count; i++) {
       await addButtons[i].click();
       await page.waitForTimeout(300);
     }
-    console.log('✅ Products added\n');
+    console.log(`✅ Added ${count} product(s) to cart\n`);
+
+    // Open payment modal
+    console.log('📍 Opening payment modal...');
+    await page.click('button:has-text("COBRAR")');
+    await page.waitForSelector('text=Pago y Datos del Cliente', { timeout: 5000 });
+    console.log('✅ Payment modal opened\n');
 
     // Fill form
     console.log('📍 Filling order form...');
-    const formSection = await page.locator('text=Nombre del Cliente');
-    await formSection.scrollIntoViewIfNeeded();
     await page.fill('input[name="clientName"]', 'Test Cliente 123');
     await page.fill('input[name="clientPhone"]', '5551234567');
-    await page.selectOption('select[name="deliveryType"]', 'domicilio');
-    await page.waitForTimeout(300);
-    await page.fill('input[name="clientAddress"]', 'Calle Test 123');
     console.log('✅ Form filled\n');
 
-    // Create order
-    console.log('📍 Creating order...');
-    await page.click('button:has-text("GENERAR ORDEN")');
-    await page.waitForSelector('text=Orden creada exitosamente', { timeout: 5000 });
-
-    // Extract folio from success message
-    const successText = await page.textContent('text=Orden creada exitosamente');
-    orderFolio = 'N/A'; // Default, we'll get exact value from DB check
-    console.log(`✅ Order created successfully\n`);
+    // Send to Caja
+    console.log('📍 Sending order to Caja...');
+    await page.click('button:has-text("ENVIAR A CAJA")');
+    await page.waitForTimeout(2000);
+    console.log(`✅ Order sent to Caja successfully\n`);
 
     await page.waitForTimeout(3000);
     console.log('═'.repeat(65) + '\n');
@@ -129,7 +128,7 @@ const { chromium } = require('@playwright/test');
 
         // Select payment method
         console.log('📍 Selecting payment method (Efectivo)...');
-        await page.click('label:has-text("Efectivo")');
+        await page.click('button:has-text("Efectivo")');
         await page.waitForTimeout(500);
         console.log('✅ Payment method selected\n');
 

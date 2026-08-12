@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { LogoutButton } from '@/components/LogoutButton'
+import { UserProfileBadge } from '@/components/UserProfileBadge'
+import { actionGetBusinessPlan } from '@/features/auth/server'
 
 const ALL_NAV_MODULES = [
  { key: 'pos', label: ' Punto de Venta', href: '/pos' },
@@ -23,7 +25,22 @@ export default function Home() {
  useEffect(() => {
  const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {}
  setUserRole(user.role || null)
- setEnabledModules(user.enabledModules || ['pos', 'inventario', 'caja', 'bodega', 'almacen', 'compras', 'contabilidad', 'entregas', 'reportes'])
+ const initialMods = user.enabledModules || ['pos', 'inventario', 'caja', 'bodega', 'almacen', 'compras', 'contabilidad', 'entregas', 'reportes']
+ setEnabledModules(initialMods)
+
+ const bizId = user.businessId || (typeof window !== 'undefined' ? localStorage.getItem('businessId') : null)
+ if (bizId) {
+   actionGetBusinessPlan(bizId).then((res) => {
+     if (res.success && res.enabledModules) {
+       user.enabledModules = res.enabledModules
+       if (typeof window !== 'undefined') {
+         localStorage.setItem('user', JSON.stringify(user))
+         localStorage.setItem('plan', res.plan || 'starter')
+       }
+       setEnabledModules(res.enabledModules)
+     }
+   }).catch(console.error)
+ }
  }, [])
 
  const visibleModules = userRole === 'super_admin'
@@ -88,6 +105,7 @@ export default function Home() {
  SuperAdmin Dashboard
  </a>
  )}
+ <UserProfileBadge />
  <ThemeToggle />
  <LogoutButton />
  </div>

@@ -3,10 +3,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { actionGetProducts, actionCreateOrder, actionGetPaidOrders, actionGetBusinessConfig, actionProcessPayment } from '@/features/pos/server';
 import { actionGetBusinessPlan } from '@/features/auth/server';
+import { generateTicketHTML } from '@/lib/ticketPrinter';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LogoutButton } from '@/components/LogoutButton';
 import { DashboardButton } from '@/components/DashboardButton';
 import { Product, CartItem, POSFormData as FormData, Sale } from '@/types';
+import { TicketPreviewModal } from '@/components/TicketPreviewModal';
+import { UserProfileBadge } from '@/components/UserProfileBadge';
 
 interface UserData {
  businessId: string;
@@ -42,6 +45,19 @@ export default function POSPage() {
  const [showFullCartModal, setShowFullCartModal] = useState(false);
  const [isMobileCartExpanded, setIsMobileCartExpanded] = useState(false);
  const [cartSearchTerm, setCartSearchTerm] = useState('');
+ const [previewTicketData, setPreviewTicketData] = useState<{
+    isOpen: boolean;
+    folio: string;
+    clientName: string;
+    paymentMethod: string;
+    dateStr?: string;
+    items: { name: string; qty: number; price: number; subtotal: number }[];
+    subtotal: number;
+    iva: number;
+    total: number;
+    ticketType: 'completo' | 'resumido';
+    whatsAppUrl: string;
+  } | null>(null);
  const [ordersSearchTerm, setOrdersSearchTerm] = useState('');
  const [ordersPage, setOrdersPage] = useState(0);
  const [requiresCajero, setRequiresCajero] = useState(false);
@@ -308,7 +324,7 @@ export default function POSPage() {
   const handlePrintTicket = (
     folio: string,
     clientName: string,
-    itemsList: CartItem[],
+    itemsList: any[],
     subtotalAmt: number,
     taxAmt: number,
     totalAmt: number,
@@ -318,86 +334,25 @@ export default function POSPage() {
     const printWin = window.open('', '_blank', 'width=380,height=600');
     if (!printWin) return;
 
-    const dateStr = new Date().toLocaleString('es-MX', {
-      dateStyle: 'short',
-      timeStyle: 'medium',
+    const htmlContent = generateTicketHTML({
+      title: 'FERREPOINT',
+      subtitle: 'Ticket de Venta',
+      folio,
+      clientName: clientName || 'Cliente Mostrador',
+      paymentMethod: method.toUpperCase(),
+      items: itemsList.map(i => ({
+        name: i.name,
+        qty: i.qty,
+        price: i.price,
+        subtotal: i.subtotal
+      })),
+      subtotal: subtotalAmt,
+      iva: taxAmt,
+      total: totalAmt,
+      ticketType: type
     });
 
-    const itemsRows = type === 'completo'
-      ? itemsList.map(i => `
-        <tr>
-          <td style="padding: 3px 0; word-break: break-word;">${i.name} <br/><small>(${i.qty} x $${i.price.toFixed(2)})</small></td>
-          <td style="text-align: right; vertical-align: top; padding: 3px 0;">$${i.subtotal.toFixed(2)}</td>
-        </tr>
-      `).join('')
-      : `
-        <tr>
-          <td style="padding: 6px 0;">Resumen (${itemsList.reduce((sum, i) => sum + i.qty, 0)} artículos)</td>
-          <td style="text-align: right; padding: 6px 0;">$${subtotalAmt.toFixed(2)}</td>
-        </tr>
-      `;
-
-    printWin.document.write(`
-      <!DOCTYPE html>
-      <html lang="es">
-      <head>
-        <meta charset="UTF-8" />
-        <title>Ticket #${folio}</title>
-        <style>
-          @page { size: 80mm auto; margin: 0; }
-          body {
-            font-family: 'Courier New', Courier, monospace;
-            width: 270px;
-            margin: 0 auto;
-            padding: 12px;
-            font-size: 12px;
-            color: #000;
-            background: #fff;
-          }
-          .text-center { text-align: center; }
-          .text-right { text-align: right; }
-          .bold { font-weight: bold; }
-          .title { font-size: 16px; font-weight: bold; margin-bottom: 2px; }
-          .subtitle { font-size: 11px; margin-bottom: 8px; text-transform: uppercase; }
-          .divider { border-top: 1px dashed #000; margin: 8px 0; }
-          table { width: 100%; border-collapse: collapse; font-size: 11px; }
-          .total-row { font-size: 14px; font-weight: bold; }
-          @media print {
-            body { width: 100%; padding: 4px; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="text-center title">FERREPOINT</div>
-        <div class="text-center subtitle">Ticket de Venta (${type.toUpperCase()})</div>
-        <div class="divider"></div>
-        <div><strong>Folio:</strong> #${folio}</div>
-        <div><strong>Fecha:</strong> ${dateStr}</div>
-        <div><strong>Cliente:</strong> ${clientName || 'Cliente Mostrador'}</div>
-        <div><strong>Método Pago:</strong> ${method.toUpperCase()}</div>
-        <div class="divider"></div>
-        <table>
-          ${itemsRows}
-        </table>
-        <div class="divider"></div>
-        <table>
-          <tr><td>Subtotal:</td><td class="text-right">$${subtotalAmt.toFixed(2)}</td></tr>
-          <tr><td>IVA (16%):</td><td class="text-right">$${taxAmt.toFixed(2)}</td></tr>
-          <tr class="total-row"><td>TOTAL:</td><td class="text-right">$${totalAmt.toFixed(2)}</td></tr>
-        </table>
-        <div class="divider"></div>
-        <div class="text-center" style="font-size: 11px; margin-top: 10px; font-weight: bold;">
-          ¡Gracias por su compra!
-        </div>
-        <script>
-          window.onload = function() {
-            window.print();
-            setTimeout(function() { window.close(); }, 500);
-          };
-        </script>
-      </body>
-      </html>
-    `);
+    printWin.document.write(htmlContent);
     printWin.document.close();
   };
 
@@ -477,20 +432,22 @@ export default function POSPage() {
           setSuccessMessage(`📥 Orden enviada a Caja para cobro. Folio: #${folioStr}`);
         }
 
-        // Si eligió comprobante por WhatsApp, abrirlo automáticamente
-        if (formData.comprobante === 'whatsapp') {
-          window.open(waUrl, '_blank');
-        } else if (formData.comprobante === 'completo' || formData.comprobante === 'resumido') {
-          handlePrintTicket(
-            folioStr,
-            formData.clientName || 'Cliente Mostrador',
-            cart,
+        // Abrir previsualización grande del ticket en pantalla
+        if (formData.comprobante === 'completo' || formData.comprobante === 'resumido') {
+          setPreviewTicketData({
+            isOpen: true,
+            folio: folioStr,
+            clientName: formData.clientName || 'Cliente Mostrador',
+            paymentMethod: formData.paymentMethod,
+            items: cart.map(i => ({ name: i.name, qty: i.qty, price: i.price, subtotal: i.subtotal })),
             subtotal,
-            tax,
+            iva: tax,
             total,
-            formData.paymentMethod,
-            formData.comprobante
-          );
+            ticketType: formData.comprobante,
+            whatsAppUrl: waUrl
+          });
+        } else if (formData.comprobante === 'whatsapp') {
+          window.open(waUrl, '_blank');
         }
 
         setTimeout(() => {
@@ -511,7 +468,7 @@ export default function POSPage() {
           if (userData) {
             actionGetPaidOrders(userData.businessId, userData.vendorId).then(setPaidOrders);
           }
-        }, 5000);
+        }, 3000);
       } else {
         setError((response as any).error || 'Error al crear la orden');
       }
@@ -737,6 +694,7 @@ export default function POSPage() {
  >
  Órdenes ({paidOrders.length})
  </button>
+ <UserProfileBadge />
  <DashboardButton />
  <ThemeToggle />
  <LogoutButton />
@@ -1616,6 +1574,34 @@ export default function POSPage() {
  </div>
  </div>
  )}
+      {previewTicketData && (
+        <TicketPreviewModal
+          isOpen={previewTicketData.isOpen}
+          onClose={() => setPreviewTicketData(null)}
+          folio={previewTicketData.folio}
+          clientName={previewTicketData.clientName}
+          paymentMethod={previewTicketData.paymentMethod}
+          dateStr={previewTicketData.dateStr}
+          items={previewTicketData.items}
+          subtotal={previewTicketData.subtotal}
+          iva={previewTicketData.iva}
+          total={previewTicketData.total}
+          ticketType={previewTicketData.ticketType}
+          whatsAppUrl={previewTicketData.whatsAppUrl}
+          onPrint={() => {
+            handlePrintTicket(
+              previewTicketData.folio,
+              previewTicketData.clientName,
+              previewTicketData.items.map(i => ({ productId: '', name: i.name, qty: i.qty, price: i.price, subtotal: i.subtotal })),
+              previewTicketData.subtotal,
+              previewTicketData.iva,
+              previewTicketData.total,
+              previewTicketData.paymentMethod,
+              previewTicketData.ticketType
+            );
+          }}
+        />
+      )}
  </div>
  );
 }

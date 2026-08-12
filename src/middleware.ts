@@ -8,13 +8,13 @@ const secret = new TextEncoder().encode(
 
 const publicRoutes = ['/login', '/api/auth/login', '/upgrade', '/demo', '/demo.html', '/_next', '/static', '/favicon']
 const roleRoutes: Record<string, string[]> = {
- super_admin: ['/', '/superadmin', '/admin', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes'],
- admin: ['/', '/admin', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes'],
- dueno: ['/', '/admin', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes'],
- encargado: ['/', '/admin/usuarios', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes'],
+ super_admin: ['/', '/superadmin', '/admin', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes', '/almacen', '/compras'],
+ admin: ['/', '/admin', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes', '/almacen', '/compras'],
+ dueno: ['/', '/admin', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes', '/almacen', '/compras'],
+ encargado: ['/', '/admin/usuarios', '/inventario', '/bodega', '/pos', '/caja', '/entregas', '/contabilidad', '/reportes', '/almacen', '/compras'],
  vendedor: ['/pos', '/reportes'],
  cajero: ['/caja', '/pos', '/reportes'],
- bodeguero: ['/bodega', '/reportes'],
+ bodeguero: ['/bodega', '/reportes', '/almacen'],
  chofer: ['/entregas']
 }
 
@@ -25,7 +25,9 @@ const routeModules: Record<string, string> = {
  '/contabilidad': 'contabilidad',
  '/inventario': 'inventario',
  '/reportes': 'reportes',
- '/pos': 'pos'
+ '/pos': 'pos',
+ '/almacen': 'almacen',
+ '/compras': 'compras'
 }
 
 export async function middleware(request: NextRequest) {
