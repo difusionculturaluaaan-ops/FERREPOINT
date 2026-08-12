@@ -82,9 +82,12 @@
   - `src/components/FeatureGate.tsx`: Muestra el estado del módulo bloqueado con el botón directo de solicitud de activación bajo demanda por WhatsApp en lugar de mensajes genéricos de upgrade.
   - `src/app/upgrade/page.tsx`: Se rediseñó la vista a un catálogo interactivo de **Activación Modular a la Medida** que indica claramente qué procesos están `✓ Activo` o `🔒 Disponible` con CTA para solicitar su habilitación.
 
-### 14. Modal de Previsualización Ampliada de Ticket de Venta (`TicketPreviewModal`)
-- **Problema**: Al disparar `window.print()` directamente sin previsualización en pantalla, los navegadores (Edge/Chrome) muestran un cuadro de diálogo nativo con miniatura diminuta y fondo oscuro sin permitir revisar claramente los productos y datos del ticket antes de imprimir.
+### 15. Insignia de Perfil de Usuario con Rol (`UserProfileBadge`) y Sincronización Server-Side de `FeatureGate`
+- **Problema**:
+  1. No había un indicador visual constante en la barra de navegación para identificar la identidad y el rol operativo activo (Vendedor, Cajero, Bodeguero, Admin, etc.).
+  2. En el entorno de producción (`ferrepoint.vercel.app`), usuarios con sesiones activas previas obtenían falsos bloqueos (*"Esta función está disponible en planes superiores"*) al entrar a `/bodega` por permisos antiguos en el `localStorage` de su navegador.
 - **Solución**:
-  - `src/components/TicketPreviewModal.tsx`: Se creó un componente modal de previsualización de alto impacto que simula la bobina física de papel térmico de 80mm/58mm en pantalla con sombra realista y borde superior coloreado.
-  - Permite revisar todos los detalles antes de enviar a la impresora e incluye botones de acción rápida: **`🖨️ Imprimir Ticket`**, **`📱 Enviar por WhatsApp`** y **`✖️ Cerrar`**.
-  - Conectado e integrado en las vistas de **POS (`/pos`)** y **Caja (`/caja`)**.
+  - `src/components/UserProfileBadge.tsx`: Se creó una insignia con indicador de estado en vivo, nombre completo y rol con badge de color distintivo (`⚡ SuperAdmin`, `🔑 Administrador`, `👑 Dueño`, `🏢 Encargado`, `📦 Bodeguero`, `🛒 Vendedor`, `💵 Cajero`, `🚚 Chofer`). Integrado en el encabezado de todas las páginas clave (`/`, `/pos`, `/caja`, `/bodega`).
+  - `src/components/FeatureGate.tsx`: Se actualizó el componente de seguridad para realizar un fetch asíncrono a la base de datos Neon (`actionGetBusinessPlan`) si los permisos locales en `localStorage` estaban incompletos o desactualizados.
+  - **Despliegue**: Subido a GitHub y desplegado en Vercel exitosamente.
+
